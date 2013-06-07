@@ -5,7 +5,7 @@ A simple, powerful VScript library for L4D2
 
 
 Installing
-==========
+===
 
 See the "Your First Mutation" tutorial in this website:
 http://zombiescanfly.com/vslib/
