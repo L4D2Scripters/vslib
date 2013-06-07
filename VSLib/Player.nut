@@ -1131,7 +1131,7 @@ function VSLib::Player::__CalcPickups( )
 	// Constants -- \todo @TODO Make these user-configurable
 	const DISTANCE_TO_HOLD = 100.0
 	const DISTANCE_CLOSE = 256.0;
-	const OBJECT_SPEED = 3.0;
+	const OBJECT_SPEED = 25.0;
 	const THROW_SPEED = 1000.0;
 	
 	// Are they trying to pick up an object?
