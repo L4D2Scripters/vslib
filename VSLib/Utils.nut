@@ -498,7 +498,7 @@ function VSLib::Utils::VectorCrossProduct(a, b)
  * 
  * @authors Rectus
  */
-function VSLib::Utils::VectorfromQAngle(angles, radius = 1.0)
+function VSLib::Utils::VectorFromQAngle(angles, radius = 1.0)
 {
         local function ToRad(angle)
         {

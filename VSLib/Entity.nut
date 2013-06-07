@@ -94,6 +94,7 @@ class ::VSLib.Entity
 	_objBtnThrow = {}
 	_objOldBtnMask = {}
 	_objHolding = {}
+	_objLastVel = {}
 }
 
 

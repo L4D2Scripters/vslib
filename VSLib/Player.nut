@@ -1106,6 +1106,7 @@ function VSLib::Player::AllowPickups( BTN_PICKUP, BTN_THROW )
 	::VSLib.EntData._objBtnThrow[_idx] <- BTN_THROW;
 	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
 	::VSLib.EntData._objHolding[_idx] <- null;
+	::VSLib.EntData._objLastVel[_idx] <- Vector(0,0,0);
 	
 	::VSLib.EntData._objPickupTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, 1, @(pEnt) pEnt.__CalcPickups(), this);
 }
@@ -1127,6 +1128,7 @@ function VSLib::Player::__CalcPickups( )
 	local btnPickup = ::VSLib.EntData._objBtnPickup[_idx];
 	local btnThrow = ::VSLib.EntData._objBtnThrow[_idx];
 	local HoldingEntity = ::VSLib.EntData._objHolding[_idx];
+	local LastVel = ::VSLib.EntData._objLastVel[_idx];
 	
 	// Constants -- \todo @TODO Make these user-configurable
 	const DISTANCE_TO_HOLD = 100.0
@@ -1170,7 +1172,8 @@ function VSLib::Player::__CalcPickups( )
 				local vecVel = vecPos - holdPos;
 				vecVel = vecVel.Scale(OBJECT_SPEED);
 				
-				HoldingEntity.SetVelocity(vecVel); // \todo @TODO ffff Valve, why doesn't SetVelocity work for physics props? BAH
+				HoldingEntity.Push(vecVel - LastVel);
+				::VSLib.EntData._objLastVel[_idx] <- vecVel;
 			}
 			else
 			{

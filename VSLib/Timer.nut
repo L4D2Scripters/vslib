@@ -107,7 +107,7 @@ function VSLib::Timers::RemoveTimer(idx)
 /*
  * Create a think timer
  */
-if (!("_thinkTimer" in ::_thinkTimer))
+if (!("_thinkTimer" in ::VSLib.Timers))
 {
 	::VSLib.Timers._thinkTimer <- g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_target" });
 	if (::VSLib.Timers._thinkTimer != null)
