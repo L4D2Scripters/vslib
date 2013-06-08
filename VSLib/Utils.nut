@@ -5,6 +5,16 @@
 
 
 /**
+ * Global constants
+ */
+// "Survivor"s, to be used with SpawnL4D1Survivor()
+getconsttable()["BILL"] <- 4;
+getconsttable()["ZOEY"] <- 5;
+getconsttable()["FRANCIS"] <- 6;
+getconsttable()["LOUIS"] <- 7;
+
+
+/**
  * Replaces parts of a string with another string,
  *
  * @param string The full string
@@ -56,11 +66,11 @@ function VSLib::Utils::SearchMainTables(idx)
 /**
  * Combines all elements of an array into one string
  */
-function VSLib::Utils::CombineArray(args)
+function VSLib::Utils::CombineArray(args, delimiter = " ")
 {
 	local str = "";
 	for (local i = 0; i < args.len(); i++)
-		str += args[i].tostring() + " ";
+		str += args[i].tostring() + delimiter;
 	return str;
 }
 
@@ -205,48 +215,48 @@ function VSLib::Utils::SayToAll(str, ...)
 /**
  * Wraps Say() to make it easier to read. This will Say to the current team only.
  */
-function VSLib::Utils::SayToTeam(str, ...)
+function VSLib::Utils::SayToTeam(player, str, ...)
 {
 	switch (vargv.len())
 	{
 		case 0:
-			Say(null, str, true);
+			Say(player.GetBaseEntity(), str, true);
 			break;
 		case 1:
-			Say(null, format(str, vargv[0]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0]), true);
 			break;
 		case 2:
-			Say(null, format(str, vargv[0], vargv[1]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1]), true);
 			break;
 		case 3:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2]), true);
 			break;
 		case 4:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3]), true);
 			break;
 		case 5:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4]), true);
 			break;
 		case 6:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5]), true);
 			break;
 		case 7:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6]), true);
 			break;
 		case 8:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7]), true);
 			break;
 		case 9:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8]), true);
 			break;
 		case 10:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9]), true);
 			break;
 		case 11:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9], vargv[10]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9], vargv[10]), true);
 			break;
 		case 12:
-			Say(null, format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9], vargv[10], vargv[11]), true);
+			Say(player.GetBaseEntity(), format(str, vargv[0], vargv[1], vargv[2], vargv[3], vargv[4], vargv[5], vargv[6], vargv[7], vargv[8], vargv[9], vargv[10], vargv[11]), true);
 			break;
 	}
 }
@@ -309,7 +319,7 @@ function VSLib::Utils::SayToAllDel(str, ...)
 /**
  * Says some text after a delay to the team.
  */
-function VSLib::Utils::SayToTeamDel(str, ...)
+function VSLib::Utils::SayToTeamDel(player, str, ...)
 {
 	local temp = "";
 
@@ -356,7 +366,7 @@ function VSLib::Utils::SayToTeamDel(str, ...)
 			break;
 	}
 	
-	Timers.AddTimer ( 0.1, false, ::VSLib.Utils._sayfunc, { txt = temp, team = true } );
+	Timers.AddTimer ( 0.1, false, ::VSLib.Utils._sayfunc, { txt = temp, team = true, p = player } );
 }
 
 
@@ -365,17 +375,11 @@ function VSLib::Utils::SayToTeamDel(str, ...)
  */
 function VSLib::Utils::_sayfunc(args)
 {
-	Say(null, args.txt, args.team);
+	if ("p" in args)
+		Say(args.p.GetBaseEntity(), args.txt, args.team);
+	else
+		Say(null, args.txt, args.team);
 }
-
-/**
- * Used by SayToAllDel and SayToTeamDel
- */
-function VSLib::Utils::_sayfunc(args)
-{
-	Say(null, args.txt, args.team);
-}
-
 
 
 //
@@ -403,12 +407,6 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = Vecto
 	return ::VSLib.Entity(ent);
 }
 
-// "Survivor"s, to be used with SpawnL4D1Survivor()
-getconsttable()["BILL"] <- 4;
-getconsttable()["ZOEY"] <- 5;
-getconsttable()["FRANCIS"] <- 6;
-getconsttable()["LOUIS"] <- 7;
-
 /**
  * Spawns the requested L4D1 Survivor at the location you want.
  *
@@ -418,17 +416,18 @@ getconsttable()["LOUIS"] <- 7;
  */
 function VSLib::Utils::SpawnL4D1Survivor(survivor = 4, pos = Vector(0,0,0), ang = Vector(0,0,0))
 {
-	local info_l4d1_survivor_spawn = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_l4d1_survivor_spawn", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang, character = survivor,  });
-	DoEntFire( "!self", "SpawnSurvivor", "", 0, info_l4d1_survivor_spawn, info_l4d1_survivor_spawn );
-	DoEntFire( "!self", "Kill", "", 0, null, info_l4d1_survivor_spawn );
+	local info_l4d1_survivor_spawn = VSLib.Utils.CreateEntity("info_l4d1_survivor_spawn", pos, ang, { character = survivor } );
+	
+	info_l4d1_survivor_spawn.Input("SpawnSurvivor");
+	info_l4d1_survivor_spawn.Kill();
 }
 
 /**
- * Spawns the requested zombie via the Director
+ * Spawns the requested zombie via the Director at the specified location.
  */
-function VSLib::Utils::SpawnZombie(zombieType = "default", attackOnSpawn = true)
+function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = true)
 {
-	local ent = VSLib.Utils.CreateEntity("info_zombie_spawn");
+	local ent = VSLib.Utils.CreateEntity("info_zombie_spawn", pos);
 	ent.SetKeyValue("population", zombieType);
 	ent.SetKeyValue("AttackOnSpawn", attackOnSpawn.tointeger());
 	ent.Input("SpawnZombie");

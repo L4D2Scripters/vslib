@@ -1106,13 +1106,13 @@ function VSLib::Player::AllowPickups( BTN_PICKUP, BTN_THROW )
 	::VSLib.EntData._objBtnThrow[_idx] <- BTN_THROW;
 	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
 	::VSLib.EntData._objHolding[_idx] <- null;
-	::VSLib.EntData._objLastVel[_idx] <- Vector(0,0,0);
 	
 	::VSLib.EntData._objPickupTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, 1, @(pEnt) pEnt.__CalcPickups(), this);
 }
 
 /**
- * Warning: Do not use! Instead @see AllowPickups
+ * Warning: Do not use!
+ * \todo @TODO Fix crash!
  */
 function VSLib::Player::__CalcPickups( )
 {
@@ -1128,7 +1128,6 @@ function VSLib::Player::__CalcPickups( )
 	local btnPickup = ::VSLib.EntData._objBtnPickup[_idx];
 	local btnThrow = ::VSLib.EntData._objBtnThrow[_idx];
 	local HoldingEntity = ::VSLib.EntData._objHolding[_idx];
-	local LastVel = ::VSLib.EntData._objLastVel[_idx];
 	
 	// Constants -- \todo @TODO Make these user-configurable
 	const DISTANCE_TO_HOLD = 100.0
@@ -1143,7 +1142,10 @@ function VSLib::Player::__CalcPickups( )
 		// If so, then cache it.
 		local object = GetLookingEntity();
 		if (object != null)
+		{
 			::VSLib.EntData._objHolding[_idx] <- object;
+			PickupObject(_ent, object); /**< \todo @TODO Comment this line once Valve fixes SetVelocity */
+		}
 	}
 	
 	// Are they holding an object?
@@ -1172,8 +1174,7 @@ function VSLib::Player::__CalcPickups( )
 				local vecVel = vecPos - holdPos;
 				vecVel = vecVel.Scale(OBJECT_SPEED);
 				
-				HoldingEntity.Push(vecVel - LastVel);
-				::VSLib.EntData._objLastVel[_idx] <- vecVel;
+				//HoldingEntity.SetVelocity(vecVel); /**< \todo @TODO Un-comment this line once Valve fixes SetVelocity */
 			}
 			else
 			{
@@ -1224,6 +1225,18 @@ function VSLib::Player::DropPickup( )
 }
 
 
+
+
+
+// Allows pickups
+function CanPickupObject(object)
+{
+	local objectIdx = object.GetEntityIndex();
+	foreach (vsobj in ::VSLib.EntData._objHolding)
+		if (vsobj.GetEntityIndex() == objectIdx)
+			return true;
+	return false;
+}
 
 
 
