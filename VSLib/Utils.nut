@@ -403,6 +403,26 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = Vecto
 	return ::VSLib.Entity(ent);
 }
 
+// "Survivor"s, to be used with SpawnL4D1Survivor()
+getconsttable()["BILL"] <- 4;
+getconsttable()["ZOEY"] <- 5;
+getconsttable()["FRANCIS"] <- 6;
+getconsttable()["LOUIS"] <- 7;
+
+/**
+ * Spawns the requested L4D1 Survivor at the location you want.
+ *
+ * \todo @TODO Possibly add a way to determine if a requested survivor should glow or not.
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnL4D1Survivor(survivor = 4, pos = Vector(0,0,0), ang = Vector(0,0,0))
+{
+	local info_l4d1_survivor_spawn = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_l4d1_survivor_spawn", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang, character = survivor,  });
+	DoEntFire( "!self", "SpawnSurvivor", "", 0, info_l4d1_survivor_spawn, info_l4d1_survivor_spawn );
+	DoEntFire( "!self", "Kill", "", 0, null, info_l4d1_survivor_spawn );
+}
+
 /**
  * Spawns the requested zombie via the Director
  */
