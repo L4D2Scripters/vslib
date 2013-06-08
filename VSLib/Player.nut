@@ -1074,6 +1074,9 @@ function VSLib::Player::StopSound( file )
 }
 
 
+
+
+
 /**
  * Stops Amnesia/HL2 style object pickups
  */
@@ -1111,8 +1114,7 @@ function VSLib::Player::AllowPickups( BTN_PICKUP, BTN_THROW )
 }
 
 /**
- * Warning: Do not use!
- * \todo @TODO Fix crash!
+ * Instead of using this directly, @see AllowPickups
  */
 function VSLib::Player::__CalcPickups( )
 {
@@ -1142,10 +1144,7 @@ function VSLib::Player::__CalcPickups( )
 		// If so, then cache it.
 		local object = GetLookingEntity();
 		if (object != null)
-		{
 			::VSLib.EntData._objHolding[_idx] <- object;
-			PickupObject(_ent, object); /**< \todo @TODO Comment this line once Valve fixes SetVelocity */
-		}
 	}
 	
 	// Are they holding an object?
@@ -1174,7 +1173,7 @@ function VSLib::Player::__CalcPickups( )
 				local vecVel = vecPos - holdPos;
 				vecVel = vecVel.Scale(OBJECT_SPEED);
 				
-				//HoldingEntity.SetVelocity(vecVel); /**< \todo @TODO Un-comment this line once Valve fixes SetVelocity */
+				HoldingEntity.SetVelocity(vecVel);
 			}
 			else
 			{
@@ -1211,7 +1210,7 @@ function VSLib::Player::__CalcPickups( )
 }
 
 /**
- * Drops the held HL2/Amnesia physics-based object
+ * Drops the held HL2/Amnesia physics-based object or the valve-style object
  */
 function VSLib::Player::DropPickup( )
 {
@@ -1221,8 +1220,166 @@ function VSLib::Player::DropPickup( )
 		return;
 	}
 	
+	// Drop amnesia object
 	::VSLib.EntData._objHolding[_idx] <- null;
+	
+	// Drop valve object
+	if (_idx in ::VSLib.EntData._objValveHolding)
+	{
+		::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), 100));
+		delete ::VSLib.EntData._objValveHolding[_idx];
+	}
 }
+
+
+/**
+ * Picks up the given VSLib Entity object
+ */
+function VSLib::Player::NativePickupObject( otherEnt )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	DropPickup();
+	
+	if (otherEnt.GetClassname() != "prop_physics")
+		return;
+	
+	::VSLib.EntData._objValveHolding[_idx] <- otherEnt.GetBaseEntity();
+	PickupObject(_ent, otherEnt.GetBaseEntity());
+}
+
+
+
+
+
+
+/**
+ * Enables Valve-style object pickups
+ * @authors Rectus
+ */
+function VSLib::Player::BeginValvePickupObjects( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	::VSLib.EntData._objValveThrowPower[_idx] <- 100;
+	::VSLib.EntData._objValvePickupRange[_idx] <- 64;
+	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
+	::VSLib.EntData._objValveTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, true, @(pEnt) pEnt.__CalcValvePickups(), this);
+}
+
+/**
+ * Disables Valve-style object pickups
+ * @authors Rectus
+ */
+function VSLib::Player::EndValvePickupObjects( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (_idx in ::VSLib.EntData._objValveTimer)
+		Timers.RemoveTimer( ::VSLib.EntData._objValveTimer[_idx] );
+}
+
+/**
+ * Sets the throwing force for Valve-style object pickups (default 100)
+ * @authors Rectus
+ */
+function VSLib::Player::ValvePickupThrowPower( power )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	::VSLib.EntData._objValveThrowPower[_idx] <- power;
+	
+	return true;
+}
+
+/**
+ * Sets the pickup range for Valve-style object pickups (default 64)
+ * @authors Rectus
+ */
+function VSLib::Player::ValvePickupPickupRange( range )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	::VSLib.EntData._objValvePickupRange[_idx] <- range;
+	
+	return true;
+}
+
+/**
+ * Instead of using this directly, @see BeginValvePickupObjects
+ * @authors Rectus
+ */
+function VSLib::Player::__CalcValvePickups( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	local traceTable =
+	{
+		start = GetEyePosition()
+		end = GetEyePosition() + Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValvePickupRange[_idx])
+		ignore = _ent
+		mask = g_MapScript.TRACE_MASK_SHOT 
+	}
+	
+	local result = TraceLine(traceTable);
+	
+	if (!result || !("enthit" in traceTable) || traceTable.enthit.GetClassname() != "prop_physics")
+	{
+		if (_idx in ::VSLib.EntData._objValveHolding)
+			delete ::VSLib.EntData._objValveHolding[_idx];
+			
+		return;
+	}
+	
+	local oldbuttons = ::VSLib.EntData._objOldBtnMask[_idx];
+	
+	if( IsPressingUse() && !(oldbuttons & (1 << 5)) )
+	{
+		::VSLib.EntData._objValveHolding[_idx] <- traceTable.enthit;
+		PickupObject(_ent, traceTable.enthit);
+		PlaySound("Defibrillator.Use");
+	}
+	else if( IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
+	{
+		try
+		{
+			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
+			delete ::VSLib.EntData._objValveHolding[_idx];
+			PlaySound("Adrenaline.NeedleOpen");
+		}
+		catch(id)
+		{
+			printl("Impulse failed! " + id);
+		}
+	}
+	
+	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
+}
+
 
 
 
@@ -1231,9 +1388,8 @@ function VSLib::Player::DropPickup( )
 // Allows pickups
 function CanPickupObject(object)
 {
-	local objectIdx = object.GetEntityIndex();
-	foreach (vsobj in ::VSLib.EntData._objHolding)
-		if (vsobj.GetEntityIndex() == objectIdx)
+	foreach (obj in ::VSLib.EntData._objValveHolding)
+		if (obj == object)
 			return true;
 	return false;
 }

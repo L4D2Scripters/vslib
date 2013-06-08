@@ -18,7 +18,7 @@
  * 
  */
 
-::__VSLIB_VERSION__ <- 1.2;
+::__VSLIB_VERSION__ <- 1.3;
 
 /*
  * Create global namespace

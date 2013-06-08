@@ -94,6 +94,11 @@ class ::VSLib.Entity
 	_objBtnThrow = {}
 	_objOldBtnMask = {}
 	_objHolding = {}
+	
+	_objValveTimer = {}
+	_objValveHolding = {}
+	_objValveThrowPower = {}
+	_objValvePickupRange = {}
 }
 
 
