@@ -87,8 +87,12 @@ function VSLib::Player::GetSteamID()
 		return "";
 	}
 	
-	if ("_steam" in ::VSLib.EasyLogic.Cache[_idx])
-		return ::VSLib.EasyLogic.Cache[_idx]._steam;
+	local id = _idx.tostring();
+	if (!(id in ::VSLib.GlobalCache))
+		return "";
+	
+	if ("_steam" in ::VSLib.GlobalCache[id])
+		return ::VSLib.GlobalCache[id]["_steam"];
 	
 	return null;
 }
@@ -101,11 +105,15 @@ function VSLib::Player::GetName()
 	if (!IsPlayerEntityValid())
 	{
 		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return "";
+		return base.GetName();
 	}
 	
-	if ("_name" in ::VSLib.EasyLogic.Cache[_idx])
-		return ::VSLib.EasyLogic.Cache[_idx]._name;
+	local id = _idx.tostring();
+	if (!(id in ::VSLib.GlobalCache))
+		return base.GetName();
+	
+	if ("_name" in ::VSLib.GlobalCache[id])
+		return ::VSLib.GlobalCache[id]["_name"];
 	
 	return base.GetName();
 }
@@ -121,10 +129,14 @@ function VSLib::Player::GetIPAddress()
 		return "";
 	}
 	
-	if ("_ip" in ::VSLib.EasyLogic.Cache[_idx])
-		return ::VSLib.EasyLogic.Cache[_idx]._ip;
+	local id = _idx.tostring();
+	if (!(id in ::VSLib.GlobalCache))
+		return "";
 	
-	return null;
+	if ("_ip" in ::VSLib.GlobalCache[id])
+		return ::VSLib.GlobalCache[id]["_ip"];
+	
+	return "";
 }
 
 /**
@@ -589,13 +601,15 @@ function VSLib::Player::BotReset()
 }
 
 /**
- * Returns the type of player. E.g. SPITTER, TANK, SURVIVOR, HUNTER, JOCKEY, SMOKER, BOOMER, CHARGER, or UNKNOWN.
+ * Returns the type of player. E.g. SPITTER, TANK, SURVIVOR, HUNTER, JOCKEY, SMOKER, BOOMER, CHARGER, COMMON, or UNKNOWN.
  */
 function VSLib::Player::GetPlayerType()
 {
 	if (!IsPlayerEntityValid())
 	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		if (IsEntityValid())
+			if (_ent.GetClassname() == "infected")
+				return COMMON;
 		return UNKNOWN;
 	}
 	
@@ -645,7 +659,7 @@ function VSLib::Player::CanSeeLocation(targetPos, tolerance = 50)
 /**
  * Returns true if this player can see the inputted entity.
  */
-function VSLib::Player::CanSeeOtherEntity(otherEntity)
+function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -654,7 +668,7 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity)
 	}
 	
 	// First check whether the player is even looking in its direction
-	if (!CanSeeLocation(otherEntity.GetLocation()))
+	if (!CanSeeLocation(otherEntity.GetLocation(), tolerance))
 		return false;
 	
 	// Next check to make sure it's not behind a wall or something
@@ -808,19 +822,6 @@ function VSLib::Player::Defib()
 	return false;
 }
 
-/**
- * Vomits on the player
- */
-function VSLib::Player::Vomit()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	_ent.HitWithVomit();
-}
 
 /**
  * Gets the last player who vomited this player, or returns null if the player
@@ -1054,6 +1055,13 @@ function VSLib::Player::PlaySound( file )
 	{
 		printl("VSLib Warning: Player " + _idx + " is invalid.");
 		return;
+	}
+	
+	if ( !(file in ::EasyLogic.PrecachedSounds) )
+	{
+		printf("VSLib: Precaching named sound: %s", file);
+		_ent.PrecacheScriptSound(file);
+		::EasyLogic.PrecachedSounds[file] <- 1;
 	}
 	
 	g_MapScript.EmitSoundOnClient(file, _ent);

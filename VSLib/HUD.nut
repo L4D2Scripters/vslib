@@ -1034,7 +1034,7 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	/**
 	 * Displays the menu and hands over control to a particular player entity.
 	 */
-	function DisplayMenu(player, attachTo)
+	function DisplayMenu(player, attachTo, autoDetach = false)
 	{
 		if (typeof player != "VSLIB_PLAYER")
 			throw "Menu could not be displayed: a non-Player entity was passed; only VSLib.Player entities are supported.";
@@ -1046,10 +1046,12 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 		
 		AttachTo(attachTo);
 		ChangeHUDNative(50, 40, 150, 300, 640, 480);
+		SetTextPosition(TextAlign.Left);
 		
 		_player = player;
 		_optimer = ::VSLib.Timers.AddTimer(0.2, 1, @(hudobj) hudobj.Tick(), this);
 		_curSel++;
+		_autoDetach = autoDetach;
 		
 		Show(); // show the menu
 	}
@@ -1069,6 +1071,9 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 			local t = { p = _player, idx = _curSel, val = _options[_curSel].text, callb = _options[_curSel].callback };
 			::VSLib.Timers.AddTimer(0.1, 0, @(tbl) tbl.callb(tbl.p, tbl.idx, tbl.val), t);
 			CloseMenu();
+			
+			if (_autoDetach)
+				Detach();
 		}
 	}
 	
@@ -1086,6 +1091,7 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	_player = null; // Player who is controlling the menu
 	_optimer = -1; // Timer responsible for updating player input
 	_title = null; // What to call the menu
+	_autoDetach = false; // Whether or not to auto-detach
 }
 
 

@@ -23,7 +23,7 @@
 /*
  * Create global namespace
  */
-::VSLib <- {};
+::VSLib <- { GlobalCache = {} };
 
 /*
  * Include sub-files

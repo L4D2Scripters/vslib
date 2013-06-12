@@ -29,7 +29,7 @@ class ::VSLib.Entity
 {
 	constructor(index)
 	{
-		if ((typeof index) == "VSLIB_ENTITY" || "_vsEntityClass" in index)
+		if ("_ent" in index && "_idx" in index)
 		{
 			_ent = index._ent;
 			_idx = index._idx;
@@ -62,6 +62,37 @@ class ::VSLib.Entity
 	function _typeof()
 	{
 		return "VSLIB_ENTITY";
+	}
+	
+	function _cmp(other)
+	{
+		if ("_ent" in other && "_idx" in other)
+		{
+			if (_idx > other._idx)
+				return 1;
+			else if (_idx == other._idx)
+				return 0;
+			else if (_idx < other._idx)
+				return -1;
+		}
+		else if ((typeof other) == "integer")
+		{
+			if (_idx > other)
+				return 1;
+			else if (_idx == other)
+				return 0;
+			else if (_idx < other)
+				return -1;
+		}
+		else if ((typeof index) == "instance")
+		{
+			if (_ent > other)
+				return 1;
+			else if (_ent == other)
+				return 0;
+			else if (_ent < other)
+				return -1;
+		}
 	}
 	
 	
@@ -124,6 +155,7 @@ getconsttable()["SPITTER"] <- 4;
 getconsttable()["HUNTER"] <- 3;
 getconsttable()["BOOMER"] <- 2;
 getconsttable()["SMOKER"] <- 1;
+getconsttable()["COMMON"] <- 999;
 
 
 
@@ -185,7 +217,7 @@ function VSLib::Entity::GetRawHealth()
  * If the entity is valid, the entity will be hurt with the specified damage type.
  * If you aren't sure what damage type you want to use, enter 0.
  */
-function VSLib::Entity::Hurt(value, dmgtype)
+function VSLib::Entity::Hurt(value, dmgtype = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -228,7 +260,10 @@ function VSLib::Entity::Input(input, value = "", delay = 0, activator = null)
 		return;
 	}
 	
-	DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), activator.GetBaseEntity(), _ent);
+	if (activator != null)
+		DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), activator.GetBaseEntity(), _ent);
+	else
+		DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), null, _ent);
 }
 
 /**
@@ -265,7 +300,7 @@ function VSLib::Entity::SetKeyValue(key, value)
 /**
  * Hurts the entity by the specified damage but overrides any user damage modifiers.
  */
-function VSLib::Entity::ForcedHurt(value, dmgtype)
+function VSLib::Entity::ForcedHurt(value, dmgtype = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -430,6 +465,21 @@ function VSLib::Entity::SetMaxHealth(value)
 	value = value.tointeger();
 	
 	_ent.__KeyValueFromInt("max_health", value);
+}
+
+/**
+ * Vomits on the Entity
+ */
+function VSLib::Entity::Vomit()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ("HitWithVomit" in _ent)
+		_ent.HitWithVomit();
 }
 
 /**
@@ -852,6 +902,76 @@ function VSLib::Entity::SetVelocity(vec)
 }
 
 /**
+ * Sets the entity's current velocity vector KV.
+ */
+function VSLib::Entity::SetVelocityKV(vec)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetKeyValue("velocity", vec);
+}
+
+/**
+ * Sets the entity's current base velocity vector KV.
+ */
+function VSLib::Entity::SetBaseVelocity(vec)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetKeyValue("basevelocity", vec);
+}
+
+/**
+ * Sets the entity's current angular velocity vector KV.
+ */
+function VSLib::Entity::SetAngularVelocity(vec)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetKeyValue("avelocity", vec);
+}
+
+/**
+ * Sets the entity's current water level.
+ */
+function VSLib::Entity::SetAngularVelocity(lvl)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetKeyValue("waterlevel", lvl.tostring());
+}
+
+/**
+ * Sets the entity's spawn flags.
+ */
+function VSLib::Entity::SetSpawnFlags(flags)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetKeyValue("spawnflags", flags.tostring());
+}
+
+/**
  * Gets the direction that the entity's eyes are facing.
  */
 function VSLib::Entity::GetEyeAngles()
@@ -1262,7 +1382,7 @@ function VSLib::Entity::GetLookingLocation()
 	local startPt = GetEyePosition();
 	local endPt = startPt + _ent.EyeAngles().Forward().Scale(999999);
 	
-	local m_trace = { start = startPt, end = endPt, ignore = _ent };
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == _ent)
@@ -1385,7 +1505,7 @@ function VSLib::Entity::GetDistanceToGround()
 	local startPt = GetLocation();
 	local endPt = startPt + Vector(0, 0, -9999999);
 	
-	local m_trace = { start = startPt, end = endPt, ignore = _ent };
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (m_trace.enthit == _ent || !m_trace.hit)
@@ -1405,7 +1525,7 @@ function VSLib::Entity::IsEntityInAir()
 		return;
 	}
 	
-	return GetDistanceToGround() > 0.0;
+	return GetDistanceToGround() > 5.0;
 }
 
 /**
@@ -1548,7 +1668,7 @@ function VSLib::Entity::IsPressingLeft()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 7);
+	return _ent.GetButtonMask() & (1 << 9);
 }
 
 /**
@@ -1562,7 +1682,7 @@ function VSLib::Entity::IsPressingRight()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 8);
+	return _ent.GetButtonMask() & (1 << 10);
 }
 
 /**
@@ -1645,41 +1765,6 @@ function VSLib::Entity::GetOwnerEntity()
  */
 function AllowTakeDamage(damageTable)
 {
-	if (!::VSLib.EntData._forcedHurt)
-	{
-		// Process hooks
-		if ("EasyLogic" in VSLib)
-		{
-			local name = damageTable.Victim.GetClassname();
-			if (name in ::VSLib.EasyLogic.OnDamage)
-			{
-				::VSLib.EntData._forcedHurt = false;
-				
-				local victim = ::VSLib.Entity(damageTable.Victim);
-				local attacker = ::VSLib.Entity(damageTable.Attacker);
-			
-				damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
-				
-				if (damageTable.DamageDone == null)
-					damageTable.DamageDone = 0;
-				
-				if (damageTable.DamageDone <= 0)
-					return false;
-				
-				return true;
-			}
-			
-			foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
-			{
-				if (func(damageTable) == false)
-					return false;
-			}
-		}
-	}
-	
-	// Reset force for next cycle
-	::VSLib.EntData._forcedHurt = false;
-	
 	// Process triggered hurts
 	if (damageTable.Attacker == ::VSLib.EntData._lastHurt)
 	{
@@ -1706,6 +1791,44 @@ function AllowTakeDamage(damageTable)
 			return false;
 		}
 	}
+	
+	if (!::VSLib.EntData._forcedHurt)
+	{
+		// Process hooks
+		if ("EasyLogic" in VSLib)
+		{
+			if (damageTable.Victim != null)
+			{
+				local name = damageTable.Victim.GetClassname();
+				if (name in ::VSLib.EasyLogic.OnDamage)
+				{
+					::VSLib.EntData._forcedHurt = false;
+					
+					local victim = ::VSLib.Player(damageTable.Victim);
+					local attacker = ::VSLib.Player(damageTable.Attacker);
+				
+					local damagesave = damageTable.DamageDone;
+					damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
+					
+					if (damageTable.DamageDone == null)
+						damageTable.DamageDone = damagesave;
+					else if (damageTable.DamageDone <= 0)
+						return false;
+					
+					return true;
+				}
+			}
+			
+			foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
+			{
+				if (func(damageTable) == false)
+					return false;
+			}
+		}
+	}
+	
+	// Reset force for next cycle
+	::VSLib.EntData._forcedHurt = false;
 	
 	return true;
 }

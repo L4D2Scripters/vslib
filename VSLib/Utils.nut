@@ -416,10 +416,10 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = Vecto
  */
 function VSLib::Utils::SpawnL4D1Survivor(survivor = 4, pos = Vector(0,0,0), ang = Vector(0,0,0))
 {
-	local info_l4d1_survivor_spawn = VSLib.Utils.CreateEntity("info_l4d1_survivor_spawn", pos, ang, { character = survivor } );
+	local info_l4d1_survivor_spawn = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_l4d1_survivor_spawn", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang, character = survivor });
 	
-	info_l4d1_survivor_spawn.Input("SpawnSurvivor");
-	info_l4d1_survivor_spawn.Kill();
+	DoEntFire( "!self", "SpawnSurvivor", "", 0, info_l4d1_survivor_spawn, info_l4d1_survivor_spawn );
+	DoEntFire( "!self", "Kill", "", 0, null, info_l4d1_survivor_spawn );
 }
 
 /**
@@ -437,7 +437,7 @@ function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = 
 /**
  * Spawns the requested zombie near a player and also
  * checks to make sure that the spawn point is not visible to
- * any survivor. Attempts to locate a position 20 times.
+ * any survivor. Attempts to locate a position 50 times.
  * If it can't find a suitable spawn location, it'll return false.
  * Keep in mind that the closer the min and max distances are to each
  * other, the lesser the chance that a suitable spawn will be found.
@@ -445,16 +445,25 @@ function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = 
  * If by chance the survivors are looking everywhere at once,
  * the infected prob won't spawn!
  */
-function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128, minDist = 32 )
+function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0, minDist = 32.0 )
 {
+	maxDist = maxDist.tofloat();
+	minDist = minDist.tofloat();
+	
 	if (maxDist < minDist)
 		maxDist = minDist;
 	
-	local playerPos = player.GetLocation();
+	local playerPos = null;
+	if (player.IsDead())
+		playerPos = player.GetLastDeathLocation();
+	else
+		playerPos = player.GetLocation();
+	
+	local survs = ::VSLib.EasyLogic.Players.Survivors();
 	
 	// Loop through some pathable location :\ cmon valve, give me
 	// some function to get a pos the players can't see
-	for (local i = 0; i < 20; i++)
+	for (local i = 0; i < 50; i++)
 	{
 		local _pos = player.GetNearbyLocation( maxDist );
 		local dist = ::VSLib.Utils.CalculateDistance(_pos, playerPos);
@@ -465,12 +474,26 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128, 
 		local canSee = false;
 		
 		// see if ppl can see this pos
-		foreach (survivor in ::VSLib.EasyLogic.Players.Survivors())
+		foreach (survivor in survs)
 		{
 			if (survivor.CanSeeLocation(_pos))
-				canSee = true;
+			{
+				local traceTable =
+				{
+					start = survivor.GetEyePosition()
+					end = _pos
+					ignore = survivor.GetBaseEntity()
+					mask = g_MapScript.TRACE_MASK_SHOT
+				}
+				
+				local result = TraceLine(traceTable);
+				
+				if (result && traceTable.pos == _pos)
+					canSee = true;
+			}
 		}
 		
+		// If they cannot see it, then spawn.
 		if (!canSee)
 		{
 			ZSpawn( { type = zombieNum, pos = _pos } );
@@ -533,7 +556,98 @@ function VSLib::Utils::VectorFromQAngle(angles, radius = 1.0)
        
         return Vector(x, y, z);
 }
- 
+
+
+/**
+ * Calculates the distance between two entities.
+ */
+function VSLib::Utils::GetDistBetweenEntities(ent1, ent2)
+{
+	return ::VSLib.Utils.CalculateDistance(ent1.GetLocation(), ent2.GetLocation());
+}
+
+
+//
+// MISC HELPERS
+//
+
+/**
+ * Slows down time.
+ */
+::_vsl_func_timescale <- null;
+function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, minBlendRate = 1.0, blendDeltaMultiplier = 2.0)
+{
+	if (_vsl_func_timescale == null)
+	{
+		_vsl_func_timescale = VSLib.Utils.CreateEntity("func_timescale");
+		
+		if (_vsl_func_timescale == null)
+		{
+			printf("Could not create _vsl_func_timescale.");
+			return;
+		}
+	}
+	
+	_vsl_func_timescale.SetKeyValue("desiredTimescale", desiredTimeScale);
+	_vsl_func_timescale.SetKeyValue("acceleration", re_Acceleration);
+	_vsl_func_timescale.SetKeyValue("minBlendRate", minBlendRate);
+	_vsl_func_timescale.SetKeyValue("blendDeltaMultiplier", blendDeltaMultiplier);
+	
+	_vsl_func_timescale.Input("Start");
+	
+	Timers.AddTimer(1.5, 0, Utils.ResumeTime, _vsl_func_timescale);
+}
+
+/**
+ * Resumes time. The param is only for VSLib's SlowTime timer.
+ */
+function VSLib::Utils::ResumeTime(timescale = null)
+{
+	if (timescale)
+	{
+		timescale.Input("Stop");
+		return;
+	}
+	
+	if (_vsl_func_timescale != null)
+		_vsl_func_timescale.Input("Stop");
+}
+
+
+/**
+ * Plays a sound to all clients
+ */
+function VSLib::Utils::PlaySoundToAll(sound)
+{
+	foreach (p in Players.All())
+		p.PlaySound(sound);
+}
+
+
+/**
+ * Returns the victim of the attacker player or null if there is no victim
+ */
+function VSLib::Utils::GetVictimOfAttacker( attacker )
+{
+	if (attacker.GetTeam() != INFECTED)
+		return;
+	
+	foreach (surv in Players.Survivors())
+	{
+		local curattker = surv.GetCurrentAttacker();
+		if (curattker != null && curattker.GetIndex() == attacker.GetIndex())
+			return surv;
+	}
+}
+
+/**
+ * Returns a pseudorandom number from 0 to requested number
+ */
+function VSLib::Utils::GetRandNumber( maxNum )
+{
+	return ((rand()/RAND_MAX) * maxNum);
+}
+
  
  
 

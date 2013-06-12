@@ -92,8 +92,17 @@ function VSLib::Timers::RemoveTimer(idx)
 	{
 		if ((curtime - timer._startTime) >= timer._delay)
 		{
-			if (timer._func(timer._params) == false)
-				timer._repeat = false;
+			try
+			{
+				if (timer._func(timer._params) == false)
+					timer._repeat = false;
+			}
+			catch (id)
+			{
+				printf("VSLib Timer caught exception; closing timer; id: %s", id.tostring());
+				delete ::VSLib.Timers.TimersList[idx];
+				continue;
+			}
 			
 			if (timer._repeat)
 				timer._startTime = curtime;
