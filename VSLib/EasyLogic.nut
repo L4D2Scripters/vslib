@@ -443,11 +443,13 @@ function OnGameEvent_player_spawn(params)
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	
 	local _id = ents.entity.GetIndex();
-	if(_id in ::VSLib.EasyLogic.Cache)
-	{
-		::VSLib.EasyLogic.Cache[_id]._isAlive <- true;
-		::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
-	}
+	
+	if (!(_id in ::VSLib.EasyLogic.Cache))
+		::VSLib.EasyLogic.Cache[_id] <- {};
+	
+	::VSLib.EasyLogic.Cache[_id]._isAlive <- true;
+	::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
+	::VSLib.EasyLogic.Cache[_id]._startPos <- ents.entity.GetLocation();
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
 		func(ents.entity, params);
@@ -458,10 +460,6 @@ function OnGameEvent_player_spawn(params)
 function OnGameEvent_player_first_spawn(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
-	
-	local index = ents.entity.GetIndex();
-	::VSLib.EasyLogic.Cache[index]._isAlive <- true;
-	::VSLib.EasyLogic.Cache[index]._startPos <- ents.entity.GetLocation();
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnFirstSpawn)
 		func(ents.entity, params);
