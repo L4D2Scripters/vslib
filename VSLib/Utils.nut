@@ -546,6 +546,9 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
  */
 function VSLib::Utils::CalculateDistance(vec1, vec2)
 {
+	if (!vec1 || !vec2)
+		return -1.0;
+	
 	return (vec2 - vec1).Length();
 }
 
@@ -677,6 +680,19 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
 function VSLib::Utils::GetRandNumber( maxNum )
 {
 	return ((rand()/RAND_MAX) * maxNum);
+}
+
+/**
+ * Forces a panic event
+ */
+function VSLib::Utils::ForcePanicEvent( )
+{
+	local ent = null;
+	if (ent = Entities.FindByClassname(ent, "info_director"))
+	{
+		local vsent = Entity(ent);
+		vsent.Input("ForcePanicEvent");
+	}
 }
 
  
