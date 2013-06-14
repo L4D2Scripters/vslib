@@ -158,6 +158,9 @@
 	OnTankPissed = {}
 	OnTankKilled = {}
 	OnTankSpawned = {}
+	
+	// Misc
+	OnDifficulty = {}
 }
 
 // Create entity data cache system
@@ -244,6 +247,24 @@ function OnGameEvent_finale_win(params)
 		func(map_name, diff, params);
 }
 
+function OnGameEvent_difficulty_changed(params)
+{
+	local newDiff = params["newDifficulty"].tointeger();
+	local diff = "";
+	
+	if (newDiff == 0) // just a guess...
+		diff = "Easy";
+	else if (newDiff == 1)
+		diff = "Normal";
+	else if (newDiff == 2)
+		diff = "Hard";
+	else if (newDiff == 3)
+		diff = "Expert";
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
+		func(diff);
+}
+
 
 
 function VSLib_ResetRoundVars()
@@ -291,6 +312,10 @@ function OnGameEvent_round_start_post_nav(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func(params);
+		
+	local diff = Convars.GetStr( "z_difficulty" );
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
+		func(diff);
 }
 
 function OnGameEvent_map_transition (params)
