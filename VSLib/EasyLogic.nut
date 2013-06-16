@@ -329,6 +329,8 @@ function OnGameEvent_map_transition (params)
 
 function OnGameEvent_round_end(params)
 {
+	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
+	
 	VSLib_ResetRoundVars();
 	VSLib_ResetCache();
 	
