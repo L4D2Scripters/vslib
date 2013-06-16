@@ -608,10 +608,12 @@ function VSLib::Player::GetPlayerType()
 	if (!IsPlayerEntityValid())
 	{
 		if (IsEntityValid())
+		{
 			if (_ent.GetClassname() == "infected")
 				return COMMON;
 			else if (_ent.GetClassname() == "witch")
 				return WITCH;
+		}
 		return UNKNOWN;
 	}
 	
@@ -1278,6 +1280,8 @@ function VSLib::Player::BeginValvePickupObjects( )
 		printl("VSLib Warning: Player " + _idx + " is invalid.");
 		return;
 	}
+	
+	EndValvePickupObjects();
 	
 	::VSLib.EntData._objValveThrowPower[_idx] <- 100;
 	::VSLib.EntData._objValvePickupRange[_idx] <- 64;

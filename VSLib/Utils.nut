@@ -679,7 +679,7 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
  */
 function VSLib::Utils::GetRandNumber( maxNum )
 {
-	return ((rand()/RAND_MAX) * maxNum);
+	return floor((rand().tofloat() / RAND_MAX) * maxNum.tofloat());
 }
 
 /**
