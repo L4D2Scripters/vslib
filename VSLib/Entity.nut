@@ -156,6 +156,7 @@ getconsttable()["HUNTER"] <- 3;
 getconsttable()["BOOMER"] <- 2;
 getconsttable()["SMOKER"] <- 1;
 getconsttable()["COMMON"] <- 999;
+getconsttable()["WITCH"] <- 998;
 
 
 

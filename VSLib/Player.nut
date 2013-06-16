@@ -610,6 +610,8 @@ function VSLib::Player::GetPlayerType()
 		if (IsEntityValid())
 			if (_ent.GetClassname() == "infected")
 				return COMMON;
+			else if (_ent.GetClassname() == "witch")
+				return WITCH;
 		return UNKNOWN;
 	}
 	
