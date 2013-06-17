@@ -161,6 +161,7 @@
 	
 	// Misc
 	OnDifficulty = {}
+	OnSurvivorsDead = {}
 }
 
 // Create entity data cache system
@@ -327,6 +328,12 @@ function OnGameEvent_map_transition (params)
 		func();
 }
 
+function OnGameEvent_mission_lost (params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsDead)
+		func(params);
+}
+
 function OnGameEvent_round_end(params)
 {
 	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
@@ -342,7 +349,6 @@ function OnGameEvent_round_end(params)
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundEnd)
 		func(winner, reason, message, time, params);
 }
-
 
 
 function RetryConnect(params)
@@ -468,12 +474,11 @@ function _OnPostSpawnEv(params)
 function OnGameEvent_player_spawn(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
-	
 	local _id = ents.entity.GetIndex();
 	
 	if (!(_id in ::VSLib.EasyLogic.Cache))
 		::VSLib.EasyLogic.Cache[_id] <- {};
-	
+		
 	::VSLib.EasyLogic.Cache[_id]._isAlive <- true;
 	::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
 	::VSLib.EasyLogic.Cache[_id]._startPos <- ents.entity.GetLocation();

@@ -624,6 +624,24 @@ function VSLib::Player::GetPlayerType()
 }
 
 /**
+ * Incaps the player
+ */
+function VSLib::Player::Incapacitate()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (IsIncapacitated())
+		return;
+	
+	SetRawHealth(1);
+	ForcedHurt(5, 0);
+}
+
+/**
  * Kills the player.
  */
 function VSLib::Player::Kill()
@@ -733,6 +751,34 @@ function VSLib::Player::SetFlashlight(turnFlashOn)
 		SetEffects(4);
 	else
 		SetEffects(0);
+}
+
+/**
+ * Sets the player's health buffer.
+ */
+function VSLib::Player::SetHealthBuffer(value)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetHealthBuffer(value);
+}
+
+/**
+ * Gets the player's health buffer.
+ */
+function VSLib::Player::GetHealthBuffer()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetHealthBuffer();
 }
 
 /**

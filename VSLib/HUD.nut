@@ -774,6 +774,7 @@ class ::VSLib.HUD.Countdown extends ::VSLib.HUD.Item
 		
 		//
 		// Build the return string
+		// \todo @TODO Use Utils.GetTimeTable() above and use format() to format the 0's below instead of doing it manually
 		//
 		local modtable = [{id = "{hrs}", val = bh }, { id = "{min}", val = bm }, { id = "{sec}", val = bs }];
 		foreach (row in modtable)
@@ -1238,15 +1239,15 @@ function VSLib::HUD::Remove(hudtype)
 function VSLib::HUD::Get(hudtype)
 {
 	if (hudtype in ::VSLib.HUD._hud.Fields)
-		if ("_vslib_item" in ::VSLib.HUD._hud.Fields.hudtype)
-			return ::VSLib.HUD._hud.Fields.hudtype._vslib_item;
+		if ("_vslib_item" in ::VSLib.HUD._hud.Fields[hudtype])
+			return ::VSLib.HUD._hud.Fields[hudtype]._vslib_item;
 	return null;
 }
 
 /**
  * Returns the HUD layout table
  */
-function VSLib::HUD::GetLayout(hudtype)
+function VSLib::HUD::GetLayout()
 {
 	return ::VSLib.HUD._hud.weakref();
 }

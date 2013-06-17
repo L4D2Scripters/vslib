@@ -675,12 +675,16 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
 }
 
 /**
- * Returns a pseudorandom number from 0 to requested number
+ * Returns a pseudorandom number from min to max
  */
-function VSLib::Utils::GetRandNumber( maxNum )
+function VSLib::Utils::GetRandNumber( min, max )
 {
-	return floor((rand().tofloat() / RAND_MAX) * maxNum.tofloat());
+	srand(Time());
+	return rand() % (max - min + 1) + min;
 }
+
+// Seed rand num generator
+srand( Time() );
 
 /**
  * Forces a panic event
@@ -693,6 +697,48 @@ function VSLib::Utils::ForcePanicEvent( )
 		local vsent = Entity(ent);
 		vsent.Input("ForcePanicEvent");
 	}
+}
+
+
+/**
+ * Returns a table with the hours, minutes, and seconds provided the total seconds (e.g. Time())
+ *
+ * Example:
+ *     local t = GetTimeTable ( Time() );
+ *     printf("Hours: %i, Minutes: %i, Seconds: %i", t.hours, t.minutes, t.seconds);
+ */
+function VSLib::Utils::GetTimeTable( time )
+{
+	// Constants
+	const SECONDS_IN_HOUR = 3600;
+	const SECONDS_IN_MINUTE = 60;
+	
+	// Modulated values
+	local bh = 0;
+	local bm = 0;
+	local bs = 0;
+	
+	// Determine the number of seconds left since the start time
+	if (time < 0) time = 0;
+
+	// Hours
+	if (time >= SECONDS_IN_HOUR)
+	{
+	   bh = ceil(time / SECONDS_IN_HOUR);
+	   time = time % SECONDS_IN_HOUR;
+	}
+	
+	// Minutes
+	if (time >= SECONDS_IN_MINUTE)
+	{
+	   bm = ceil(time / SECONDS_IN_MINUTE);
+	   time = time % SECONDS_IN_MINUTE;
+	}
+
+	// Seconds
+	bs = time;
+	
+	return { hours = bh.tointeger(), minutes = bm.tointeger(), seconds = bs.tointeger() };
 }
 
  
