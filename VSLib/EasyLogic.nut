@@ -1347,6 +1347,46 @@ function VSLib::EasyLogic::Players::AnySurvivor()
 }
 
 /**
+ * Returns one valid alive survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::AnyAliveSurvivor()
+{
+	local ent = null;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && libObj.IsAlive())
+				return libObj;
+		}
+	}
+	
+	return null;
+}
+
+/**
+ * Returns a table of all human players.
+ */
+function VSLib::EasyLogic::Players::Humans()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (!libObj.IsBot())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a table of all infected of a specific type.
  */
 function VSLib::EasyLogic::Players::OfType(playerType)
