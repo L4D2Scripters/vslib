@@ -741,7 +741,6 @@ function VSLib::Utils::GetTimeTable( time )
 	return { hours = bh.tointeger(), minutes = bm.tointeger(), seconds = bs.tointeger() };
 }
 
-
 /**
  * Precaches a model
  *
@@ -756,6 +755,66 @@ function VSLib::Utils::PrecacheModel( mdl )
 		PrecacheEntityFromTable( Model );
 		::EasyLogic.PrecachedModels[mdl] <- 1;
 	}
+}
+
+
+/**
+ * Kills the given entity
+ */
+function VSLib::Utils::RemoveEntity( ent )
+{
+	ent.Kill();
+}
+
+/**
+ * Creates a hint on the specified entity, optionally "parenting" the hint.
+ *
+ * \todo @TODO See why normal SetParent doesn't work, needed to "parent" manually
+ *
+ * @param entity The VSLib Entity or Player to set a hint to
+ * @param hinttext The hint to display
+ * @param icon The icon to show, see a list of icons here: https://developer.valvesoftware.com/wiki/Env_instructor_hint#Icons
+ * @param range The maximum range to display this icon. Enter 0 for infinite range
+ * @param parentEnt Set to true to make the hint "follow" the entity
+ * @param duration How long to show the hint. Enter 0 for infinite time.
+ */
+function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", range = 0, parentEnt = false, duration = 0.0 )
+{
+	local HintSpawnInfo =
+	{
+		hint_auto_start = "1"
+		hint_range = range.tostring()
+		hint_suppress_rest = "1"
+		hint_nooffscreen = "1"
+		hint_forcecaption = "1"
+		hint_icon_onscreen = icon
+	}
+	
+	local hintTargetName = "vslib_hint_" + UniqueString();
+	g_MapScript.CreateHintTarget( hintTargetName, entity.GetLocation(), null, g_MapScript.TrainingHintTargetCB );
+	g_MapScript.CreateHintOn( SessionState.TrainingHintTargetNextName, entity.GetLocation(), hinttext, HintSpawnInfo, g_MapScript.TrainingHintCB );
+	
+	local hintObject = Entity(SessionState.TrainingHintTargetNextName);
+	local baseEnt = hintObject.GetBaseEntity();
+	
+	if (parentEnt)
+	{
+		baseEnt.ValidateScriptScope();
+		local scrScope = baseEnt.GetScriptScope();
+		scrScope.hint <- baseEnt;
+		scrScope.prop <- entity.GetBaseEntity();
+		scrScope["ThinkTimer"] <- function()
+		{
+			this.hint.SetOrigin(this.prop.GetOrigin());
+		}
+		
+		AddThinkToEnt(baseEnt, "ThinkTimer");
+	}
+	
+	if (duration > 0.0)
+		Timers.AddTimer(duration, false, ::VSLib.Utils.RemoveEntity, hintObject);
+	
+	SessionState.rawdelete( "TrainingHintTargetNextName" );
 }
 
  

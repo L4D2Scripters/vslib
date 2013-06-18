@@ -208,34 +208,6 @@ function VSLib::Player::IsHangingFromLedge()
 }
 
 /**
- * Returns true if the entity is a bot.
- */
-function VSLib::Player::IsBot()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	return IsPlayerABot(_ent);
-}
-
-/**
- * Returns true if the entity is a real human (non-bot).
- */
-function VSLib::Player::IsHuman()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	return !IsBot();
-}
-
-/**
  * Returns true if the entity is in ghost mode (i.e. infected ghost).
  */
 function VSLib::Player::IsGhost()
@@ -247,6 +219,20 @@ function VSLib::Player::IsGhost()
 	}
 	
 	return _ent.IsGhost();
+}
+
+/**
+ * Returns the VSLib::Entity of the player's active weapon
+ */
+function VSLib::Player::GetActiveWeapon()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.GetActiveWeapon();
 }
 
 /**
@@ -504,101 +490,6 @@ function VSLib::Player::IsSurvivorTrapped()
 	return GetTeam() == SURVIVORS && GetCurrentAttacker() != null;
 }
 
-/**
- * Commands this player to move to a particular location (only applies to bots).
- */
-function VSLib::Player::BotMoveToLocation(newpos)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 1, pos = newpos, bot = _ent } );
-}
-
-/**
- * Commands this player to move to another entity's location (only applies to bots).
- */
-function VSLib::Player::BotMoveToOther(otherEntity)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 1, pos = otherEntity.GetLocation(), bot = _ent } );
-}
-
-/**
- * Commands the other bot entity to move to this entity's location (only applies to bots).
- */
-function VSLib::Player::BotMoveOtherToThis(otherEntity)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 1, pos = GetLocation(), bot = otherEntity.GetBaseEntity() } );
-}
-
-/**
- * Commands this player to attack a particular entity (only applies to bots).
- */
-function VSLib::Player::BotAttack(otherEntity)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 0, target = otherEntity.GetBaseEntity(), bot = _ent } );
-}
-
-/**
- * Commands this player to retreat from a particular entity (only applies to bots).
- */
-function VSLib::Player::BotRetreatFrom(otherEntity)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 2, target = otherEntity.GetBaseEntity(), bot = _ent } );
-}
-
-/**
- * Returns the bot to normal after it is commanded.
- */
-function VSLib::Player::BotReset()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Bot " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (!IsBot()) return;
-	
-	CommandABot( { cmd = 3, bot = _ent } );
-}
 
 /**
  * Returns the type of player. E.g. SPITTER, TANK, SURVIVOR, HUNTER, JOCKEY, SMOKER, BOOMER, CHARGER, COMMON, or UNKNOWN.
@@ -694,7 +585,7 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 		return false;
 	
 	// Next check to make sure it's not behind a wall or something
-	local m_trace = { start = GetEyePosition(), end = otherEntity.GetLocation(), ignore = _ent };
+	local m_trace = { start = GetEyePosition(), end = otherEntity.GetLocation(), ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)

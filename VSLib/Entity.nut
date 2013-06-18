@@ -46,7 +46,7 @@ class ::VSLib.Entity
 		}
 		else if ((typeof index) == "string" && index.find("!") != 0)
 		{
-			_ent = Entities.FindByTarget (null, index);
+			_ent = Entities.FindByName (null, index);
 			if (_ent == null)
 				throw "Invalid targetname (target not found)";
 			_idx = GetBaseIndex();
@@ -1727,7 +1727,7 @@ function VSLib::Entity::IsPressingWalk()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 18);
+	return _ent.GetButtonMask() & (1 << 17);
 }
 
 /**
@@ -1756,6 +1756,147 @@ function VSLib::Entity::GetOwnerEntity()
 	}
 	
 	return _ent.GetOwnerEntity();
+}
+
+
+/**
+ * Commands this Entity to move to a particular location (only applies to bots).
+ */
+function VSLib::Entity::BotMoveToLocation(newpos)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 1, pos = newpos, bot = _ent } );
+}
+
+/**
+ * Commands this Entity to move to another entity's location (only applies to bots).
+ */
+function VSLib::Entity::BotMoveToOther(otherEntity)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 1, pos = otherEntity.GetLocation(), bot = _ent } );
+}
+
+/**
+ * Commands the other bot entity to move to this entity's location (only applies to bots).
+ */
+function VSLib::Entity::BotMoveOtherToThis(otherEntity)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 1, pos = GetLocation(), bot = otherEntity.GetBaseEntity() } );
+}
+
+/**
+ * Commands this Entity to attack a particular entity (only applies to bots).
+ */
+function VSLib::Entity::BotAttack(otherEntity)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 0, target = otherEntity.GetBaseEntity(), bot = _ent } );
+}
+
+/**
+ * Commands this Entity to retreat from a particular entity (only applies to bots).
+ */
+function VSLib::Entity::BotRetreatFrom(otherEntity)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 2, target = otherEntity.GetBaseEntity(), bot = _ent } );
+}
+
+/**
+ * Returns the bot to normal after it is commanded.
+ */
+function VSLib::Entity::BotReset()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Bot " + _idx + " is invalid.");
+		return;
+	}
+	
+	CommandABot( { cmd = 3, bot = _ent } );
+}
+
+/**
+ * Returns true if the entity is a bot.
+ */
+function VSLib::Entity::IsBot()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return IsPlayerABot(_ent);
+}
+
+/**
+ * Returns true if the entity is a real human (non-bot).
+ */
+function VSLib::Entity::IsHuman()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return !IsBot();
+}
+
+/**
+ * Returns true if this entity can trace to another entity without hitting anything.
+ * I.e. if a line can be drawn from this entity to the other entity without any collision.
+ */
+function VSLib::Entity::CanTraceToOtherEntity(otherEntity)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	// add 5 to z-axis so it doesn't collide with level ground
+	local m_trace = { start = GetLocation() + Vector(0, 0, 5), end = otherEntity.GetLocation() + Vector(0, 0, 5), ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	TraceLine(m_trace);
+	
+	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)
+		return false;
+	
+	if (m_trace.enthit.GetClassname() == "worldspawn" || !m_trace.enthit.IsValid())
+		return false;
+	
+	if (m_trace.enthit == otherEntity.GetBaseEntity())
+		return true;
+	
+	return false;
 }
 
 

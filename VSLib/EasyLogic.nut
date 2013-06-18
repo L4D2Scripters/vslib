@@ -49,8 +49,9 @@
 	// User defined data storage
 	UserDefinedVars = {}
 	
-	// Player helpers
+	// Player/object helpers
 	Players = {}
+	Objects = {}
 	
 	// Round variables
 	RoundVars =
@@ -333,6 +334,8 @@ function OnGameEvent_map_transition (params)
 
 function OnGameEvent_mission_lost (params)
 {
+	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsDead)
 		func(params);
 }
@@ -1289,7 +1292,7 @@ function VSLib::EasyLogic::Players::All()
 }
 
 /**
- * Returns a table of all infected.
+ * Returns a table of all special infected.
  */
 function VSLib::EasyLogic::Players::Infected()
 {
@@ -1304,6 +1307,23 @@ function VSLib::EasyLogic::Players::Infected()
 			if (libObj.GetTeam() == INFECTED)
 				t[++i] <- libObj;
 		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a table of all common infected.
+ */
+function VSLib::EasyLogic::Players::CommonInfected()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "infected"))
+	{
+		if (ent.IsValid())
+			t[++i] <- ::VSLib.Player(ent);
 	}
 	
 	return t;
@@ -1411,6 +1431,33 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 	return t;
 }
 
+
+
+/**
+ * Returns all entities of a specific classname.
+ *
+ * E.g. foreach ( object in Objects.OfClassname("prop_physics") ) ...
+ */
+function VSLib::EasyLogic::Objects::OfClassname(classname)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, classname))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Update Hooks
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1435,6 +1482,7 @@ function Update()
 ::Notifications <- ::VSLib.EasyLogic.Notifications.weakref();
 ::ChatTriggers <- ::VSLib.EasyLogic.Triggers.weakref();
 ::Players <- ::VSLib.EasyLogic.Players.weakref();
+::Objects <- ::VSLib.EasyLogic.Objects.weakref();
 
 
 
