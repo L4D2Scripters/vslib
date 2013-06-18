@@ -66,6 +66,9 @@
 	
 	// Holds precached sounds
 	PrecachedSounds = {}
+	
+	// Holds precached models
+	PrecachedModels = {}
 }
 
 // Game event wrapper.

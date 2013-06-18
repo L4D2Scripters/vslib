@@ -741,6 +741,23 @@ function VSLib::Utils::GetTimeTable( time )
 	return { hours = bh.tointeger(), minutes = bm.tointeger(), seconds = bs.tointeger() };
 }
 
+
+/**
+ * Precaches a model
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::PrecacheModel( mdl )
+{
+	local Model = { classname = "prop_dynamic", model = mdl, angles = Vector(0,0,0), origin = Vector(0,0,0) }
+	if ( !(mdl in ::EasyLogic.PrecachedModels) )
+	{
+		printf("VSLib: Precaching: %s", mdl);
+		PrecacheEntityFromTable( Model );
+		::EasyLogic.PrecachedModels[mdl] <- 1;
+	}
+}
+
  
  
 

@@ -147,16 +147,18 @@ getconsttable()["INFECTED"] <- 3;
 
 
 // "Zombie" types, to be used with GetPlayerType()
+getconsttable()["WITCH_BRIDE"] <- 11;
+getconsttable()["MOB"] <- 10;
 getconsttable()["SURVIVOR"] <- 9;
 getconsttable()["TANK"] <- 8;
+getconsttable()["WITCH"] <- 7;
 getconsttable()["CHARGER"] <- 6;
 getconsttable()["JOCKEY"] <- 5;
 getconsttable()["SPITTER"] <- 4;
 getconsttable()["HUNTER"] <- 3;
 getconsttable()["BOOMER"] <- 2;
 getconsttable()["SMOKER"] <- 1;
-getconsttable()["COMMON"] <- 999;
-getconsttable()["WITCH"] <- 7;
+getconsttable()["COMMON"] <- 0;
 
 
 
