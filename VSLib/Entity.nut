@@ -130,6 +130,9 @@ class ::VSLib.Entity
 	_objValveHolding = {}
 	_objValveThrowPower = {}
 	_objValvePickupRange = {}
+	
+	_inv = {}
+	_invItems = {}
 }
 
 
@@ -159,6 +162,32 @@ getconsttable()["HUNTER"] <- 3;
 getconsttable()["BOOMER"] <- 2;
 getconsttable()["SMOKER"] <- 1;
 getconsttable()["COMMON"] <- 0;
+
+// More button values to be used with IsPressingButton()
+getconsttable()["BUTTON_ATTACK"] <- 1;
+getconsttable()["BUTTON_JUMP"] <- 2;
+getconsttable()["BUTTON_DUCK"] <- 4;
+getconsttable()["BUTTON_FORWARD"] <- 8;
+getconsttable()["BUTTON_BACK"] <- 16;
+getconsttable()["BUTTON_USE"] <- 32;
+getconsttable()["BUTTON_CANCEL"] <- 64;
+getconsttable()["BUTTON_LEFT"] <- 128;
+getconsttable()["BUTTON_RIGHT"] <- 256;
+getconsttable()["BUTTON_MOVELEFT"] <- 512; // move left key (e.g. A)
+getconsttable()["BUTTON_MOVERIGHT"] <- 1024; // move right key (e.g. D)
+getconsttable()["BUTTON_SHOVE"] <- 2048;
+getconsttable()["BUTTON_RUN"] <- 4096;
+getconsttable()["BUTTON_RELOAD"] <- 8192;
+getconsttable()["BUTTON_ALT1"] <- 16384;
+getconsttable()["BUTTON_ALT2"] <- 32768;
+getconsttable()["BUTTON_SCORE"] <- 65536;   // Used by client.dll for when scoreboard is held down
+getconsttable()["BUTTON_WALK"] <- 131072; // Player is holding the walk key
+getconsttable()["BUTTON_ZOOM"] <- 524288; // Zoom key
+getconsttable()["BUTTON_WEAPON1"] <- 1048576; // weapon defines these bits
+getconsttable()["BUTTON_WEAPON2"] <- 2097152; // weapon defines these bits
+getconsttable()["BUTTON_BULLRUSH"] <- 4194304;
+getconsttable()["BUTTON_GRENADE1"] <- 8388608; // grenade 1
+getconsttable()["BUTTON_GRENADE2"] <- 16777216; // grenade 2
 
 
 
@@ -1572,7 +1601,7 @@ function VSLib::Entity::IsPressingButton(btn)
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & btn;
+	return (_ent.GetButtonMask() & btn) > 0;
 }
 
 /**
@@ -1869,6 +1898,42 @@ function VSLib::Entity::IsHuman()
 	}
 	
 	return !IsBot();
+}
+
+/**
+ * Adds to the entity's THINK function. You can use "this.ent" when you need to use the VSLib::Entity.
+ * 
+ * @param func A function to add to the think timer.
+ */
+function VSLib::Entity::AddThinkFunction( func )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local funcName = "_thnk_" + UniqueString();
+	_ent.ValidateScriptScope();
+	local scrScope = _ent.GetScriptScope();
+	scrScope.ent <- this;
+	scrScope[funcName] <- func;
+	AddThinkToEnt(_ent, funcName);
+}
+
+/**
+ * Returns the entity's script scope.
+ */
+function VSLib::Entity::GetScriptScope( )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.ValidateScriptScope();
+	return _ent.GetScriptScope();
 }
 
 /**

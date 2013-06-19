@@ -1332,6 +1332,64 @@ function VSLib::Player::__CalcValvePickups( )
 }
 
 
+/**
+ * Returns the quantity of the requested inventory item.
+ * Inventory items can be spawned with Utils::SpawnInventoryItem().
+ */
+function VSLib::Player::GetInventory( itemName )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return 0;
+	}
+	
+	if (!(_idx in ::VSLib.EntData._inv))
+		return 0;
+	
+	if (!(itemName in ::VSLib.EntData._inv[_idx]))
+		return 0;
+	
+	return ::VSLib.EntData._inv[_idx][itemName];
+}
+
+/**
+ * Sets the quantity of the specified inventory item.
+ */
+function VSLib::Player::SetInventory( itemName, quantity )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (!(_idx in ::VSLib.EntData._inv))
+		::VSLib.EntData._inv[_idx] <- {};
+	
+	::VSLib.EntData._inv[_idx][itemName] <- quantity;
+}
+
+/**
+ * Returns the player's inventory table. You can use it like this:
+ * 
+ * 		local inv = player.GetInventoryTable();
+ * 		inv["itemName"] <- 25; // change quantity to 25
+ */
+function VSLib::Player::GetInventoryTable( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return 0;
+	}
+	
+	if (!(_idx in ::VSLib.EntData._inv))
+		::VSLib.EntData._inv[_idx] <- {};
+	
+	return ::VSLib.EntData._inv[_idx];
+}
+
 
 
 

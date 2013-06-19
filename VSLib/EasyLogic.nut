@@ -166,6 +166,7 @@
 	// Misc
 	OnDifficulty = {}
 	OnSurvivorsDead = {}
+	OnPickupInvItem = {}
 }
 
 // Create entity data cache system
@@ -1343,6 +1344,27 @@ function VSLib::EasyLogic::Players::Survivors()
 		{
 			local libObj = ::VSLib.Player(ent);
 			if (libObj.GetTeam() == SURVIVORS)
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a table of all alive survivors.
+ */
+function VSLib::EasyLogic::Players::AliveSurvivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && libObj.IsAlive())
 				t[++i] <- libObj;
 		}
 	}

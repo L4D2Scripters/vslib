@@ -1045,16 +1045,43 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 		
 		CloseMenu(); // close old menu and hide it
 		
+		_player = player;
+		
 		AttachTo(attachTo);
 		ChangeHUDNative(50, 40, 150, 300, 640, 480);
+		ResizeHeightByLines();
 		SetTextPosition(TextAlign.Left);
+		CenterVertical();
 		
-		_player = player;
-		_optimer = ::VSLib.Timers.AddTimer(0.2, 1, @(hudobj) hudobj.Tick(), this);
+		_selectBtn = BUTTON_ATTACK;
+		_switchBtn = BUTTON_SHOVE;
+		
 		_curSel++;
 		_autoDetach = autoDetach;
+		_optimer = ::VSLib.Timers.AddTimer(0.2, 1, @(hudobj) hudobj.Tick(), this);
 		
 		Show(); // show the menu
+	}
+	
+	/**
+	 * Resizes this HUD item's height depending on the line height.
+	 */
+	function ResizeHeightByLines()
+	{
+		local lines = split(GetString(), "\n").len() + 1;
+		local baseh = _vguiBaseRes.height.tofloat();
+		
+		SetHeight( ((22 * lines)/(480/baseh))/baseh );
+	}
+	
+	/**
+	 * Overrides the buttons used to detect HUD changes.
+	 * You can pass in BUTTON_ATTACK and BUTTON_SHOVE for example.
+	 */
+	function OverrideButtons(selectBtn, switchBtn)
+	{
+		_selectBtn = selectBtn;
+		_switchBtn = switchBtn;
 	}
 	
 	/**
@@ -1062,12 +1089,12 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	 */
 	function Tick()
 	{
-		if (_player.IsPressingShove())
+		if (_player.IsPressingButton(_switchBtn))
 		{
 			if ((++_curSel) > _numop)
 				_curSel = 1;
 		}
-		else if (_player.IsPressingAttack())
+		else if (_player.IsPressingButton(_selectBtn))
 		{
 			local t = { p = _player, idx = _curSel, val = _options[_curSel].text, callb = _options[_curSel].callback };
 			::VSLib.Timers.AddTimer(0.1, 0, @(tbl) tbl.callb(tbl.p, tbl.idx, tbl.val), t);
@@ -1093,6 +1120,8 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	_optimer = -1; // Timer responsible for updating player input
 	_title = null; // What to call the menu
 	_autoDetach = false; // Whether or not to auto-detach
+	_selectBtn = null;
+	_switchBtn = null;
 }
 
 

@@ -395,7 +395,7 @@ function VSLib::Utils::_sayfunc(args)
  * @param kvs Other keyvalues you may want it to have
  * @return A VSLib entity object
  */
-function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = Vector(0,0,0), kvs = {})
+function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = QAngle(0,0,0), kvs = {})
 {
 	kvs.classname <- _classname;
 	kvs.origin <- pos;
@@ -447,6 +447,9 @@ function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = 
  */
 function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0, minDist = 32.0 )
 {
+	if (!player)
+		return false;
+	
 	maxDist = maxDist.tofloat();
 	minDist = minDist.tofloat();
 	
@@ -679,7 +682,6 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
  */
 function VSLib::Utils::GetRandNumber( min, max )
 {
-	srand(Time());
 	return rand() % (max - min + 1) + min;
 }
 
@@ -757,13 +759,76 @@ function VSLib::Utils::PrecacheModel( mdl )
 	}
 }
 
-
 /**
- * Kills the given entity
+ * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
 {
 	ent.Kill();
+}
+
+/**
+ * Returns a Vector position that is between the min and max radius, or null if not found.
+ */
+function VSLib::Utils::GetNearbyLocationRadius( player, minDist, maxDist )
+{
+	if (!player)
+		return null;
+	
+	maxDist = maxDist.tofloat();
+	minDist = minDist.tofloat();
+	
+	if (maxDist < minDist)
+		maxDist = minDist;
+	
+	local playerPos = null;
+	if (player.IsDead())
+		playerPos = player.GetLastDeathLocation();
+	else
+		playerPos = player.GetLocation();
+	
+	for (local i = 0; i < 50; i++)
+	{
+		local _pos = player.GetNearbyLocation( maxDist );
+		local dist = ::VSLib.Utils.CalculateDistance(_pos, playerPos);
+		
+		if (dist > maxDist || dist < minDist)
+			continue;
+		
+		return _pos;
+	}
+}
+
+/**
+ * Spawns an inventory item that can be picked up by players. Returns the spawned item.
+ *
+ * @see Player::GetInventory()
+ */
+function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
+{
+	::VSLib.Utils.PrecacheModel(mdl);
+	local vsent = ::VSLib.Utils.CreateEntity("prop_dynamic_override", pos, QAngle(0,0,0), { model = mdl, StartDisabled = "false", Solid = "6", spawnflags = "8" });
+	vsent.Input("EnableCollision");
+	vsent.Input("TurnOn");
+	
+	local function CalcPlayerPos()
+	{
+		foreach (surv in Players.AliveSurvivors())
+			if (Utils.CalculateDistance(surv.GetLocation(), this.ent.GetLocation()) < 32.0)
+				if (surv.CanTraceToOtherEntity(this.ent))
+				{
+					foreach (func in ::VSLib.EasyLogic.Notifications.OnPickupInvItem)
+						func(surv, this.itemName, this.ent);
+					
+					surv.SetInventory( this.itemName, surv.GetInventory(this.itemName) + 1 );
+					this.ent.Kill();
+				}
+	}
+	
+	vsent.GetScriptScope()["itemName"] <- itemName;
+	vsent.AddThinkFunction(CalcPlayerPos);
+	
+	return vsent;
 }
 
 /**
@@ -777,6 +842,8 @@ function VSLib::Utils::RemoveEntity( ent )
  * @param range The maximum range to display this icon. Enter 0 for infinite range
  * @param parentEnt Set to true to make the hint "follow" the entity
  * @param duration How long to show the hint. Enter 0 for infinite time.
+ *
+ * @return The actual hint object's VSLib::Entity
  */
 function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", range = 0, parentEnt = false, duration = 0.0 )
 {
@@ -797,24 +864,31 @@ function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", rang
 	local hintObject = Entity(SessionState.TrainingHintTargetNextName);
 	local baseEnt = hintObject.GetBaseEntity();
 	
-	if (parentEnt)
+	if (baseEnt != null)
 	{
-		baseEnt.ValidateScriptScope();
-		local scrScope = baseEnt.GetScriptScope();
-		scrScope.hint <- baseEnt;
-		scrScope.prop <- entity.GetBaseEntity();
-		scrScope["ThinkTimer"] <- function()
+		if (parentEnt)
 		{
-			this.hint.SetOrigin(this.prop.GetOrigin());
+			baseEnt.ValidateScriptScope();
+			local scrScope = baseEnt.GetScriptScope();
+			scrScope.hint <- baseEnt;
+			scrScope.prop <- entity.GetBaseEntity();
+			scrScope["ThinkTimer"] <- function()
+			{
+				if (hint.IsValid() && prop.IsValid())
+					hint.SetOrigin(prop.GetOrigin());
+			}
+			
+			if (scrScope.prop != null)
+				AddThinkToEnt(baseEnt, "ThinkTimer");
 		}
 		
-		AddThinkToEnt(baseEnt, "ThinkTimer");
+		if (duration > 0.0)
+			Timers.AddTimer(duration, false, ::VSLib.Utils.RemoveEntity, hintObject);
 	}
 	
-	if (duration > 0.0)
-		Timers.AddTimer(duration, false, ::VSLib.Utils.RemoveEntity, hintObject);
-	
 	SessionState.rawdelete( "TrainingHintTargetNextName" );
+	
+	return hintObject;
 }
 
  
