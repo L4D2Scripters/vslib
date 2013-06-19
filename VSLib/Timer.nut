@@ -99,8 +99,11 @@ function VSLib::Timers::RemoveTimer(idx)
 			}
 			catch (id)
 			{
-				printf("VSLib Timer caught exception; closing timer; id: %s", id.tostring());
+				printf("VSLib Timer caught exception; closing timer. Error was: %s", id.tostring());
+				local deadFunc = timer._func;
+				local params = timer._params;
 				delete ::VSLib.Timers.TimersList[idx];
+				deadFunc(params); // this will most likely throw
 				continue;
 			}
 			

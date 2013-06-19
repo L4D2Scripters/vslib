@@ -280,6 +280,22 @@ function VSLib_ResetRoundVars()
 		::VSLib.EasyLogic.RoundVars[idx] = var;
 }
 
+function VSLib_RemoveDeadTimers()
+{
+	// Clear timer cache
+	if ("Timers" in VSLib)
+	{
+		if ("TimersList" in ::VSLib.Timers)
+		{
+			foreach (idx, timer in ::VSLib.Timers.TimersList)
+			{
+				if ( !(timer._flags & TIMER_FLAG_KEEPALIVE) )
+					delete ::VSLib.Timers.TimersList[idx];
+			}
+		}
+	}
+}
+
 function VSLib_ResetCache()
 {
 	// clear the cache
@@ -293,19 +309,6 @@ function VSLib_ResetCache()
 	for (local i = -1; i <= 64; i++)
 	{
 		::VSLib.EasyLogic.Cache[i]._isAlive <- true;
-	}
-	
-	// Clear timer cache
-	if ("Timers" in VSLib)
-	{
-		if ("TimersList" in ::VSLib.Timers)
-		{
-			foreach (idx, timer in ::VSLib.Timers.TimersList)
-			{
-				if ( !(timer._flags & TIMER_FLAG_KEEPALIVE) )
-					delete ::VSLib.Timers.TimersList[idx];
-			}
-		}
 	}
 }
 
@@ -347,6 +350,7 @@ function OnGameEvent_round_end(params)
 	
 	VSLib_ResetRoundVars();
 	VSLib_ResetCache();
+	VSLib_RemoveDeadTimers();
 	
 	local winner = ::VSLib.EasyLogic.GetEventInt(params, "winner"); // team or player
 	local reason = ::VSLib.EasyLogic.GetEventInt(params, "reason");

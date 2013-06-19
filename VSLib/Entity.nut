@@ -1940,7 +1940,7 @@ function VSLib::Entity::GetScriptScope( )
  * Returns true if this entity can trace to another entity without hitting anything.
  * I.e. if a line can be drawn from this entity to the other entity without any collision.
  */
-function VSLib::Entity::CanTraceToOtherEntity(otherEntity)
+function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 {
 	if (!IsEntityValid())
 	{
@@ -1948,8 +1948,11 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity)
 		return false;
 	}
 	
+	local begin = GetLocation() + Vector(0, 0, height);
+	local finish = otherEntity.GetLocation() + Vector(0, 0, height);
+	
 	// add 5 to z-axis so it doesn't collide with level ground
-	local m_trace = { start = GetLocation() + Vector(0, 0, 5), end = otherEntity.GetLocation() + Vector(0, 0, 5), ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	local m_trace = { start = begin, end = finish, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)
@@ -1958,7 +1961,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity)
 	if (m_trace.enthit.GetClassname() == "worldspawn" || !m_trace.enthit.IsValid())
 		return false;
 	
-	if (m_trace.enthit == otherEntity.GetBaseEntity())
+	if (m_trace.enthit == otherEntity.GetBaseEntity() || m_trace.pos == finish)
 		return true;
 	
 	return false;
