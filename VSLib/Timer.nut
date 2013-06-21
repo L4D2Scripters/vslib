@@ -33,17 +33,24 @@
 /*
  * Constants
  */
-getconsttable()["NO_TIMER_PARAMS"] <- null;
-const UPDATE_RATE = 0.1;
+
+// Passable constants
+getconsttable()["NO_TIMER_PARAMS"] <- null; /** No timer params */
+
+// Internal constants
+const UPDATE_RATE = 0.1; /** Fastest possible update rate */
 
 // Flags
-getconsttable()["TIMER_FLAG_KEEPALIVE"] <- (1 << 1);
+getconsttable()["TIMER_FLAG_KEEPALIVE"] <- (1 << 1); /** Keep timer alive even after RoundEnd is called */
+getconsttable()["TIMER_FLAG_COUNTDOWN"] <- (1 << 2); /** Fire the timer the specified number of times before the timer removes itself */
+getconsttable()["TIMER_FLAG_DURATION"] <- (1 << 3); /** Fire the timer each interval for the specified duration */
+getconsttable()["TIMER_FLAG_DURATION_VARIANT"] <- (1 << 4); /** Fire the timer each interval for the specified duration, regardless of internal function call time loss */
 
 
 /**
  * Calls a function and passes the specified table to the callback after the specified delay.
  */
-function VSLib::Timers::AddTimer(delay, repeat, func, paramTable = null, flags = 0)
+function VSLib::Timers::AddTimer(delay, repeat, func, paramTable = null, flags = 0, value = {})
 {
 	delay = delay.tofloat();
 	repeat = repeat.tointeger();
@@ -56,6 +63,34 @@ function VSLib::Timers::AddTimer(delay, repeat, func, paramTable = null, flags =
 		delay = UPDATE_RATE;
 	}
 	
+	if (paramTable == null)
+		paramTable = {};
+	
+	if (typeof value != "table")
+	{
+		printf("VSLib Timer Error: Illegal parameter: 'value' parameter needs to be a table.");
+		return -1;
+	}
+	else if (flags & TIMER_FLAG_COUNTDOWN && !("count" in value))
+	{
+		printf("VSLib Timer Error: Could not create the countdown timer because the 'count' field is missing from 'value'.");
+		return -1;
+	}
+	else if ((flags & TIMER_FLAG_DURATION || flags & TIMER_FLAG_DURATION_VARIANT) && !("duration" in value))
+	{
+		printf("VSLib Timer Error: Could not create the duration timer because the 'duration' field is missing from 'value'.");
+		return -1;
+	}
+	
+	// Convert the flag into countdown
+	if (flags & TIMER_FLAG_DURATION)
+	{
+		flags = flags & ~TIMER_FLAG_DURATION;
+		flags = flags | TIMER_FLAG_COUNTDOWN;
+		
+		value["count"] <- floor(value["duration"].tofloat() / delay);
+	}
+	
 	++count;
 	TimersList[count] <-
 	{
@@ -63,8 +98,10 @@ function VSLib::Timers::AddTimer(delay, repeat, func, paramTable = null, flags =
 		_func = func
 		_params = paramTable
 		_startTime = Time()
+		_baseTime = Time()
 		_repeat = rep
 		_flags = flags
+		_opval = value
 	}
 	
 	return count;
@@ -92,6 +129,20 @@ function VSLib::Timers::RemoveTimer(idx)
 	{
 		if ((curtime - timer._startTime) >= timer._delay)
 		{
+			if (timer._flags & TIMER_FLAG_COUNTDOWN)
+			{
+				timer._params["TimerCount"] <- timer._opval["count"];
+				
+				if ((--timer._opval["count"]) <= 0)
+					timer._repeat = false;
+			}
+			
+			if (timer._flags & TIMER_FLAG_DURATION_VARIANT && (curtime - timer._baseTime) > timer._opval["duration"])
+			{
+				delete ::VSLib.Timers.TimersList[idx];
+				continue;
+			}
+			
 			try
 			{
 				if (timer._func(timer._params) == false)
@@ -99,7 +150,7 @@ function VSLib::Timers::RemoveTimer(idx)
 			}
 			catch (id)
 			{
-				printf("VSLib Timer caught exception; closing timer. Error was: %s", id.tostring());
+				printf("VSLib Timer caught exception; closing timer %d. Error was: %s", idx, id.tostring());
 				local deadFunc = timer._func;
 				local params = timer._params;
 				delete ::VSLib.Timers.TimersList[idx];

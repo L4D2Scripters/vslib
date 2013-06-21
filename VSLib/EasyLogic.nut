@@ -1481,6 +1481,70 @@ function VSLib::EasyLogic::Objects::OfClassname(classname)
 	return t;
 }
 
+/**
+ * Returns all entities around a radius.
+ *
+ * E.g. foreach ( object in Objects.AroundRadius(pos, radius) ) ...
+ */
+function VSLib::EasyLogic::Objects::AroundRadius(pos, radius)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindInSphere(ent, pos, radius))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns all infected/survivors (including commons) around specified position and radius.
+ * If you need to find infected/survivors around a PLAYER instead, just pass in the player's
+ * position with player.GetLocation()
+ */
+function VSLib::EasyLogic::Objects::AliveAroundRadius(pos, radius)
+{
+	local t = AroundRadius(pos, radius);
+	
+	foreach (idx, ent in t)
+		if (ent.GetClassname() != "player" && ent.GetClassname() != "infected")
+			delete t[idx];
+		else if (::VSLib.Player(ent).IsDead()) // tag on a branched if statement
+			delete t[idx];
+	
+	return t;
+}
+
+/**
+ * Returns all entities of a particular model.
+ */
+function VSLib::EasyLogic::Objects::OfModel(model)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByModel(ent, model))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+
+
+
+
 
 
 

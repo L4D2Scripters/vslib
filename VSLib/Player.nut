@@ -1208,9 +1208,9 @@ function VSLib::Player::NativePickupObject( otherEnt )
 
 /**
  * Enables Valve-style object pickups
- * @authors Rectus
+ * @authors Neil, Rectus
  */
-function VSLib::Player::BeginValvePickupObjects( )
+function VSLib::Player::BeginValvePickupObjects( pickupSound = "Defibrillator.Use", throwSound = "Adrenaline.NeedleOpen" )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1223,7 +1223,7 @@ function VSLib::Player::BeginValvePickupObjects( )
 	::VSLib.EntData._objValveThrowPower[_idx] <- 100;
 	::VSLib.EntData._objValvePickupRange[_idx] <- 64;
 	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
-	::VSLib.EntData._objValveTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, true, @(pEnt) pEnt.__CalcValvePickups(), this);
+	::VSLib.EntData._objValveTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, true, @(p) p.ent.__CalcValvePickups(p.ps, p.ts), {ent = this, ps = pickupSound, ts = throwSound});
 }
 
 /**
@@ -1278,9 +1278,9 @@ function VSLib::Player::ValvePickupPickupRange( range )
 
 /**
  * Instead of using this directly, @see BeginValvePickupObjects
- * @authors Rectus
+ * @authors Neil, Rectus
  */
-function VSLib::Player::__CalcValvePickups( )
+function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1308,19 +1308,28 @@ function VSLib::Player::__CalcValvePickups( )
 	
 	local oldbuttons = ::VSLib.EntData._objOldBtnMask[_idx];
 	
-	if( IsPressingUse() && !(oldbuttons & (1 << 5)) )
+	if (IsPressingUse() && !(oldbuttons & (1 << 5)))
 	{
 		::VSLib.EntData._objValveHolding[_idx] <- traceTable.enthit;
 		PickupObject(_ent, traceTable.enthit);
-		PlaySound("Defibrillator.Use");
+		PlaySound(pickupSound);
 	}
-	else if( IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
+	else if (IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
 	{
 		try
 		{
 			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
+			
+			local function _calcThrowDmg(params)
+			{
+				foreach (obj in Objects.AliveAroundRadius(params.ent.GetLocation(), 128))
+					if (obj.GetIndex() != params.ignore.GetIndex())
+						obj.Hurt(30, 1);
+			}
+			
+			Timers.AddTimer( 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this }, TIMER_FLAG_COUNTDOWN, { count = 15 } );
 			delete ::VSLib.EntData._objValveHolding[_idx];
-			PlaySound("Adrenaline.NeedleOpen");
+			PlaySound(throwSound);
 		}
 		catch(id)
 		{

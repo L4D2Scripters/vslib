@@ -112,13 +112,7 @@ class ::VSLib.Entity
 	_lastHurt = -1
 	_hurtIntent = -1
 	_hurtDmg = 0
-	_forcedHurt = false
-	
-	// repeating point_hurt data
-	_continuousHurt = {}
-	_continuousHurtIntent = {}
-	_continuousHurtDmg = {}
-	_continuousHurtCount = -1
+	_isHurtActive = false
 	
 	_objPickupTimer = {}
 	_objBtnPickup = {}
@@ -189,6 +183,39 @@ getconsttable()["BUTTON_BULLRUSH"] <- 4194304;
 getconsttable()["BUTTON_GRENADE1"] <- 8388608; // grenade 1
 getconsttable()["BUTTON_GRENADE2"] <- 16777216; // grenade 2
 
+// Damage types that can be used with Hurt(), ForceHurt(), etc
+getconsttable()["DMG_GENERIC"] <- 0;
+getconsttable()["DMG_CRUSH"] <- (1 << 0);
+getconsttable()["DMG_BULLET"] <- (1 << 1);
+getconsttable()["DMG_SLASH"] <- (1 << 2);
+getconsttable()["DMG_BURN"] <- (1 << 3);
+getconsttable()["DMG_VEHICLE"] <- (1 << 4);
+getconsttable()["DMG_FALL"] <- (1 << 5);
+getconsttable()["DMG_BLAST"] <- (1 << 6);
+getconsttable()["DMG_CLUB"] <- (1 << 7);
+getconsttable()["DMG_SHOCK"] <- (1 << 8);
+getconsttable()["DMG_SONIC"] <- (1 << 9);
+getconsttable()["DMG_ENERGYBEAM"] <- (1 << 10);
+getconsttable()["DMG_PREVENT_PHYSICS_FORCE"] <- (1 << 11);
+getconsttable()["DMG_NEVERGIB"] <- (1 << 12);
+getconsttable()["DMG_ALWAYSGIB"] <- (1 << 13);
+getconsttable()["DMG_DROWN"] <- (1 << 14);
+getconsttable()["DMG_PARALYZE"] <- (1 << 15);
+getconsttable()["DMG_NERVEGAS"] <- (1 << 16);
+getconsttable()["DMG_POISON"] <- (1 << 17);
+getconsttable()["DMG_RADIATION"] <- (1 << 18);
+getconsttable()["DMG_DROWNRECOVER"] <- (1 << 19);
+getconsttable()["DMG_ACID"] <- (1 << 20);
+getconsttable()["DMG_SLOWBURN"] <- (1 << 21);
+getconsttable()["DMG_REMOVENORAGDOLL"] <- (1 << 22);
+getconsttable()["DMG_PHYSGUN"] <- (1 << 23);
+getconsttable()["DMG_PLASMA"] <- (1 << 24);
+getconsttable()["DMG_AIRBOAT"] <- (1 << 25);
+getconsttable()["DMG_DISSOLVE"] <- (1 << 26);
+getconsttable()["DMG_BLAST_SURFACE"] <- (1 << 27);
+getconsttable()["DMG_DIRECT"] <- (1 << 28);
+getconsttable()["DMG_BUCKSHOT"] <- (1 << 29);
+
 
 
 /**
@@ -245,11 +272,14 @@ function VSLib::Entity::GetRawHealth()
 }
 
 /**
- * Hurts the entity by the specified damage.
- * If the entity is valid, the entity will be hurt with the specified damage type.
- * If you aren't sure what damage type you want to use, enter 0.
+ * Hurts the entity.
+ *
+ * @param value Amount of damage to inflict.
+ * @param dmgtype The type of damage to inflict (e.g. DMG_GENERIC)
+ * @param weapon The classname of the weapon (if set, the point hurt will "pretend" to be the weapon)
+ * @param attacker If set, the damage will be done by the specified VSLib::Entity or VSLib::Player
  */
-function VSLib::Entity::Hurt(value, dmgtype = 0)
+function VSLib::Entity::Hurt(value, dmgtype = 0, weapon = "", attacker = null, radius = 64.0)
 {
 	if (!IsEntityValid())
 	{
@@ -260,7 +290,9 @@ function VSLib::Entity::Hurt(value, dmgtype = 0)
 	value = value.tointeger();
 	dmgtype = dmgtype.tointeger();
 	
-	local point_hurt = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_hurt", targetname = "vslib_tmp_" + UniqueString(), origin = GetLocation(), angles = QAngle(0,0,0), Damage = value, DamageType = dmgtype });
+	local spawn = { classname = "point_hurt", targetname = "vslib_tmp_" + UniqueString(), origin = GetLocation(), angles = QAngle(0,0,0), Damage = value, DamageType = dmgtype, DamageRadius = radius.tostring() };
+	
+	local point_hurt = g_ModeScript.CreateSingleSimpleEntityFromTable(spawn);
 	
 	// if the entity is not valid (e.g. entdata has reached the max), then try something else.
 	if (!point_hurt)
@@ -270,15 +302,23 @@ function VSLib::Entity::Hurt(value, dmgtype = 0)
 		return;
 	}
 	
-	point_hurt.__KeyValueFromString("DamageTarget", _ent.GetName());
+	local vsHurt = Entity(point_hurt);
 	
-	::VSLib.EntData._lastHurt = point_hurt;
+	if(weapon != "")
+		vsHurt.SetKeyValue("classname", weapon);
+	
+	if (!attacker)
+		attacker = vsHurt;
+	
+	::VSLib.EntData._lastHurt = attacker.GetBaseEntity();
 	::VSLib.EntData._hurtIntent = _ent;
 	::VSLib.EntData._hurtDmg = value;
-	::VSLib.EntData._forcedHurt = false;
+	::VSLib.EntData._isHurtActive = true;
 	
-	DoEntFire("!self", "Hurt", "", 0, point_hurt, point_hurt);
-	DoEntFire("!self", "Kill", "", 0, null, point_hurt);
+	vsHurt.Input("Hurt", "", 0, attacker);
+	vsHurt.SetKeyValue("classname", "point_hurt");
+	
+	vsHurt.Kill();
 }
 
 /**
@@ -330,45 +370,10 @@ function VSLib::Entity::SetKeyValue(key, value)
 }
 
 /**
- * Hurts the entity by the specified damage but overrides any user damage modifiers.
- */
-function VSLib::Entity::ForcedHurt(value, dmgtype = 0)
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	value = value.tointeger();
-	dmgtype = dmgtype.tointeger();
-	
-	local point_hurt = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_hurt", targetname = "vslib_tmp_" + UniqueString(), origin = GetLocation(), angles = QAngle(0,0,0), Damage = value, DamageType = dmgtype });
-	
-	// if the entity is not valid (e.g. entdata has reached the max), then try something else.
-	if (!point_hurt)
-	{
-		Msg("Warning: Could not create point_hurt entity.");
-		SetRawHealth(GetHealth() - value);
-		return;
-	}
-	
-	point_hurt.__KeyValueFromString("DamageTarget", _ent.GetName());
-	
-	::VSLib.EntData._lastHurt = point_hurt;
-	::VSLib.EntData._hurtIntent = _ent;
-	::VSLib.EntData._hurtDmg = value;
-	::VSLib.EntData._forcedHurt = true;
-	
-	DoEntFire("!self", "Hurt", "", 0, point_hurt, point_hurt);
-	DoEntFire("!self", "Kill", "", 0, null, point_hurt);
-}
-
-/**
  * Same as Hurt(), except it keeps hurting for the specified time.
- * It hurts at the specified interval.
+ * It hurts at the specified interval for the specified time.
  */
-function VSLib::Entity::HurtTime(value, dmgtype, interval, time)
+function VSLib::Entity::HurtTime(value, dmgtype, interval, time, weapon = "", attacker = null, radius = 64.0)
 {
 	if (!IsEntityValid())
 	{
@@ -376,66 +381,12 @@ function VSLib::Entity::HurtTime(value, dmgtype, interval, time)
 		return;
 	}
 	
-	//
-	// Create the point hurt
-	//
 	value = value.tointeger();
 	dmgtype = dmgtype.tointeger();
 	time = time.tofloat();
 	interval = interval.tofloat();
 	
-	local id = "vslib_tmp_" + UniqueString() + "a";
-	
-	local point_hurt = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_hurt", targetname = id, origin = GetLocation(), angles = QAngle(0,0,0), Damage = value, DamageType = dmgtype, DamageDelay = interval });
-	
-	// if the entity is not valid (e.g. entdata has reached the max), then try something else.
-	if (!point_hurt)
-	{
-		Msg("Warning: Could not create point_hurt entity.");
-		return;
-	}
-	
-	point_hurt.__KeyValueFromString("DamageTarget", _ent.GetName());
-	
-	//
-	// Set up VSLib to use the data
-	//
-	::VSLib.EntData._continuousHurtCount++;
-	::VSLib.EntData._continuousHurt[::VSLib.EntData._continuousHurtCount] <- point_hurt;
-	::VSLib.EntData._continuousHurtIntent[::VSLib.EntData._continuousHurtCount] <- _ent;
-	::VSLib.EntData._continuousHurtDmg[::VSLib.EntData._continuousHurtCount] <- value;
-	
-	//
-	// Connect outputs to VSLib
-	//
-	point_hurt.ConnectOutput("OnKilled", "Killed");
-	point_hurt.ValidateScriptScope();
-	local scr = point_hurt.GetScriptScope();
-	scr.ent <- point_hurt;
-	scr.target <- ::VSLib.Entity(_ent);
-	scr.Killed <- function()
-	{
-		foreach (idx, val in ::VSLib.EntData._continuousHurt)
-		{
-			if (val == this.ent)
-			{
-				delete ::VSLib.EntData._continuousHurt[idx];
-				delete ::VSLib.EntData._continuousHurtIntent[idx];
-				delete ::VSLib.EntData._continuousHurtDmg[idx];
-			}
-		}
-	}
-	
-	scr[id] <- function()
-	{
-		if (this.target.IsEntityValid())
-			this.ent.SetOrigin(this.target.GetLocation());
-	}
-	
-	AddThinkToEnt(point_hurt, id);
-	
-	DoEntFire("!self", "TurnOn", "", 0, point_hurt, point_hurt);
-	DoEntFire("!self", "Kill", "", time, null, point_hurt);
+	Timers.AddTimer( interval, true, @(params) params.player.Hurt(params.val, params.dmgt, params.wep, params.activator, params.rad), { player = this, val = value, dmgt = dmgtype, wep = weapon, activator = attacker, rad = radius }, TIMER_FLAG_DURATION, { duration = time } );
 }
 
 /**
@@ -1132,7 +1083,7 @@ function VSLib::Entity::Kill()
 		return;
 	}
 	
-	_ent.Kill();
+	Input("Kill");
 }
 
 /**
@@ -1937,6 +1888,25 @@ function VSLib::Entity::GetScriptScope( )
 }
 
 /**
+ * Connects an output to a function
+ *
+ * @param output The output name (string)
+ * @param func Function to fire (pass in a function, not a string name)
+ */
+function VSLib::Entity::ConnectOutput( output, func )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local oname = "_vslib_out" + UniqueString();
+	GetScriptScope()[oname] <- func;
+	_ent.ConnectOutput( output, oname );
+}
+
+/**
  * Returns true if this entity can trace to another entity without hitting anything.
  * I.e. if a line can be drawn from this entity to the other entity without any collision.
  */
@@ -1982,6 +1952,7 @@ function AllowTakeDamage(damageTable)
 	{
 		if (damageTable.Victim == ::VSLib.EntData._hurtIntent)
 		{
+			::VSLib.EntData._isHurtActive <- false;
 			damageTable.DamageDone = ::VSLib.EntData._hurtDmg;
 			return true;
 		}
@@ -1989,58 +1960,35 @@ function AllowTakeDamage(damageTable)
 		return false;
 	}
 	
-	// Process continuous hurts
-	foreach (idx, point_hurt in ::VSLib.EntData._continuousHurt)
+	// Process hooks
+	if ("EasyLogic" in VSLib)
 	{
-		if (damageTable.Attacker == point_hurt)
+		if (damageTable.Victim != null)
 		{
-			if (damageTable.Victim == ::VSLib.EntData._continuousHurtIntent[idx])
+			local name = damageTable.Victim.GetClassname();
+			if (name in ::VSLib.EasyLogic.OnDamage)
 			{
-				damageTable.DamageDone = ::VSLib.EntData._continuousHurtDmg[idx];
+				local victim = ::VSLib.Player(damageTable.Victim);
+				local attacker = ::VSLib.Player(damageTable.Attacker);
+			
+				local damagesave = damageTable.DamageDone;
+				damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
+				
+				if (damageTable.DamageDone == null)
+					damageTable.DamageDone = damagesave;
+				else if (damageTable.DamageDone <= 0)
+					return false;
+				
 				return true;
 			}
-			
-			return false;
 		}
-	}
-	
-	if (!::VSLib.EntData._forcedHurt)
-	{
-		// Process hooks
-		if ("EasyLogic" in VSLib)
+		
+		foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
 		{
-			if (damageTable.Victim != null)
-			{
-				local name = damageTable.Victim.GetClassname();
-				if (name in ::VSLib.EasyLogic.OnDamage)
-				{
-					::VSLib.EntData._forcedHurt = false;
-					
-					local victim = ::VSLib.Player(damageTable.Victim);
-					local attacker = ::VSLib.Player(damageTable.Attacker);
-				
-					local damagesave = damageTable.DamageDone;
-					damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
-					
-					if (damageTable.DamageDone == null)
-						damageTable.DamageDone = damagesave;
-					else if (damageTable.DamageDone <= 0)
-						return false;
-					
-					return true;
-				}
-			}
-			
-			foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
-			{
-				if (func(damageTable) == false)
-					return false;
-			}
+			if (func(damageTable) == false)
+				return false;
 		}
 	}
-	
-	// Reset force for next cycle
-	::VSLib.EntData._forcedHurt = false;
 	
 	return true;
 }
