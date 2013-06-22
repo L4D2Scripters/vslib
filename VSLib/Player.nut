@@ -601,6 +601,30 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 }
 
 /**
+ * Returns true if this player can trace a line from the eyes to the specified location.
+ * \todo @TODO Fix this, doesn't work right yet
+ */
+function VSLib::Player::CanTraceToLocation(finishPos)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local begin = GetEyePosition();
+	local finish = finishPos;
+	
+	local m_trace = { start = begin, end = finish, ignore = _ent, mask = MASK_NPCWORLDSTATIC };
+	TraceLine(m_trace);
+	
+	if (Utils.AreVectorsEqual(m_trace.pos, finish))
+		return true;
+	
+	return false;
+}
+
+/**
  * Sends a client command to the player entity.
  * \todo @TODO Doesn't work, need to fix.
  */
@@ -1327,7 +1351,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 						obj.Hurt(30, 1);
 			}
 			
-			Timers.AddTimer( 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this }, TIMER_FLAG_COUNTDOWN, { count = 15 } );
+			Timers.AddTimer( 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
 			delete ::VSLib.EntData._objValveHolding[_idx];
 			PlaySound(throwSound);
 		}

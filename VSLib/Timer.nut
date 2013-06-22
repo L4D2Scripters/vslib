@@ -27,6 +27,7 @@
 ::VSLib.Timers <-
 {
 	TimersList = {}
+	TimersID = {}
 	count = 0
 }
 
@@ -46,6 +47,31 @@ getconsttable()["TIMER_FLAG_COUNTDOWN"] <- (1 << 2); /** Fire the timer the spec
 getconsttable()["TIMER_FLAG_DURATION"] <- (1 << 3); /** Fire the timer each interval for the specified duration */
 getconsttable()["TIMER_FLAG_DURATION_VARIANT"] <- (1 << 4); /** Fire the timer each interval for the specified duration, regardless of internal function call time loss */
 
+
+/**
+ * Creates a named timer that will be added to the timers list. If a named timer already exists,
+ * it will be replaced.
+ *
+ * @return Name of the created timer
+ */
+function VSLib::Timers::AddTimerByName(strName, delay, repeat, func, paramTable = null, flags = 0, value = {})
+{
+	::VSLib.Timers.RemoveTimerByName(strName);
+	::VSLib.Timers.TimersID[strName] <- ::VSLib.Timers.AddTimer(delay, repeat, func, paramTable, flags, value);
+	return strName;
+}
+
+/**
+ * Deletes a named timer.
+ */
+function VSLib::Timers::RemoveTimerByName(strName)
+{
+	if (strName in ::VSLib.Timers.TimersID)
+	{
+		::VSLib.Timers.RemoveTimer(::VSLib.Timers.TimersID[strName]);
+		delete ::VSLib.Timers.TimersID[strName];
+	}
+}
 
 /**
  * Calls a function and passes the specified table to the callback after the specified delay.

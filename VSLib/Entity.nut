@@ -217,6 +217,53 @@ getconsttable()["DMG_DIRECT"] <- (1 << 28);
 getconsttable()["DMG_BUCKSHOT"] <- (1 << 29);
 
 
+// Content flags
+getconsttable()["CONTENTS_EMPTY"] <-			0;		/**< No contents. */
+getconsttable()["CONTENTS_SOLID"] <-			0x1;		/**< an eye is never valid in a solid . */
+getconsttable()["CONTENTS_WINDOW"] <-			0x2;		/**< translucent, but not watery (glass). */
+getconsttable()["CONTENTS_AUX"] <-			0x4;
+getconsttable()["CONTENTS_GRATE"] <-			0x8;		/**< alpha-tested "grate" textures.  Bullets/sight pass through, but solids don't. */
+getconsttable()["CONTENTS_SLIME"] <-			0x10;
+getconsttable()["CONTENTS_WATER"] <-			0x20;
+getconsttable()["CONTENTS_MIST"] <-			0x40;
+getconsttable()["CONTENTS_OPAQUE"] <-			0x80;		/**< things that cannot be seen through (may be non-solid though). */
+getconsttable()["LAST_VISIBLE_CONTENTS"] <-	0x80;
+getconsttable()["ALL_VISIBLE_CONTENTS"] <- 	(getconsttable()["LAST_VISIBLE_CONTENTS"] | (getconsttable()["LAST_VISIBLE_CONTENTS"]-1))
+getconsttable()["CONTENTS_TESTFOGVOLUME"] <-	0x100;
+getconsttable()["CONTENTS_UNUSED5"] <-		0x200;
+getconsttable()["CONTENTS_UNUSED6"] <-		0x4000;
+getconsttable()["CONTENTS_TEAM1"] <-			0x800;		/**< per team contents used to differentiate collisions. */
+getconsttable()["CONTENTS_TEAM2"] <-			0x1000;		/**< between players and objects on different teams. */
+getconsttable()["CONTENTS_IGNORE_NODRAW_OPAQUE"] <-	0x2000;		/**< ignore CONTENTS_OPAQUE on surfaces that have SURF_NODRAW. */
+getconsttable()["CONTENTS_MOVEABLE"] <-		0x4000;		/**< hits entities which are MOVETYPE_PUSH (doors, plats, etc) */
+getconsttable()["CONTENTS_AREAPORTAL"] <-		0x8000;		/**< remaining contents are non-visible, and don't eat brushes. */
+getconsttable()["CONTENTS_PLAYERCLIP"] <-		0x10000;
+getconsttable()["CONTENTS_MONSTERCLIP"] <-	0x20000;
+getconsttable()["CONTENTS_ORIGIN"] <-			0x1000000;	/**< removed before bsping an entity. */
+getconsttable()["CONTENTS_MONSTER"] <-		0x2000000;	/**< should never be on a brush, only in game. */
+getconsttable()["CONTENTS_DEBRIS"] <-			0x4000000;
+getconsttable()["CONTENTS_DETAIL"] <-			0x8000000;	/**< brushes to be added after vis leafs. */
+getconsttable()["CONTENTS_TRANSLUCENT"] <-	0x10000000;	/**< auto set if any surface has trans. */
+getconsttable()["CONTENTS_LADDER"] <-			0x20000000;
+getconsttable()["CONTENTS_HITBOX"] <-			0x40000000;	/**< use accurate hitboxes on trace. */
+
+
+// Many more masks
+getconsttable()["MASK_WATER"] <-(getconsttable()["CONTENTS_WATER"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_SLIME"]) /**< water physics in these contents */
+getconsttable()["MASK_OPAQUE"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_OPAQUE"]) /**< everything that blocks line of sight for AI, lighting, etc */
+getconsttable()["MASK_OPAQUE_AND_NPCS"] <-(getconsttable()["MASK_OPAQUE"]|getconsttable()["CONTENTS_MONSTER"])/**< everything that blocks line of sight for AI, lighting, etc, but with monsters added. */
+getconsttable()["MASK_VISIBLE"] <-(getconsttable()["MASK_OPAQUE"]|getconsttable()["CONTENTS_IGNORE_NODRAW_OPAQUE"]) /**< everything that blocks line of sight for players */
+getconsttable()["MASK_VISIBLE_AND_NPCS"] <-(getconsttable()["MASK_OPAQUE_AND_NPCS"]|getconsttable()["CONTENTS_IGNORE_NODRAW_OPAQUE"]) /**< everything that blocks line of sight for players, but with monsters added. */
+getconsttable()["MASK_SHOT_HULL"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_MONSTER"]|getconsttable()["CONTENTS_WINDOW"]|getconsttable()["CONTENTS_DEBRIS"]|getconsttable()["CONTENTS_GRATE"]) /**< non-raycasted weapons see this as solid (includes grates) */
+getconsttable()["MASK_SHOT_PORTAL"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_WINDOW"]) /**< hits solids (not grates) and passes through everything else */
+getconsttable()["MASK_SOLID_BRUSHONLY"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_WINDOW"]|getconsttable()["CONTENTS_GRATE"]) /**< everything normally solid, except monsters (world+brush only) */
+getconsttable()["MASK_PLAYERSOLID_BRUSHONLY"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_WINDOW"]|getconsttable()["CONTENTS_PLAYERCLIP"]|getconsttable()["CONTENTS_GRATE"]) /**< everything normally solid for player movement, except monsters (world+brush only) */
+getconsttable()["MASK_NPCSOLID_BRUSHONLY"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_MOVEABLE"]|getconsttable()["CONTENTS_WINDOW"]|getconsttable()["CONTENTS_MONSTERCLIP"]|getconsttable()["CONTENTS_GRATE"]) /**< everything normally solid for npc movement, except monsters (world+brush only) */
+getconsttable()["MASK_NPCWORLDSTATIC"] <-(getconsttable()["CONTENTS_SOLID"]|getconsttable()["CONTENTS_WINDOW"]|getconsttable()["CONTENTS_MONSTERCLIP"]|getconsttable()["CONTENTS_GRATE"]) /**< just the world, used for route rebuilding */
+getconsttable()["MASK_SPLITAREAPORTAL"] <-(getconsttable()["CONTENTS_WATER"]|getconsttable()["CONTENTS_SLIME"]) /**< These are things that can split areaportals */
+
+
+
 
 /**
  * Returns true if the entity is valid or false otherwise.
@@ -1931,7 +1978,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 	if (m_trace.enthit.GetClassname() == "worldspawn" || !m_trace.enthit.IsValid())
 		return false;
 	
-	if (m_trace.enthit == otherEntity.GetBaseEntity() || m_trace.pos == finish)
+	if (m_trace.enthit == otherEntity.GetBaseEntity() || Utils.AreVectorsEqual(m_trace.pos, finish))
 		return true;
 	
 	return false;

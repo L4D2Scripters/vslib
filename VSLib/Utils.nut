@@ -845,14 +845,14 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
  *
  * @return The actual hint object's VSLib::Entity
  */
-function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", range = 0, parentEnt = false, duration = 0.0 )
+function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", range = 0, parentEnt = false, duration = 0.0, noOffScreen = 1 )
 {
 	local HintSpawnInfo =
 	{
 		hint_auto_start = "1"
 		hint_range = range.tostring()
 		hint_suppress_rest = "1"
-		hint_nooffscreen = "1"
+		hint_nooffscreen = noOffScreen.tostring()
 		hint_forcecaption = "1"
 		hint_icon_onscreen = icon
 	}
@@ -889,6 +889,15 @@ function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", rang
 	SessionState.rawdelete( "TrainingHintTargetNextName" );
 	
 	return hintObject;
+}
+
+/**
+ * Manually compares two vectors and returns true if they are equal.
+ * Fix for vector instance overloaded == not firing properly
+ */
+function VSLib::Utils::AreVectorsEqual(vec1, vec2)
+{
+	return vec1.x == vec2.x && vec1.y == vec2.y && vec1.z == vec2.z;
 }
 
  
