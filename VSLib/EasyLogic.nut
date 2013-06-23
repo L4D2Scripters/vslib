@@ -127,6 +127,7 @@
 	OnWeaponGiven = {}
 	OnWeaponReload = {}
 	OnWeaponZoom = {}
+	OnItemPickup = {}
 	
 	// Charger events
 	OnChargerCharged = {}
@@ -424,6 +425,14 @@ function OnGameEvent_player_death(params)
 		func(ents.entity, ents.attacker, params);
 }
 
+function OnGameEvent_item_pickup(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnItemPickup)
+		func(ents.entity, "weapon_" + params["item"], params);
+}
+	
 function OnGameEvent_defibrillator_used(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);

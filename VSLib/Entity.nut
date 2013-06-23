@@ -112,7 +112,7 @@ class ::VSLib.Entity
 	_lastHurt = -1
 	_hurtIntent = -1
 	_hurtDmg = 0
-	_isHurtActive = false
+	_hurtIgnore = []
 	
 	_objPickupTimer = {}
 	_objBtnPickup = {}
@@ -124,6 +124,9 @@ class ::VSLib.Entity
 	_objValveHolding = {}
 	_objValveThrowPower = {}
 	_objValvePickupRange = {}
+	_objValveThrowDmg = {}
+	_objValveHoldDmg = {}
+	_objEnableDmg = {}
 	
 	_inv = {}
 	_invItems = {}
@@ -183,7 +186,7 @@ getconsttable()["BUTTON_BULLRUSH"] <- 4194304;
 getconsttable()["BUTTON_GRENADE1"] <- 8388608; // grenade 1
 getconsttable()["BUTTON_GRENADE2"] <- 16777216; // grenade 2
 
-// Damage types that can be used with Hurt(), ForceHurt(), etc
+// Damage types that can be used with Hurt(), etc
 getconsttable()["DMG_GENERIC"] <- 0;
 getconsttable()["DMG_CRUSH"] <- (1 << 0);
 getconsttable()["DMG_BULLET"] <- (1 << 1);
@@ -319,14 +322,10 @@ function VSLib::Entity::GetRawHealth()
 }
 
 /**
- * Hurts the entity.
- *
- * @param value Amount of damage to inflict.
- * @param dmgtype The type of damage to inflict (e.g. DMG_GENERIC)
- * @param weapon The classname of the weapon (if set, the point hurt will "pretend" to be the weapon)
- * @param attacker If set, the damage will be done by the specified VSLib::Entity or VSLib::Player
+ * Hurts the entity. Internal function. There should not be any need to use this directly.
+ * @see Hurt, @see HurtAround, @see HurtTime instead
  */
-function VSLib::Entity::Hurt(value, dmgtype = 0, weapon = "", attacker = null, radius = 64.0)
+function VSLib::Entity::__HurtInt__(value, dmgtype, weapon, attacker, radius, _hurtIntent, _hurtIgnore)
 {
 	if (!IsEntityValid())
 	{
@@ -358,14 +357,53 @@ function VSLib::Entity::Hurt(value, dmgtype = 0, weapon = "", attacker = null, r
 		attacker = vsHurt;
 	
 	::VSLib.EntData._lastHurt = attacker.GetBaseEntity();
-	::VSLib.EntData._hurtIntent = _ent;
+	::VSLib.EntData._hurtIntent = _hurtIntent;
 	::VSLib.EntData._hurtDmg = value;
-	::VSLib.EntData._isHurtActive = true;
+	::VSLib.EntData._hurtIgnore = _hurtIgnore;
 	
 	vsHurt.Input("Hurt", "", 0, attacker);
 	vsHurt.SetKeyValue("classname", "point_hurt");
 	
 	vsHurt.Kill();
+}
+
+/**
+ * Hurts the entity.
+ *
+ * @param value Amount of damage to inflict.
+ * @param dmgtype The type of damage to inflict (e.g. DMG_GENERIC)
+ * @param weapon The classname of the weapon (if set, the point hurt will "pretend" to be the weapon)
+ * @param attacker If set, the damage will be done by the specified VSLib::Entity or VSLib::Player
+ */
+function VSLib::Entity::Hurt(value, dmgtype = 0, weapon = "", attacker = null, radius = 64.0)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	__HurtInt__(value, dmgtype, weapon, attacker, radius, _ent, []);
+}
+
+/**
+ * Hurts AROUND the entity without hurting the entity itself.
+ *
+ * @param value Amount of damage to inflict.
+ * @param dmgtype The type of damage to inflict (e.g. DMG_GENERIC)
+ * @param weapon The classname of the weapon (if set, the point hurt will "pretend" to be the weapon)
+ * @param attacker If set, the damage will be done by the specified VSLib::Entity or VSLib::Player
+ */
+function VSLib::Entity::HurtAround(value, dmgtype = 0, weapon = "", attacker = null, radius = 64.0, ignoreEntities = [])
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	ignoreEntities.push(this);
+	__HurtInt__(value, dmgtype, weapon, attacker, radius, null, ignoreEntities);
 }
 
 /**
@@ -1772,7 +1810,7 @@ function VSLib::Entity::IsPressingZoom()
 }
 
 /**
- * Returns the entity's owner
+ * Returns the entity's owner, or null if the owner does not exist
  */
 function VSLib::Entity::GetOwnerEntity()
 {
@@ -1782,7 +1820,10 @@ function VSLib::Entity::GetOwnerEntity()
 		return;
 	}
 	
-	return _ent.GetOwnerEntity();
+	local owner = _ent.GetOwnerEntity();
+	if (!owner)
+		return null;
+	return ::VSLib.Entity(owner);
 }
 
 
@@ -1997,9 +2038,12 @@ function AllowTakeDamage(damageTable)
 	// Process triggered hurts
 	if (damageTable.Attacker == ::VSLib.EntData._lastHurt)
 	{
-		if (damageTable.Victim == ::VSLib.EntData._hurtIntent)
+		foreach (hEnt in ::VSLib.EntData._hurtIgnore)
+			if (hEnt.GetIndex() == damageTable.Victim.GetEntityIndex())
+				return false;
+		
+		if (!::VSLib.EntData._hurtIntent || damageTable.Victim == ::VSLib.EntData._hurtIntent)
 		{
-			::VSLib.EntData._isHurtActive <- false;
 			damageTable.DamageDone = ::VSLib.EntData._hurtDmg;
 			return true;
 		}

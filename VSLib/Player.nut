@@ -602,7 +602,6 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 
 /**
  * Returns true if this player can trace a line from the eyes to the specified location.
- * \todo @TODO Fix this, doesn't work right yet
  */
 function VSLib::Player::CanTraceToLocation(finishPos)
 {
@@ -1022,6 +1021,9 @@ function VSLib::Player::PlaySound( file )
 		return;
 	}
 	
+	if (file == "" || !file)
+		return;
+	
 	if ( !(file in ::EasyLogic.PrecachedSounds) )
 	{
 		printf("VSLib: Precaching named sound: %s", file);
@@ -1244,6 +1246,9 @@ function VSLib::Player::BeginValvePickupObjects( pickupSound = "Defibrillator.Us
 	
 	EndValvePickupObjects();
 	
+	::VSLib.EntData._objEnableDmg[_idx] <- false;
+	::VSLib.EntData._objValveHoldDmg[_idx] <- 5;
+	::VSLib.EntData._objValveThrowDmg[_idx] <- 30;
 	::VSLib.EntData._objValveThrowPower[_idx] <- 100;
 	::VSLib.EntData._objValvePickupRange[_idx] <- 64;
 	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
@@ -1301,6 +1306,48 @@ function VSLib::Player::ValvePickupPickupRange( range )
 }
 
 /**
+ * Sets the throw damage for Valve-style object pickups (default 30)
+ */
+function VSLib::Player::SetThrowDamage( dmg )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	::VSLib.EntData._objValveThrowDmg[_idx] <- dmg.tointeger();
+}
+
+/**
+ * Sets the hold damage for Valve-style object pickups (default 5)
+ */
+function VSLib::Player::SetHoldDamage( dmg )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	::VSLib.EntData._objValveHoldDmg[_idx] <- dmg.tointeger();
+}
+
+/**
+ * Enables or disables hold/throw damage calculation
+ */
+function VSLib::Player::SetDamageEnabled( isEnabled )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	::VSLib.EntData._objEnableDmg[_idx] <- isEnabled;
+}
+
+/**
  * Instead of using this directly, @see BeginValvePickupObjects
  * @authors Neil, Rectus
  */
@@ -1324,19 +1371,32 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 	
 	if (!result || !("enthit" in traceTable) || traceTable.enthit.GetClassname() != "prop_physics")
 	{
-		if (_idx in ::VSLib.EntData._objValveHolding)
-			delete ::VSLib.EntData._objValveHolding[_idx];
+		if (_idx in ::VSLib.EntData._objValveHolding && !Entity(::VSLib.EntData._objValveHolding[_idx]).IsEntityInAir())
+		{
+			if (::VSLib.EntData._objEnableDmg[_idx])
+				Timers.RemoveTimerByName("vPickup" + _idx);
 			
+			delete ::VSLib.EntData._objValveHolding[_idx];
+		}
+		
 		return;
 	}
 	
 	local oldbuttons = ::VSLib.EntData._objOldBtnMask[_idx];
+	
+	local function _calcThrowDmg(params)
+	{
+		params.ent.HurtAround(params.dmg, 1, "", null, 64.0, [params.ignore]);
+	}
 	
 	if (IsPressingUse() && !(oldbuttons & (1 << 5)))
 	{
 		::VSLib.EntData._objValveHolding[_idx] <- traceTable.enthit;
 		PickupObject(_ent, traceTable.enthit);
 		PlaySound(pickupSound);
+		
+		if (::VSLib.EntData._objEnableDmg[_idx])
+			Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
 	}
 	else if (IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
 	{
@@ -1344,21 +1404,17 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 		{
 			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
 			
-			local function _calcThrowDmg(params)
-			{
-				foreach (obj in Objects.AliveAroundRadius(params.ent.GetLocation(), 128))
-					if (obj.GetIndex() != params.ignore.GetIndex())
-						obj.Hurt(30, 1);
-			}
+			if (::VSLib.EntData._objEnableDmg[_idx])
+				Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
 			
-			Timers.AddTimer( 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
 			delete ::VSLib.EntData._objValveHolding[_idx];
 			PlaySound(throwSound);
 		}
-		catch(id)
+		catch (id)
 		{
 			printl("Impulse failed! " + id);
 		}
+	
 	}
 	
 	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();

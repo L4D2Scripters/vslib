@@ -900,6 +900,112 @@ function VSLib::Utils::AreVectorsEqual(vec1, vec2)
 	return vec1.x == vec2.x && vec1.y == vec2.y && vec1.z == vec2.z;
 }
 
+/**
+ * Shakes the screen with the specified amplitude at the specified location. If the location specified is
+ * null, then the map is shaken globally. Returns the env_shake entity. Note that the returned entity is
+ * automatically killed after its use is done.
+ *
+ * @auhors Rayman, Neil
+ */
+function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, _frequency = 35, _radius = 500)
+{
+	local spawn = {
+		classname = "env_shake",
+		amplitude = _amplitude,
+		duration = _duration,
+		frequency = _frequency,
+		radius = _radius,
+		targetname = "vslib_shake_script" + UniqueString(),
+		origin = pos,
+		angles = QAngle(0, 0, 0)
+	};
+	
+	if (!pos)
+	{
+		spawn["spawnflags"] <- 1;
+		spawn["origin"] <- Vector(0, 0, 0);
+	}
+	else
+		spawn["spawnflags"] <- 0;
+	
+	local env_shake = ::VSLib.Entity(g_ModeScript.CreateSingleSimpleEntityFromTable(spawn));
+	env_shake.Input("StartShake");
+	
+	if (_duration > 0.0)
+		Timers.AddTimer(_duration, false, ::VSLib.Utils.RemoveEntity, env_shake);
+	
+	return env_shake;
+}
+
+/**
+ * Fades player's screen with the specified color, alpha, etc. Returns the env_fade entity. Note that the entity is
+ * automatically killed after its use is done.
+ *
+ * @auhors Rayman, Neil
+ */
+function VSLib::Utils::FadeScreen(player, red = 0, green = 0, blue = 0, alpha = 255, _duration = 5.0, _holdtime = 5.0, modulate = false, fadeFrom = false)
+{
+	local flags = 4;
+	
+	if (modulate)
+		flags = flags | 2;
+	
+	if (fadeFrom)
+		flags = flags | 1;
+	
+	local spawn = {
+		classname = "env_fade",
+		duration = _duration,
+		holdtime = _holdtime,
+		renderamt = 255,
+		rendercolor = red + " " + green + " " + blue,
+		spawnflags = (8 | flags),
+		targetname = "vslib_fade_script" + UniqueString(),
+		origin = Vector(0, 0, 0),
+		angles = Vector(0, 0, 0),
+		connections =
+		{
+			OnBeginFade =
+			{
+				cmd1 = ""
+			}
+		}
+	};
+	
+	local env_fade = ::VSLib.Entity(g_ModeScript.CreateSingleSimpleEntityFromTable(spawn));
+	env_fade.Input("Alpha", alpha);
+	env_fade.Input("Fade", "", 0, player);
+	
+	if (_duration > 0.0)
+		Timers.AddTimer(_duration + _holdtime + 1.0, false, ::VSLib.Utils.RemoveEntity, env_fade);
+	
+	return env_fade;
+}
+
+/**
+ * Returns true if the specified classname is a valid melee weapon.
+ */
+function VSLib::Utils::IsValidMeleeWeapon(classname)
+{
+	return classname == "weapon_melee" || classname == "melee";
+}
+
+/**
+ * Returns true if the specified classname is a valid fire weapon (does not include melee weapons).
+ */
+function VSLib::Utils::IsValidFireWeapon(weapon)
+{
+	return weapon == "weapon_pumpshotgun" || weapon == "weapon_autoshotgun" || weapon.find("weapon_rifle") != null || weapon.find("weapon_pistol") != null || weapon == "weapon_smg" || weapon == "weapon_hunting_rifle" || weapon == "weapon_sniper_scout" || weapon == "weapon_sniper_military" || weapon == "weapon_sniper_awp" || weapon == "weapon_smg_silenced" || weapon == "weapon_smg_mp5" || weapon == "weapon_shotgun_spas" || weapon == "weapon_shotgun_chrome" || weapon == "weapon_rifle_sg552" || weapon == "weapon_rifle_desert" || weapon == "weapon_rifle_ak47" || weapon == "weapon_grenade_launcher" || weapon == "weapon_rifle_m60";
+}
+
+/**
+ * Returns true if the specified classname is a valid weapon (includes melee and fire weapons).
+ */
+function VSLib::Utils::IsValidWeapon(classname)
+{
+	return Utils.IsValidMeleeWeapon(classname) || Utils.IsValidFireWeapon(classname);
+}
+
  
  
 
