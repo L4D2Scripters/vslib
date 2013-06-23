@@ -1091,13 +1091,13 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	{
 		if (_player.IsPressingButton(_switchBtn))
 		{
-			_player.PlaySound("Menu.Scroll");
+			Utils.PlaySoundToAll("Menu.Scroll");
 			if ((++_curSel) > _numop)
 				_curSel = 1;
 		}
 		else if (_player.IsPressingButton(_selectBtn))
 		{
-			_player.PlaySound("Menu.Select");
+			Utils.PlaySoundToAll("Menu.Select");
 			
 			local t = { p = _player, idx = _curSel, val = _options[_curSel].text, callb = _options[_curSel].callback };
 			::VSLib.Timers.AddTimer(0.1, 0, @(tbl) tbl.callb(tbl.p, tbl.idx, tbl.val), t);

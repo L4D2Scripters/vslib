@@ -1424,6 +1424,34 @@ function VSLib::EasyLogic::Players::AnyAliveSurvivor()
 }
 
 /**
+ * Returns one valid alive survivor with the highest flow distance, or null if none exist
+ */
+function VSLib::EasyLogic::Players::SurvivorWithHighestFlow()
+{
+	local player = null;
+	local flow = -1;
+	local ent = null;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && libObj.IsAlive())
+			{
+				local dist = libObj.GetFlowDistance();
+				if (dist > flow)
+				{
+					player = libObj;
+					flow = dist;
+				}
+			}
+		}
+	}
+	
+	return player;
+}
+
+/**
  * Returns a table of all human players.
  */
 function VSLib::EasyLogic::Players::Humans()

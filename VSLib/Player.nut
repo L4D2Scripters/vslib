@@ -529,7 +529,7 @@ function VSLib::Player::Incapacitate()
 		return;
 	
 	SetRawHealth(1);
-	ForcedHurt(5, 0);
+	Hurt(5, 0);
 }
 
 /**
@@ -538,7 +538,7 @@ function VSLib::Player::Incapacitate()
 function VSLib::Player::Kill()
 {
 	if (IsPlayerEntityValid())
-		ForcedHurt(65535, 0);
+		Hurt(65535, 0);
 	else
 		base.Kill();
 }
@@ -603,7 +603,7 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 /**
  * Returns true if this player can trace a line from the eyes to the specified location.
  */
-function VSLib::Player::CanTraceToLocation(finishPos)
+function VSLib::Player::CanTraceToLocation(finishPos, traceMask = MASK_NPCWORLDSTATIC)
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -614,7 +614,7 @@ function VSLib::Player::CanTraceToLocation(finishPos)
 	local begin = GetEyePosition();
 	local finish = finishPos;
 	
-	local m_trace = { start = begin, end = finish, ignore = _ent, mask = MASK_NPCWORLDSTATIC };
+	local m_trace = { start = begin, end = finish, ignore = _ent, mask = traceMask };
 	TraceLine(m_trace);
 	
 	if (Utils.AreVectorsEqual(m_trace.pos, finish))

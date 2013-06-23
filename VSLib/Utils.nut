@@ -462,7 +462,7 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 	else
 		playerPos = player.GetLocation();
 	
-	local survs = ::VSLib.EasyLogic.Players.Survivors();
+	local survs = ::VSLib.EasyLogic.Players.AliveSurvivors();
 	
 	// Loop through some pathable location :\ cmon valve, give me
 	// some function to get a pos the players can't see
@@ -479,51 +479,26 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 		// see if ppl can see this pos
 		foreach (survivor in survs)
 		{
-			if (survivor.CanSeeLocation(_pos, 75))
+			local survivorEyeAng = survivor.GetEyeAngles();
+			local posLeft = _pos + survivorEyeAng.Left().Scale(64);
+			local posRight = _pos + survivorEyeAng.Left().Scale(-64);
+			
+			if (
+				survivor.CanTraceToLocation(_pos)
+				|| survivor.CanTraceToLocation(_pos + Vector(0, 0, 128))
+				|| survivor.CanTraceToLocation(posLeft)
+				|| survivor.CanTraceToLocation(posRight)
+			)
 			{
-				if (survivor.IsBot())
-					continue;
-				
-				local survivorEyePos = survivor.GetEyePosition();
-				local baseEnt = survivor.GetBaseEntity();
-				
-				local traceTable =
-				{
-					start = survivorEyePos
-					end = _pos
-					ignore = baseEnt
-					mask = g_MapScript.TRACE_MASK_SHOT
-				}
-				
-				local result = TraceLine(traceTable);
-				
-				if (result && traceTable.pos == _pos)
-				{
-					// re-trace for accuracy, eye pos this time
-					traceTable =
-					{
-						start = survivorEyePos
-						end = _pos + Vector(0, 0, 64)
-						ignore = baseEnt
-						mask = g_MapScript.TRACE_MASK_SHOT
-					}
-					
-					result = TraceLine(traceTable);
-					
-					if (result && traceTable.pos == _pos)
-					{
-						canSee = true;
-						break;
-					}
-				}
-				
-				local survdist = ::VSLib.Utils.CalculateDistance(_pos, survivor.GetLocation());
-				
-				if ((survivor.IsInEndingSafeRoom() && survdist < 800.0) || survdist < 400.0)
-				{
-					canSee = true;
-					break;
-				}
+				canSee = true;
+				break;
+			}
+			
+			local survdist = ::VSLib.Utils.CalculateDistance(_pos, survivor.GetLocation());
+			if ((survivor.IsInEndingSafeRoom() && survdist < 800.0) || survdist < minDist)
+			{
+				canSee = true;
+				break;
 			}
 		}
 		
@@ -537,7 +512,6 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 	
 	return false;
 }
-
 
 
 //
@@ -607,6 +581,14 @@ function VSLib::Utils::GetDistBetweenEntities(ent1, ent2)
 //
 // MISC HELPERS
 //
+
+/**
+ * Draws a line from one location to another
+ */
+function VSLib::Utils::DrawLine(pos1, pos2, time = 10.0, red = 255, green = 0, blue = 0)
+{
+	DebugDrawLine(pos1, pos2, red, green, blue, true, time);
+}
 
 /**
  * Slows down time.
