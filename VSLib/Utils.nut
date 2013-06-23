@@ -742,6 +742,15 @@ function VSLib::Utils::PrecacheModel( mdl )
 }
 
 /**
+ * Spawns a dynamic model at the specified location
+ */
+function VSLib::Utils::SpawnDynamicProp( mdl, pos, ang = QAngle(0,0,0) )
+{
+	::VSLib.Utils.PrecacheModel( mdl );
+	return ::VSLib.Utils.CreateEntity("prop_dynamic_override", pos, ang, { model = mdl, StartDisabled = "false", Solid = "6", spawnflags = "8" });
+}
+
+/**
  * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
