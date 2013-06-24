@@ -938,6 +938,15 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 		_hpre = highlightStrPre;
 		_hpost = highlightStrPost;
 		_title = title;
+		
+		
+		_options = {};
+		_numop = 0;
+		_curSel = 0;
+		_player = null;
+		
+		::VSLib.Timers.RemoveTimer(_optimer);
+		_optimer = -1;
 	}
 	
 	
