@@ -112,6 +112,21 @@ class ::VSLib.HUD.Item
 	 */
 	constructor(formatStr, ...)
 	{
+		_formatstr = null;
+		_binddata = {};
+		_cachestr = null;
+		_modded = true;
+		_isbound = false;
+		_flags = 0;
+		_dynrefcount = 0;
+		_hudmode = -1;
+		_width = 0.0;
+		_height = 0.0;
+		_xpos = 0.0;
+		_ypos = 0.0;
+		_blinktimer = -1;
+		_visibletimer = -1;
+		
 		SetFormatString(formatStr);
 		
 		for(local i = 0; i < vargv.len(); i++)
