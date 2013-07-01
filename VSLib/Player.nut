@@ -1486,9 +1486,17 @@ function VSLib::Player::GetInventoryTable( )
 // Allows pickups
 function CanPickupObject(object)
 {
+	local vsent = ::VSLib.Entity(object);
+	local classname = object.GetClassname();
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.CanPickupObject)
+		if (func(vsent, classname))
+			return true;
+	
 	foreach (obj in ::VSLib.EntData._objValveHolding)
 		if (obj == object)
 			return true;
+	
 	return false;
 }
 

@@ -127,7 +127,7 @@
 	OnWeaponGiven = {}
 	OnWeaponReload = {}
 	OnWeaponZoom = {}
-	OnItemPickup = {}
+	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
 	
 	// Charger events
 	OnChargerCharged = {}
@@ -167,7 +167,8 @@
 	// Misc
 	OnDifficulty = {}
 	OnSurvivorsDead = {}
-	OnPickupInvItem = {}
+	OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
+	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
 }
 
 // Create entity data cache system
