@@ -445,7 +445,7 @@ function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = 
  * If by chance the survivors are looking everywhere at once,
  * the infected prob won't spawn!
  */
-function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0, minDist = 32.0 )
+function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0, minDist = 32.0, checkVisibility = true, useAltSpawn = false )
 {
 	if (!player)
 		return false;
@@ -476,37 +476,52 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 		
 		local canSee = false;
 		
-		// see if ppl can see this pos
-		foreach (survivor in survs)
+		if ( checkVisibility )
 		{
-			local survivorEyeAng = survivor.GetEyeAngles();
-			local posLeft = _pos + survivorEyeAng.Left().Scale(64);
-			local posRight = _pos + survivorEyeAng.Left().Scale(-64);
-			
-			if (
-				survivor.CanTraceToLocation(_pos)
-				|| survivor.CanTraceToLocation(_pos + Vector(0, 0, 128))
-				|| survivor.CanTraceToLocation(posLeft)
-				|| survivor.CanTraceToLocation(posRight)
-			)
+			// see if ppl can see this pos
+			foreach (survivor in survs)
 			{
-				canSee = true;
-				break;
-			}
-			
-			local survdist = ::VSLib.Utils.CalculateDistance(_pos, survivor.GetLocation());
-			if ((survivor.IsInEndingSafeRoom() && survdist < 800.0) || survdist < minDist)
-			{
-				canSee = true;
-				break;
+				local survivorEyeAng = survivor.GetEyeAngles();
+				local posLeft = _pos + survivorEyeAng.Left().Scale(64);
+				local posRight = _pos + survivorEyeAng.Left().Scale(-64);
+				
+				if (
+					survivor.CanTraceToLocation(_pos)
+					|| survivor.CanTraceToLocation(_pos + Vector(0, 0, 128))
+					|| survivor.CanTraceToLocation(posLeft)
+					|| survivor.CanTraceToLocation(posRight)
+				)
+				{
+					canSee = true;
+					break;
+				}
+				
+				local survdist = ::VSLib.Utils.CalculateDistance(_pos, survivor.GetLocation());
+				if ((survivor.IsInEndingSafeRoom() && survdist < 800.0) || survdist < minDist)
+				{
+					canSee = true;
+					break;
+				}
 			}
 		}
 		
 		// If they cannot see it, then spawn.
 		if (!canSee)
 		{
-			ZSpawn( { type = zombieNum, pos = _pos } );
-			return true;
+			if ( useAltSpawn )
+			{
+				local ent = VSLib.Utils.CreateEntity("info_zombie_spawn", _pos);
+				ent.SetKeyValue("population", zombieNum);
+				ent.SetKeyValue("AttackOnSpawn", attackOnSpawn.tointeger());
+				ent.Input("SpawnZombie");
+				ent.Kill();
+				return true;
+			}
+			else
+			{
+				ZSpawn( { type = zombieNum, pos = _pos } );
+				return true;
+			}
 		}
 	}
 	

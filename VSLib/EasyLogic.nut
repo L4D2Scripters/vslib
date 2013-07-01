@@ -128,6 +128,7 @@
 	OnWeaponReload = {}
 	OnWeaponZoom = {}
 	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
+	OnSurvivorRescued = {}
 	
 	// Charger events
 	OnChargerCharged = {}
@@ -991,6 +992,15 @@ function OnGameEvent_tank_spawn(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnTankSpawned)
 		func(ents.entity, params);
+}
+
+function OnGameEvent_survivor_rescued(params)
+{
+	local rescuer = EasyLogic.GetEventPlayer(params, "rescuer");
+	local victim = EasyLogic.GetEventPlayer(params, "victim");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorRescued)
+		func(rescuer, victim, params);
 }
 
 //
