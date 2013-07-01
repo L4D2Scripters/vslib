@@ -986,7 +986,7 @@ function VSLib::Utils::IsValidMeleeWeapon(classname)
  */
 function VSLib::Utils::IsValidFireWeapon(weapon)
 {
-	return weapon == "weapon_pumpshotgun" || weapon == "weapon_autoshotgun" || weapon.find("weapon_rifle") != null || weapon.find("weapon_pistol") != null || weapon == "weapon_smg" || weapon == "weapon_hunting_rifle" || weapon == "weapon_sniper_scout" || weapon == "weapon_sniper_military" || weapon == "weapon_sniper_awp" || weapon == "weapon_smg_silenced" || weapon == "weapon_smg_mp5" || weapon == "weapon_shotgun_spas" || weapon == "weapon_shotgun_chrome" || weapon == "weapon_rifle_sg552" || weapon == "weapon_rifle_desert" || weapon == "weapon_rifle_ak47" || weapon == "weapon_grenade_launcher" || weapon == "weapon_rifle_m60";
+	return weapon.find("pistol") != null || weapon.find("shotgun") != null || weapon.find("rifle") != null || weapon.find("launcher") != null || weapon.find("sniper") != null || weapon.find("smg") != null;
 }
 
 /**
