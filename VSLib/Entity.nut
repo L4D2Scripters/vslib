@@ -46,10 +46,15 @@ class ::VSLib.Entity
 		}
 		else if ((typeof index) == "string" && index.find("!") != 0)
 		{
-			_ent = Entities.FindByName (null, index);
+			_ent = Entities.FindByName(null, index);
+			
 			if (_ent == null)
-				throw "Invalid targetname (target not found)";
-			_idx = GetBaseIndex();
+			{
+				printf("VSLib Warning: Invalid targetname (target not found)");
+				_idx = -1;
+			}
+			else
+				_idx = GetBaseIndex();
 		}
 		else
 		{
@@ -1216,7 +1221,7 @@ function VSLib::Entity::KillHierarchy()
 /**
  * Attempts to "Use" or pick up another entity.
  */
-function VSLib::Entity::UseOther(otherEntity)
+function VSLib::Entity::Use(otherEntity)
 {
 	if (!IsEntityValid())
 	{
@@ -1225,6 +1230,14 @@ function VSLib::Entity::UseOther(otherEntity)
 	}
 	
 	DoEntFire("!self", "Use", "", 0, _ent, otherEntity.GetBaseEntity());
+}
+
+/**
+ * Attempts to "Use" or pick up another entity.
+ */
+function VSLib::Entity::UseOther(otherEntity)
+{
+	Use(otherEntity);
 }
 
 /**
@@ -1594,22 +1607,6 @@ function VSLib::Entity::IsEntityInAir()
 	}
 	
 	return GetDistanceToGround() > 5.0;
-}
-
-/**
- * The "give" concommand.
- *
- * @param str What to give the entity (for example, "health")
- */
-function VSLib::Entity::Give(str)
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	_ent.GiveItem(str);
 }
 
 /**

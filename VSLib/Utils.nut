@@ -1012,6 +1012,174 @@ function VSLib::Utils::IsValidWeapon(classname)
 	return Utils.IsValidMeleeWeapon(classname) || Utils.IsValidFireWeapon(classname);
 }
 
+/**
+ * Gets a random value from an array
+ */
+function VSLib::Utils::GetRandValueFromArray(arr)
+{
+	local arrlen = arr.len();
+	
+	if (arrlen <= 0)
+		return null;
+	
+	return arr[ Utils.GetRandNumber(0, arrlen - 1) ];
+}
+
+/**
+ * Removes all weapons from the map (even held ones).
+ * @authors Rayman
+ */
+function VSLib::Utils::SanitizeWeapons()
+{
+	EntFire( "weapon_*", "kill" );
+}
+
+/**
+ * Removes all unheld weapons from the map.
+ */
+function VSLib::Utils::SanitizeUnheldWeapons()
+{
+	local weaponsToRemove =
+    {
+        weapon_pistol = 0
+        weapon_pistol_magnum = 0
+        weapon_smg = 0
+        weapon_pumpshotgun = 0
+        weapon_autoshotgun = 0
+        weapon_rifle = 0
+        weapon_hunting_rifle = 0
+        weapon_smg_silenced = 0
+        weapon_shotgun_chrome = 0
+        weapon_rifle_desert = 0
+        weapon_sniper_military = 0
+        weapon_shotgun_spas = 0
+        weapon_grenade_launcher = 0
+        weapon_rifle_ak47 = 0
+        weapon_smg_mp5 = 0
+        weapon_rifle_sg552 = 0
+        weapon_sniper_awp = 0   
+        weapon_sniper_scout = 0
+        weapon_rifle_m60 = 0
+        weapon_melee = 0
+        weapon_chainsaw = 0
+        weapon_pipe_bomb = 0
+        weapon_molotov = 0
+        weapon_vomitjar = 0
+        weapon_first_aid_kit = 0
+        weapon_pain_pills = 0
+        weapon_adrenaline = 0
+        weapon_defibrillator = 0
+        weapon_upgradepack_incendiary = 0
+        weapon_upgradepack_explosive = 0
+        upgrade_item = 0
+        ammo = 0
+    }
+	
+	foreach (wclass, v in weaponsToRemove)
+		foreach(wep in Objects.OfClassname(wclass))
+			if (wep.GetOwnerEntity() == null)
+				wep.Kill();
+}
+
+/**
+ * Kills common spawn locations.
+ * @authors Rayman
+ */
+function VSLib::Utils::KillZombieSpawns()
+{
+	EntFire( "intro_zombie_spawn", "kill" );
+    EntFire( "zspawn_lobby_fall_1", "kill" );
+    EntFire( "zspawn_lobby_fall_2", "kill" );
+    EntFire( "zspawn_lobby_fall_3", "kill" );
+    EntFire( "zspawn_lobby_fall_4", "kill" );
+    EntFire( "zspawn_lobby_fall_5", "kill" );
+    EntFire( "zspawn_fall_1", "kill" );
+    EntFire( "zspawn_fall_2", "kill" );
+    EntFire( "zombie_outro", "kill" );
+    EntFire( "escape_zombie", "kill" );
+    EntFire( "zspawn_zombie_safe", "kill" );
+    EntFire( "zspawn_zombie_safe2", "kill" );
+    EntFire( "spawn_zombie_van", "kill" );
+    EntFire( "spawn_zombie_alarm", "kill" );
+    EntFire( "spawn_zombie_alarm2", "kill" );
+    EntFire( "zombie_spawn1", "kill" );
+    EntFire( "spawn_zombie_run", "kill" );
+    EntFire( "spawn_zombie_end", "kill" );
+    EntFire( "infected_spawner", "kill" );
+    EntFire( "infected_spawner2", "kill" );
+    EntFire( "spawn_zombie_location1", "kill" );
+    EntFire( "spawn_zombie_location2", "kill" );
+    EntFire( "spawn_zombie_location3", "kill" );
+    EntFire( "spawn_zombie_location4", "kill" );
+    EntFire( "spawn_zombie_location5", "kill" );
+    EntFire( "spawn_zombie_location6", "kill" );
+}
+
+/**
+ * Disables car alarms.
+ * @authors Rayman
+ */
+function VSLib::Utils::DisableCarAlarms()
+{
+    foreach (car in Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
+        car.Kill();
+    
+    foreach (car in Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
+        car.Input("enable");
+    
+    EntFire( "prop_car_alarm", "disable" );
+    EntFire( "instructor_impound", "kill" );
+    EntFire( "InstanceAuto5-remark_caralarm", "kill" );
+    EntFire( "alarm1-remark_caralarm", "kill" );
+    EntFire( "alarm2-remark_caralarm", "kill" );
+    EntFire( "alarm3-remark_caralarm", "kill" );
+    EntFire( "alarm4-remark_caralarm", "kill" );
+    EntFire( "alarm5-remark_caralarm", "kill" );
+    EntFire( "alarm6-remark_caralarm", "kill" );
+    EntFire( "alarm7-remark_caralarm", "kill" );
+    EntFire( "alarm8-remark_caralarm", "kill" );
+    EntFire( "remark_caralarm-car1_alarm", "kill" );
+    EntFire( "remark_caralarm-car2_alarm", "kill" );
+    EntFire( "remark_caralarm-car3_alarm", "kill" );
+    EntFire( "car_alarm-remark_caralarm", "kill" );
+    EntFire( "remark_caralarm", "kill" );
+    EntFire( "InstanceAuto1-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto2-remark_caralarm", "kill" );
+    EntFire( "car_alarm1-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto12-remark_caralarm", "kill" );
+    EntFire( "remark_caralarm-car1", "kill" );
+    EntFire( "remark_caralarm-car2", "kill" );
+    EntFire( "remark_caralarm-car3", "kill" );
+    EntFire( "remark_caralarm-car4", "kill" );
+    EntFire( "remark_caralarm-car5", "kill" );
+    EntFire( "caralarm_1-remark_caralarm", "kill" );
+    EntFire( "caralarm_2-remark_caralarm", "kill" );
+    EntFire( "caralarm_3-remark_caralarm", "kill" );
+    EntFire( "caralarm_4-remark_caralarm", "kill" );
+    EntFire( "caralarm_6-remark_caralarm", "kill" );
+    EntFire( "caralarm_7-remark_caralarm", "kill" );
+    EntFire( "caralarm_8-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto24-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto44-remark_caralarm", "kill" );
+    EntFire( "car1-remark_caralarm", "kill" );
+    EntFire( "car2-remark_caralarm", "kill" );
+    EntFire( "car3-remark_caralarm", "kill" );
+    EntFire( "car4-remark_caralarm", "kill" );
+    EntFire( "car5-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto128-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto4-remark_caralarm", "kill" );
+    EntFire( "InstanceAuto5-remark_caralarm", "kill" );
+    EntFire( "alarma1-remark_caralarm", "kill" );
+    EntFire( "alarma2-remark_caralarm", "kill" );
+    EntFire( "alarma3-remark_caralarm", "kill" );
+    EntFire( "alarma4-remark_caralarm", "kill" );
+    EntFire( "alarma5-remark_caralarm", "kill" );
+    EntFire( "alarma6-remark_caralarm", "kill" );
+    EntFire( "alarma7-remark_caralarm", "kill" );
+    EntFire( "alarma8-remark_caralarm", "kill" );
+    EntFire( "alarma9-remark_caralarm", "kill" );
+}
+
  
  
 

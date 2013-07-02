@@ -1506,6 +1506,37 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 }
 
 
+/**
+ * Returns a table of L4D1 survivors.
+ */
+function VSLib::EasyLogic::Objects::L4D1Survivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	
+	local L4D1Survs =
+	[
+		"!bill"
+		"!francis" 
+		"!zoey" 
+		"!louis"
+	]
+	
+	foreach (s in L4D1Survs)
+	{
+		while (ent = Entities.FindByName( ent, s ))
+		{
+			if (ent.IsValid())
+			{
+				local libObj = ::VSLib.Entity(ent);
+				t[++i] <- libObj;
+			}
+		}
+	}
+	
+	return t;
+}
 
 /**
  * Returns all entities of a specific classname.
@@ -1527,6 +1558,21 @@ function VSLib::EasyLogic::Objects::OfClassname(classname)
 	}
 	
 	return t;
+}
+
+/**
+ * Returns a single entity of the specified classname, or null if non-existent
+ */
+function VSLib::EasyLogic::Objects::AnyOfClassname(classname)
+{
+	local ent = null;
+	while (ent = Entities.FindByClassname(ent, classname))
+	{
+		if (ent.IsValid())
+			return ::VSLib.Entity(ent);
+	}
+	
+	return null;
 }
 
 /**

@@ -1227,6 +1227,22 @@ function VSLib::Player::NativePickupObject( otherEnt )
 	PickupObject(_ent, otherEnt.GetBaseEntity());
 }
 
+/**
+ * The "give" concommand.
+ *
+ * @param str What to give the entity (for example, "health")
+ */
+function VSLib::Player::Give(str)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.GiveItem(str);
+}
+
 
 
 
