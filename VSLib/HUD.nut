@@ -479,10 +479,19 @@ class ::VSLib.HUD.Item
 	/**
 	 * Shows the GUI panel for the specified time before hiding it again
 	 */
-	function ShowTime(seconds)
+	function ShowTime(seconds, detachAfter = false)
 	{
 		Show();
-		_visibletimer = ::VSLib.Timers.AddTimer(seconds, 0, @(hudobj) hudobj.Hide(), this);
+		
+		local function _ShowFunc(params)
+		{
+			if (params.detach)
+				params.hudobj.Detach();
+			else
+				params.hudobj.Hide();
+		}
+		
+		_visibletimer = ::VSLib.Timers.AddTimer(seconds, 0, _ShowFunc, { hudobj = this, detach = detachAfter });
 	}
 	
 	/**

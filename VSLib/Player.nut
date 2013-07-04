@@ -94,7 +94,26 @@ function VSLib::Player::GetSteamID()
 	if ("_steam" in ::VSLib.GlobalCache[id])
 		return ::VSLib.GlobalCache[id]["_steam"];
 	
-	return null;
+	return "";
+}
+
+/**
+ * Gets the player's Unqiue ID (clean, formatted Steam ID).
+ */
+function VSLib::Player::GetUniqueID()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return "";
+	}
+	
+	local steamid = GetSteamID();
+	steamid = Utils.StringReplace(steamid, "STEAM_1:", "S");
+	steamid = Utils.StringReplace(steamid, "STEAM_0:", "S");
+	steamid = Utils.StringReplace(steamid, ":", "");
+	
+	return steamid;
 }
 
 /**

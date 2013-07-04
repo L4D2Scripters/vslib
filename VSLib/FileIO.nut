@@ -1,0 +1,121 @@
+/*  
+ * Copyright (c) 2013 LuKeM aka Neil - 119
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ */
+
+
+
+/**
+* File I/O functions that simplify the saving and loading of data.
+*/
+::VSLib.FileIO <- {};
+
+
+/**
+ * Recursively serializes a table and returns the string. This command ignores all functions within
+ * the table, saving only the primitive types (i.e. integers, floats, strings, etc with definite values).
+ * The indexes that you use for your table need to be programmatically "clean," meaning that the index
+ * cannot contain invalid characters like +-=!@#$%^&*() etc. Indexes that contain any kind of
+ * invalid character is completely ignored. If you are trying to store player information,
+ * use Player::GetUniqueID() instead of Player::GetSteamID() for the index ID.
+ *
+ * You probably won't need to use this function by itself. @see VSLib::FileIO::SaveTable()
+ */
+function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicateEnd = "}\n", indice = true)
+{
+	local baseString = predicateStart;
+	
+	foreach (idx, val in object)
+	{
+		local idxType = typeof idx;
+		
+		if (idxType == "instance" || idxType == "class" || idxType == "function")
+			continue;
+		
+		local idxStr = idx.tostring();
+		local reg = regexp("^[a-zA-Z0-9]+$");
+		
+		if (!reg.match(idxStr))
+		{
+			printf("VSLib Warning: Index '%s' is invalid (invalid characters found), skipping...", idxStr);
+			continue;
+		}
+		
+		local preCompileString = ((indice) ? (idx + " = ") : "");
+		
+		switch (typeof val)
+		{
+			case "table":
+				baseString += preCompileString + ::VSLib.FileIO.SerializeTable(val);
+				break;
+			
+			case "string":
+				baseString += preCompileString + "\"" + ::VSLib.Utils.StringReplace(val, "\"", "\\\"") + "\"\n"; // "
+				break;
+			
+			case "integer":
+				baseString += preCompileString + val + "\n";
+				break;
+			
+			case "float":
+				baseString += preCompileString + val + "\n";
+				break;
+			
+			case "array":
+				baseString += preCompileString + ::VSLib.FileIO.SerializeTable(val, "[\n", "]\n", false);
+				break;
+				
+			case "bool":
+				baseString += preCompileString + ((val) ? "true" : "false") + "\n";
+				break;
+		}
+	}
+	
+	baseString += predicateEnd;
+	
+	return baseString;
+}
+
+/**
+ * This function will serialize and save a table to the hard disk; useful for storing stats,
+ * round times, and other important information.
+ */
+function VSLib::FileIO::SaveTable(fileName, table)
+{
+	fileName += ".tbl";
+	StringToFile(fileName, ::VSLib.FileIO.SerializeTable(table));
+}
+
+/**
+ * This function will deserialize and return the compiled table.
+ * If the table does not exist, null is returned.
+ */
+function VSLib::FileIO::LoadTable(fileName)
+{
+	local contents = FileToString(fileName + ".tbl");
+	
+	if (!contents)
+		return null;
+	
+	return compilestring( "return " + contents )();
+}
+
+
+
+// Add a weak reference to the global table.
+::FileIO <- ::VSLib.FileIO.weakref();

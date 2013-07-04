@@ -1022,6 +1022,18 @@ function VSLib::EasyLogic::GetEventInt(params, field)
 }
 
 /**
+ * Returns an Entity for the specified field (Entity index), or null if it does not exist.
+ */
+function VSLib::EasyLogic::GetEventEntity(params, field)
+{
+	if (field in params)
+		if (params[field] != "" && params[field] != null)
+			return ::VSLib.Entity(params[field].tointeger());
+	
+	return null;
+}
+
+/**
  * Returns a float value for the specified field, or null if it does not exist.
  */
 function VSLib::EasyLogic::GetEventFloat(params, field)
