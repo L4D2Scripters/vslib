@@ -679,7 +679,8 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
  */
 function VSLib::Utils::GetRandNumber( min, max )
 {
-	return rand() % (max - min + 1) + min;
+	//return rand() % (max - min + 1) + min;
+	return RandomInt(min, max);
 }
 
 // Seed rand num generator
@@ -911,7 +912,7 @@ function VSLib::Utils::AreVectorsEqual(vec1, vec2)
  * null, then the map is shaken globally. Returns the env_shake entity. Note that the returned entity is
  * automatically killed after its use is done.
  *
- * @auhors Rayman, Neil
+ * @auhors Rayman1103, Neil
  */
 function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, _frequency = 35, _radius = 500)
 {
@@ -947,7 +948,7 @@ function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, 
  * Fades player's screen with the specified color, alpha, etc. Returns the env_fade entity. Note that the entity is
  * automatically killed after its use is done.
  *
- * @auhors Rayman, Neil
+ * @auhors Rayman1103, Neil
  */
 function VSLib::Utils::FadeScreen(player, red = 0, green = 0, blue = 0, alpha = 255, _duration = 5.0, _holdtime = 5.0, modulate = false, fadeFrom = false)
 {
@@ -1026,64 +1027,97 @@ function VSLib::Utils::GetRandValueFromArray(arr)
 }
 
 /**
- * Removes all weapons from the map (even held ones).
- * @authors Rayman
+ * Removes all held weapons from the map.
+ * @authors Rayman1103
  */
-function VSLib::Utils::SanitizeWeapons()
+function VSLib::Utils::SanitizeHeldWeapons()
 {
-	EntFire( "weapon_*", "kill" );
+	EntFire( "weapon_pistol", "kill" );
+	EntFire( "weapon_pistol_magnum", "kill" );
+	EntFire( "weapon_smg", "kill" );
+	EntFire( "weapon_pumpshotgun", "kill" );
+	EntFire( "weapon_autoshotgun", "kill" );
+	EntFire( "weapon_rifle", "kill" );
+	EntFire( "weapon_hunting_rifle", "kill" );
+	EntFire( "weapon_smg_silenced", "kill" );
+	EntFire( "weapon_shotgun_chrome", "kill" );
+	EntFire( "weapon_sniper_military", "kill" );
+	EntFire( "weapon_shotgun_spas", "kill" );
+	EntFire( "weapon_rifle_desert", "kill" );
+	EntFire( "weapon_rifle_ak47", "kill" );
+	EntFire( "weapon_smg_mp5", "kill" );
+	EntFire( "weapon_rifle_sg552", "kill" );
+	EntFire( "weapon_sniper_awp", "kill" );
+	EntFire( "weapon_sniper_scout", "kill" );
+	EntFire( "weapon_grenade_launcher", "kill" );
+	EntFire( "weapon_rifle_m60", "kill" );
+	EntFire( "weapon_melee", "kill" );
+	EntFire( "weapon_chainsaw", "kill" );
+	EntFire( "weapon_pipe_bomb", "kill" );
+	EntFire( "weapon_molotov", "kill" );
+	EntFire( "weapon_vomitjar", "kill" );
+	EntFire( "weapon_first_aid_kit", "kill" );
+	EntFire( "weapon_pain_pills", "kill" );
+	EntFire( "weapon_adrenaline", "kill" );
+	EntFire( "weapon_defibrillator", "kill" );
+	EntFire( "weapon_upgradepack_incendiary", "kill" );
+	EntFire( "weapon_upgradepack_explosive", "kill" );
 }
 
 /**
  * Removes all unheld weapons from the map.
+ * @authors Rayman1103
  */
 function VSLib::Utils::SanitizeUnheldWeapons()
 {
-	local weaponsToRemove =
-    {
-        weapon_pistol = 0
-        weapon_pistol_magnum = 0
-        weapon_smg = 0
-        weapon_pumpshotgun = 0
-        weapon_autoshotgun = 0
-        weapon_rifle = 0
-        weapon_hunting_rifle = 0
-        weapon_smg_silenced = 0
-        weapon_shotgun_chrome = 0
-        weapon_rifle_desert = 0
-        weapon_sniper_military = 0
-        weapon_shotgun_spas = 0
-        weapon_grenade_launcher = 0
-        weapon_rifle_ak47 = 0
-        weapon_smg_mp5 = 0
-        weapon_rifle_sg552 = 0
-        weapon_sniper_awp = 0   
-        weapon_sniper_scout = 0
-        weapon_rifle_m60 = 0
-        weapon_melee = 0
-        weapon_chainsaw = 0
-        weapon_pipe_bomb = 0
-        weapon_molotov = 0
-        weapon_vomitjar = 0
-        weapon_first_aid_kit = 0
-        weapon_pain_pills = 0
-        weapon_adrenaline = 0
-        weapon_defibrillator = 0
-        weapon_upgradepack_incendiary = 0
-        weapon_upgradepack_explosive = 0
-        upgrade_item = 0
-        ammo = 0
-    }
-	
-	foreach (wclass, v in weaponsToRemove)
-		foreach(wep in Objects.OfClassname(wclass))
-			if (wep.GetOwnerEntity() == null)
-				wep.Kill();
+	EntFire( "weapon_pistol_spawn", "kill" );
+	EntFire( "weapon_pistol_magnum_spawn", "kill" );
+	EntFire( "weapon_smg_spawn", "kill" );
+	EntFire( "weapon_pumpshotgun_spawn", "kill" );
+	EntFire( "weapon_autoshotgun_spawn", "kill" );
+	EntFire( "weapon_rifle_spawn", "kill" );
+	EntFire( "weapon_hunting_rifle_spawn", "kill" );
+	EntFire( "weapon_smg_silenced_spawn", "kill" );
+	EntFire( "weapon_shotgun_chrome_spawn", "kill" );
+	EntFire( "weapon_sniper_military_spawn", "kill" );
+	EntFire( "weapon_shotgun_spas_spawn", "kill" );
+	EntFire( "weapon_rifle_desert_spawn", "kill" );
+	EntFire( "weapon_rifle_ak47_spawn", "kill" );
+	EntFire( "weapon_smg_mp5_spawn", "kill" );
+	EntFire( "weapon_rifle_sg552_spawn", "kill" );
+	EntFire( "weapon_sniper_awp_spawn", "kill" );
+	EntFire( "weapon_sniper_scout_spawn", "kill" );
+	EntFire( "weapon_grenade_launcher_spawn", "kill" );
+	EntFire( "weapon_rifle_m60_spawn", "kill" );
+	EntFire( "weapon_melee_spawn", "kill" );
+	EntFire( "weapon_chainsaw_spawn", "kill" );
+	EntFire( "weapon_pipe_bomb_spawn", "kill" );
+	EntFire( "weapon_molotov_spawn", "kill" );
+	EntFire( "weapon_vomitjar_spawn", "kill" );
+	EntFire( "weapon_first_aid_kit_spawn", "kill" );
+	EntFire( "weapon_pain_pills_spawn", "kill" );
+	EntFire( "weapon_adrenaline_spawn", "kill" );
+	EntFire( "weapon_defibrillator_spawn", "kill" );
+	EntFire( "weapon_upgradepack_incendiary_spawn", "kill" );
+	EntFire( "weapon_upgradepack_explosive_spawn", "kill" );
+	EntFire( "upgrade_item", "kill" );
+	EntFire( "ammo", "kill" );
+}
+
+/**
+ * Removes all miniguns from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeMiniguns()
+{
+	EntFire( "prop_minigun", "kill" );
+	EntFire( "prop_minigun_l4d1", "kill" );
+	EntFire( "prop_mounted_machine_gun", "kill" );
 }
 
 /**
  * Kills common spawn locations.
- * @authors Rayman
+ * @authors Rayman1103
  */
 function VSLib::Utils::KillZombieSpawns()
 {
@@ -1117,7 +1151,7 @@ function VSLib::Utils::KillZombieSpawns()
 
 /**
  * Disables car alarms.
- * @authors Rayman
+ * @authors Rayman1103
  */
 function VSLib::Utils::DisableCarAlarms()
 {
