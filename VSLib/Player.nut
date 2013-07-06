@@ -715,6 +715,23 @@ function VSLib::Player::GetHealthBuffer()
 }
 
 /**
+ * Gets the player's valve inventory (molotov, weapons, pills, etc).
+ */
+function VSLib::Player::GetHeldItems()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = {};
+	GetInvTable(_ent, t);
+	
+	return t;
+}
+
+/**
  * Gets the position where the player last died, or null if the player has not died yet
  */
 function VSLib::Player::GetLastDeathLocation()
@@ -1394,25 +1411,14 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 		return false;
 	}
 	
-	local traceTable =
-	{
-		start = GetEyePosition()
-		end = GetEyePosition() + Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValvePickupRange[_idx])
-		ignore = _ent
-		mask = g_MapScript.TRACE_MASK_SHOT 
-	}
+	local curinv = GetHeldItems();
 	
-	local result = TraceLine(traceTable);
-	
-	if (!result || !("enthit" in traceTable) || traceTable.enthit.GetClassname() != "prop_physics")
+	if (_idx in ::VSLib.EntData._objValveHolding && (!("Held" in curinv) || ::VSLib.EntData._objValveHolding[_idx] != curinv["Held"]))
 	{
-		if (_idx in ::VSLib.EntData._objValveHolding && !Entity(::VSLib.EntData._objValveHolding[_idx]).IsEntityInAir())
-		{
-			if (::VSLib.EntData._objEnableDmg[_idx])
-				Timers.RemoveTimerByName("vPickup" + _idx);
-			
-			delete ::VSLib.EntData._objValveHolding[_idx];
-		}
+		if (::VSLib.EntData._objEnableDmg[_idx])
+			Timers.RemoveTimerByName("vPickup" + _idx);
+		
+		delete ::VSLib.EntData._objValveHolding[_idx];
 		
 		return;
 	}
@@ -1426,12 +1432,25 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 	
 	if (IsPressingUse() && !(oldbuttons & (1 << 5)))
 	{
-		::VSLib.EntData._objValveHolding[_idx] <- traceTable.enthit;
-		PickupObject(_ent, traceTable.enthit);
-		PlaySound(pickupSound);
+		local traceTable =
+		{
+			start = GetEyePosition()
+			end = GetEyePosition() + Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValvePickupRange[_idx])
+			ignore = _ent
+			mask = g_MapScript.TRACE_MASK_SHOT 
+		}
+
+		local result = TraceLine(traceTable);
 		
-		if (::VSLib.EntData._objEnableDmg[_idx])
-			Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
+		if (result && "enthit" in traceTable && traceTable.enthit.GetClassname() == "prop_physics")
+		{
+			::VSLib.EntData._objValveHolding[_idx] <- traceTable.enthit;
+			PickupObject(_ent, traceTable.enthit);
+			PlaySound(pickupSound);
+			
+			if (::VSLib.EntData._objEnableDmg[_idx])
+				Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
+		}
 	}
 	else if (IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
 	{

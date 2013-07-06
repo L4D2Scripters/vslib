@@ -2058,7 +2058,7 @@ function AllowTakeDamage(damageTable)
 			{
 				local victim = ::VSLib.Player(damageTable.Victim);
 				local attacker = ::VSLib.Player(damageTable.Attacker);
-			
+				
 				local damagesave = damageTable.DamageDone;
 				damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
 				
