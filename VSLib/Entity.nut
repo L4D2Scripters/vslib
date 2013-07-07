@@ -1923,6 +1923,60 @@ function VSLib::Entity::IsBot()
 }
 
 /**
+ * Sets the sense flags for this player.
+ */
+function VSLib::Entity::SetSenseFlags(flags)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (!IsBot())
+		return;
+	
+	_ent.SetSenseFlags(flags);
+}
+
+/**
+ * Sets if the target can see.
+ */
+function VSLib::Entity::ChangeBotEyes(hasEyes)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (!IsBot())
+		return;
+	
+	if (!hasEyes)
+		_ent.SetSenseFlags(_ent.GetSenseFlags() | g_MapScript.BOT_CANT_SEE);
+	else
+		_ent.SetSenseFlags(_ent.GetSenseFlags() & ~g_MapScript.BOT_CANT_SEE);
+}
+
+/**
+ * Gets the sense flags for this player.
+ */
+function VSLib::Entity::GetSenseFlags()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return 0;
+	}
+	
+	if (!IsBot())
+		return 0;
+	
+	return _ent.GetSenseFlags();
+}
+
+/**
  * Returns true if the entity is a real human (non-bot).
  */
 function VSLib::Entity::IsHuman()

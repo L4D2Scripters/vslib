@@ -248,7 +248,7 @@ function VSLib::Player::GetActiveWeapon()
 	if (!IsPlayerEntityValid())
 	{
 		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
+		return null;
 	}
 	
 	return _ent.GetActiveWeapon();
@@ -493,7 +493,7 @@ function VSLib::Player::GetCurrentAttacker()
 	
 	return null;
 }
-
+	
 /**
  * Returns true if the Survivor player is trapped by an SI attacker like smoker,
  * hunter, charger, or jockey.

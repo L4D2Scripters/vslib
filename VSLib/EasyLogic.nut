@@ -590,10 +590,11 @@ function OnGameEvent_create_panic_event(params)
 
 function OnGameEvent_infected_hurt(params)
 {
-	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local infected = EasyLogic.GetEventEntity(params, "entityid");
+	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnInfectedHurt)
-		func(ents.entity, ets.attacker, params);
+		func(infected, attacker, params);
 }
 
 function OnGameEvent_witch_harasser_set(params)
