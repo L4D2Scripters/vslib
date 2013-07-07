@@ -341,25 +341,18 @@ function OnGameEvent_round_start_post_nav(params)
 
 function OnGameEvent_map_transition (params)
 {
-	// Persist global cache
-	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
-	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnMapEnd)
 		func();
 }
 
 function OnGameEvent_mission_lost (params)
 {
-	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
-	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsDead)
 		func(params);
 }
 
 function OnGameEvent_round_end(params)
 {
-	SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
-	
 	VSLib_ResetRoundVars();
 	VSLib_ResetCache();
 	VSLib_RemoveDeadTimers();
@@ -394,6 +387,9 @@ function OnGameEvent_player_connect(params)
 		::VSLib.GlobalCache[_id]["_name"] <- name;
 		::VSLib.GlobalCache[_id]["_ip"] <- ipAddress;
 		::VSLib.GlobalCache[_id]["_steam"] <- steamID;
+		
+		// Save our changes to the global cache
+		SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
 		
 		foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerJoined)
 			func(ents.entity, name, ipAddress, steamID, params);
