@@ -1053,6 +1053,14 @@ function VSLib::Utils::SanitizeHeldWeapons()
 	EntFire( "weapon_rifle_m60", "kill" );
 	EntFire( "weapon_melee", "kill" );
 	EntFire( "weapon_chainsaw", "kill" );
+}
+
+/**
+ * Removes all held items from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeHeldItems()
+{
 	EntFire( "weapon_pipe_bomb", "kill" );
 	EntFire( "weapon_molotov", "kill" );
 	EntFire( "weapon_vomitjar", "kill" );
@@ -1070,6 +1078,7 @@ function VSLib::Utils::SanitizeHeldWeapons()
  */
 function VSLib::Utils::SanitizeUnheldWeapons()
 {
+	EntFire( "weapon_spawn", "kill" );
 	EntFire( "weapon_pistol_spawn", "kill" );
 	EntFire( "weapon_pistol_magnum_spawn", "kill" );
 	EntFire( "weapon_smg_spawn", "kill" );
@@ -1091,6 +1100,14 @@ function VSLib::Utils::SanitizeUnheldWeapons()
 	EntFire( "weapon_rifle_m60_spawn", "kill" );
 	EntFire( "weapon_melee_spawn", "kill" );
 	EntFire( "weapon_chainsaw_spawn", "kill" );
+}
+
+/**
+ * Removes all unheld items from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeUnheldItems()
+{
 	EntFire( "weapon_pipe_bomb_spawn", "kill" );
 	EntFire( "weapon_molotov_spawn", "kill" );
 	EntFire( "weapon_vomitjar_spawn", "kill" );

@@ -172,6 +172,15 @@
 	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
 }
 
+/**
+ * Global constants
+ */
+// "Difficulty" to be used with OnDifficulty()
+getconsttable()["EASY"] <- "Easy";
+getconsttable()["NORMAL"] <- "Normal";
+getconsttable()["ADVANCED"] <- "Hard";
+getconsttable()["EXPERT"] <- "Expert";
+
 // Create entity data cache system
 ::VSLib.EasyLogic.Cache <- {};
 
