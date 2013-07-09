@@ -515,7 +515,7 @@ function VSLib::Entity::SetHealth(value)
 	if (value <= 0)
 	{
 		SetRawHealth(1);
-		Hurt(1, 0);
+		Hurt(1, (1 << 2));
 	}
 	else if (value < hp)
 		Hurt(hp - value, 0);

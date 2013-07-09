@@ -329,7 +329,9 @@ function OnGameEvent_round_start_post_nav(params)
 	VSLib_ResetRoundVars();
 	VSLib_ResetCache();
 	
-	RestoreTable( "_vslib_global_cache", ::VSLib.GlobalCache );
+	::VSLib.GlobalCache <- ::VSLib.FileIO.LoadTable( "_vslib_global_cache" );
+	if (::VSLib.GlobalCache == null)
+		::VSLib.GlobalCache <- {};
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func(params);
@@ -381,7 +383,10 @@ function OnGameEvent_player_connect(params)
 	
 	if (ents.entity != null)
 	{
-		local _id = ents.entity.GetIndex().tostring();
+		local _id = ents.entity.GetIndex();
+		
+		if (_id in ::VSLib.GlobalCache)
+			delete ::VSLib.GlobalCache[_id];
 		
 		::VSLib.GlobalCache[_id] <- {};
 		::VSLib.GlobalCache[_id]["_name"] <- name;
@@ -389,7 +394,7 @@ function OnGameEvent_player_connect(params)
 		::VSLib.GlobalCache[_id]["_steam"] <- steamID;
 		
 		// Save our changes to the global cache
-		SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
+		::VSLib.FileIO.SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
 		
 		foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerJoined)
 			func(ents.entity, name, ipAddress, steamID, params);
@@ -509,6 +514,10 @@ function OnGameEvent_player_spawn(params)
 	::VSLib.EasyLogic.Cache[_id]._isAlive <- true;
 	::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
 	::VSLib.EasyLogic.Cache[_id]._startPos <- ents.entity.GetLocation();
+	
+	// Remove any bots off the global cache
+	if (ents.entity.IsBot() && _id in ::VSLib.GlobalCache)
+		delete ::VSLib.GlobalCache[_id];
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
 		func(ents.entity, params);

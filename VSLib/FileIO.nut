@@ -47,8 +47,9 @@ function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicate
 		if (idxType == "instance" || idxType == "class" || idxType == "function")
 			continue;
 		
+		// Check for invalid characters
 		local idxStr = idx.tostring();
-		local reg = regexp("^[a-zA-Z0-9]+$");
+		local reg = regexp("^[a-zA-Z0-9_]*$");
 		
 		if (!reg.match(idxStr))
 		{
@@ -56,7 +57,13 @@ function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicate
 			continue;
 		}
 		
-		local preCompileString = ((indice) ? (idx + " = ") : "");
+		// Check for numeric fields and prefix them so system can compile
+		reg = regexp("^[0-9]+$");
+		if (reg.match(idxStr))
+			idxStr = "_vslInt_" + idxStr;
+		
+		
+		local preCompileString = ((indice) ? (idxStr + " = ") : "");
 		
 		switch (typeof val)
 		{
@@ -112,7 +119,21 @@ function VSLib::FileIO::LoadTable(fileName)
 	if (!contents)
 		return null;
 	
-	return compilestring( "return " + contents )();
+	local t = compilestring( "return " + contents )();
+	
+	foreach (idx, val in t)
+	{
+		local idxStr = idx.tostring();
+		
+		if (idxStr.find("_vslInt_") != null)
+		{
+			idxStr = Utils.StringReplace(idxStr, "_vslInt_", "");
+			t[idxStr.tointeger()] <- val;
+			delete t[idx];
+		}
+	}
+	
+	return t;
 }
 
 

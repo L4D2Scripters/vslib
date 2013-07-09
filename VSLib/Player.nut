@@ -87,7 +87,7 @@ function VSLib::Player::GetSteamID()
 		return "";
 	}
 	
-	local id = _idx.tostring();
+	local id = _idx;
 	if (!(id in ::VSLib.GlobalCache))
 		return "";
 	
@@ -127,7 +127,7 @@ function VSLib::Player::GetName()
 		return base.GetName();
 	}
 	
-	local id = _idx.tostring();
+	local id = _idx;
 	if (!(id in ::VSLib.GlobalCache))
 		return base.GetName();
 	
@@ -148,7 +148,7 @@ function VSLib::Player::GetIPAddress()
 		return "";
 	}
 	
-	local id = _idx.tostring();
+	local id = _idx;
 	if (!(id in ::VSLib.GlobalCache))
 		return "";
 	
@@ -548,6 +548,7 @@ function VSLib::Player::Incapacitate()
 		return;
 	
 	SetRawHealth(1);
+	SetHealthBuffer(0);
 	Hurt(5, 0);
 }
 
