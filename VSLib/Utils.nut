@@ -760,10 +760,25 @@ function VSLib::Utils::PrecacheModel( mdl )
 /**
  * Spawns a dynamic model at the specified location
  */
-function VSLib::Utils::SpawnDynamicProp( mdl, pos, ang = QAngle(0,0,0) )
+function VSLib::Utils::SpawnDynamicProp( mdl, pos, ang = QAngle(0,0,0), keyvalues = {} )
 {
 	::VSLib.Utils.PrecacheModel( mdl );
-	return ::VSLib.Utils.CreateEntity("prop_dynamic_override", pos, ang, { model = mdl, StartDisabled = "false", Solid = "6", spawnflags = "8" });
+	local t = { model = mdl, StartDisabled = "false", Solid = "6", spawnflags = "8" };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_dynamic_override", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a physics model at the specified location
+ */
+function VSLib::Utils::SpawnPhysicsProp( mdl, pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	::VSLib.Utils.PrecacheModel( mdl );
+	local t = { model = mdl };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_physics", pos, ang, keyvalues);
 }
 
 /**

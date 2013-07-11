@@ -1462,6 +1462,14 @@ function VSLib::EasyLogic::Players::AnyAliveSurvivor()
 }
 
 /**
+ * Returns one RANDOM valid alive survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::RandomAliveSurvivor()
+{
+	return Utils.GetRandValueFromArray(Players.AliveSurvivors());
+}
+
+/**
  * Returns one valid alive survivor with the highest flow distance, or null if none exist
  */
 function VSLib::EasyLogic::Players::SurvivorWithHighestFlow()
