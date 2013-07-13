@@ -37,6 +37,16 @@ class ::VSLib.Player extends ::VSLib.Entity
 	}
 }
 
+
+// @see DropWeaponSlot
+getconsttable()["SLOT_PRIMARY"] <- 0;
+getconsttable()["SLOT_SECONDARY"] <- 1;
+getconsttable()["SLOT_THROW"] <- 2;
+getconsttable()["SLOT_MEDKIT"] <- 3;
+getconsttable()["SLOT_PILLS"] <- 4;
+
+
+
 /**
  * Returns true if the player entity is valid or false otherwise.
  */
@@ -699,6 +709,50 @@ function VSLib::Player::SetHealthBuffer(value)
 	}
 	
 	_ent.SetHealthBuffer(value);
+}
+
+/**
+ * Drops a weapon from a slot.
+ *
+ * You can use global constants SLOT_PRIMARY, SLOT_SECONDARY, SLOT_THROW,
+ * SLOT_MEDKIT (also works for defibs), SLOT_PILLS (also works for adrenaline etc)
+ */
+function VSLib::Player::DropWeaponSlot(slot)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	
+	slot = "slot" + slot;
+	local t = GetHeldItems();
+	
+	if (t && slot in t)
+	{
+		local wep = Entity(t[slot]);
+		wep.Kill();
+	}
+}
+
+/**
+ * Drops all held weapons
+ */
+function VSLib::Player::DropAllWeapons()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	
+	local t = GetHeldItems();
+	
+	if (t)
+		foreach (ent in t)
+			Entity(ent).Kill();
 }
 
 /**

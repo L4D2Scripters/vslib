@@ -2045,6 +2045,24 @@ function VSLib::Entity::ConnectOutput( output, func )
 	_ent.ConnectOutput( output, oname );
 }
 
+
+/**
+ * Sets the entity's alpha
+ *
+ * @param value An integer value between 0 and 255
+ */
+function VSLib::Entity::SetEntityRenderAmt( value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.__KeyValueFromInt("renderamt", value.tointeger());
+}
+
+
 /**
  * Returns true if this entity can trace to another entity without hitting anything.
  * I.e. if a line can be drawn from this entity to the other entity without any collision.
