@@ -1079,12 +1079,20 @@ function VSLib::Utils::SanitizeHeldItems()
 	EntFire( "weapon_pipe_bomb", "kill" );
 	EntFire( "weapon_molotov", "kill" );
 	EntFire( "weapon_vomitjar", "kill" );
+	EntFire( "weapon_upgradepack_incendiary", "kill" );
+	EntFire( "weapon_upgradepack_explosive", "kill" );
+}
+
+/**
+ * Removes all held meds from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeHeldMeds()
+{
 	EntFire( "weapon_first_aid_kit", "kill" );
 	EntFire( "weapon_pain_pills", "kill" );
 	EntFire( "weapon_adrenaline", "kill" );
 	EntFire( "weapon_defibrillator", "kill" );
-	EntFire( "weapon_upgradepack_incendiary", "kill" );
-	EntFire( "weapon_upgradepack_explosive", "kill" );
 }
 
 /**
@@ -1126,14 +1134,22 @@ function VSLib::Utils::SanitizeUnheldItems()
 	EntFire( "weapon_pipe_bomb_spawn", "kill" );
 	EntFire( "weapon_molotov_spawn", "kill" );
 	EntFire( "weapon_vomitjar_spawn", "kill" );
-	EntFire( "weapon_first_aid_kit_spawn", "kill" );
-	EntFire( "weapon_pain_pills_spawn", "kill" );
-	EntFire( "weapon_adrenaline_spawn", "kill" );
-	EntFire( "weapon_defibrillator_spawn", "kill" );
 	EntFire( "weapon_upgradepack_incendiary_spawn", "kill" );
 	EntFire( "weapon_upgradepack_explosive_spawn", "kill" );
 	EntFire( "upgrade_item", "kill" );
 	EntFire( "ammo", "kill" );
+}
+
+/**
+ * Removes all unheld meds from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeUnheldMeds()
+{
+	EntFire( "weapon_first_aid_kit_spawn", "kill" );
+	EntFire( "weapon_pain_pills_spawn", "kill" );
+	EntFire( "weapon_adrenaline_spawn", "kill" );
+	EntFire( "weapon_defibrillator_spawn", "kill" );
 }
 
 /**

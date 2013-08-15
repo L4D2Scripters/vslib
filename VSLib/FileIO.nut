@@ -136,6 +136,55 @@ function VSLib::FileIO::LoadTable(fileName)
 	return t;
 }
 
+/**
+ * This function will make the filename unique for each mapname.
+ * @authors Rayman1103
+ */
+function VSLib::FileIO::MakeFileName( mapname, modename )
+{
+	return  "VSLib_" + mapname + "_" + modename + ".tbl"
+}
+
+/**
+ * This function will serialize and save a table to the hard disk from the current mapname; useful for storing stats,
+ * round times, and other important information individually for every mapname.
+ * @authors Rayman1103
+ */
+function VSLib::FileIO::SaveTableFileName(mapname, modename, table)
+{
+	//fileName += ".tbl";
+	StringToFile(::VSLib.FileIO.MakeFileName( mapname, modename ), ::VSLib.FileIO.SerializeTable(table));
+}
+
+/**
+ * This function will deserialize and return the compiled table from the current mapname.
+ * If the table does not exist, null is returned.
+ * @authors Rayman1103
+ */
+function VSLib::FileIO::LoadTableFileName(mapname, modename)
+{
+	local contents = FileToString(::VSLib.FileIO.MakeFileName( mapname, modename ) + ".tbl");
+	
+	if (!contents)
+		return null;
+	
+	local t = compilestring( "return " + contents )();
+	
+	foreach (idx, val in t)
+	{
+		local idxStr = idx.tostring();
+		
+		if (idxStr.find("_vslInt_") != null)
+		{
+			idxStr = Utils.StringReplace(idxStr, "_vslInt_", "");
+			t[idxStr.tointeger()] <- val;
+			delete t[idx];
+		}
+	}
+	
+	return t;
+}
+
 
 
 // Add a weak reference to the global table.
