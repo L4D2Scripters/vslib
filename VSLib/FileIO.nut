@@ -152,7 +152,6 @@ function VSLib::FileIO::MakeFileName( mapname, modename )
  */
 function VSLib::FileIO::SaveTableFileName(mapname, modename, table)
 {
-	//fileName += ".tbl";
 	StringToFile(::VSLib.FileIO.MakeFileName( mapname, modename ), ::VSLib.FileIO.SerializeTable(table));
 }
 
