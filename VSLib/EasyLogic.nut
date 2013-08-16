@@ -91,6 +91,8 @@
 	// General player events (both infected and survivors)
 	OnPlayerJoined = {}
 	OnDeath = {}
+	OnInfectedDeath = {}
+	OnZombieDeath = {}
 	OnEnterSaferoom = {}
 	OnLeaveSaferoom = {}
 	OnHurt = {}
@@ -600,6 +602,25 @@ function OnGameEvent_infected_hurt(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnInfectedHurt)
 		func(infected, attacker, params);
+}
+
+function OnGameEvent_infected_death(params)
+{
+	local infected = EasyLogic.GetEventEntity(params, "infected_id");
+	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnInfectedDeath)
+		func(infected, attacker, params);
+}
+
+function OnGameEvent_zombie_death(params)
+{
+	local infected = EasyLogic.GetEventEntity(params, "infected_id");
+	local victim = EasyLogic.GetEventEntity(params, "victim");
+	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnZombieDeath)
+		func(infected, victim, attacker, params);
 }
 
 function OnGameEvent_witch_harasser_set(params)
