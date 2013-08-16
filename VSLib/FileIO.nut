@@ -142,7 +142,7 @@ function VSLib::FileIO::LoadTable(fileName)
  */
 function VSLib::FileIO::MakeFileName( mapname, modename )
 {
-	return  "VSLib_" + mapname + "_" + modename + ".tbl"
+	return  "VSLib_" + mapname + "_" + modename;
 }
 
 /**
@@ -152,7 +152,7 @@ function VSLib::FileIO::MakeFileName( mapname, modename )
  */
 function VSLib::FileIO::SaveTableFileName(mapname, modename, table)
 {
-	StringToFile(::VSLib.FileIO.MakeFileName( mapname, modename ), ::VSLib.FileIO.SerializeTable(table));
+	::VSLib.FileIO.SaveTable(::VSLib.FileIO.MakeFileName( mapname, modename ), table);
 }
 
 /**
@@ -162,26 +162,7 @@ function VSLib::FileIO::SaveTableFileName(mapname, modename, table)
  */
 function VSLib::FileIO::LoadTableFileName(mapname, modename)
 {
-	local contents = FileToString(::VSLib.FileIO.MakeFileName( mapname, modename ) + ".tbl");
-	
-	if (!contents)
-		return null;
-	
-	local t = compilestring( "return " + contents )();
-	
-	foreach (idx, val in t)
-	{
-		local idxStr = idx.tostring();
-		
-		if (idxStr.find("_vslInt_") != null)
-		{
-			idxStr = Utils.StringReplace(idxStr, "_vslInt_", "");
-			t[idxStr.tointeger()] <- val;
-			delete t[idx];
-		}
-	}
-	
-	return t;
+	return ::VSLib.FileIO.LoadTable(::VSLib.FileIO.MakeFileName( mapname, modename ));
 }
 
 
