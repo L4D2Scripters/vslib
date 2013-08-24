@@ -1156,7 +1156,7 @@ function VSLib::Entity::GetTeam()
 	
 	if (!("GetZombieType" in _ent))
 		return UNKNOWN;
-	else if (_ent.IsSurvivor() || _ent.GetZombieType() == SURVIVOR)
+	else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
 		return SURVIVORS;
 	else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost() || _ent.GetClassname() == "infected")
 		return INFECTED;
