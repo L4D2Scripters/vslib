@@ -216,7 +216,7 @@ function VSLib::Player::IsIncapacitated()
 	if (!IsPlayer())
 		return false;
 	
-	return GetPlayerType() == SURVIVOR && _ent.IsIncapacitated();
+	return GetPlayerType() == Z_SURVIVOR && _ent.IsIncapacitated();
 }
 
 /**
@@ -233,7 +233,7 @@ function VSLib::Player::IsHangingFromLedge()
 	if (!IsPlayer())
 		return false;
 	
-	return GetPlayerType() == SURVIVOR && _ent.IsHangingFromLedge();
+	return GetPlayerType() == Z_SURVIVOR && _ent.IsHangingFromLedge();
 }
 
 /**
@@ -521,7 +521,7 @@ function VSLib::Player::IsSurvivorTrapped()
 
 
 /**
- * Returns the type of player. E.g. SPITTER, TANK, SURVIVOR, HUNTER, JOCKEY, SMOKER, BOOMER, CHARGER, COMMON, or UNKNOWN.
+ * Returns the type of player. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, Z_COMMON, or UNKNOWN.
  */
 function VSLib::Player::GetPlayerType()
 {
@@ -530,9 +530,9 @@ function VSLib::Player::GetPlayerType()
 		if (IsEntityValid())
 		{
 			if (_ent.GetClassname() == "infected")
-				return COMMON;
+				return Z_COMMON;
 			else if (_ent.GetClassname() == "witch")
-				return WITCH;
+				return Z_WITCH;
 		}
 		return UNKNOWN;
 	}
@@ -995,7 +995,7 @@ function VSLib::Player::IsFrustrated()
 		return false;
 	}
 	
-	if (GetPlayerType() != TANK)
+	if (GetPlayerType() != Z_TANK)
 		return false;
 	
 	if(_idx in ::VSLib.EasyLogic.Cache)

@@ -152,18 +152,18 @@ getconsttable()["INFECTED"] <- 3;
 
 
 // "Zombie" types, to be used with GetPlayerType()
-getconsttable()["WITCH_BRIDE"] <- 11;
-getconsttable()["MOB"] <- 10;
-getconsttable()["SURVIVOR"] <- 9;
-getconsttable()["TANK"] <- 8;
-getconsttable()["WITCH"] <- 7;
-getconsttable()["CHARGER"] <- 6;
-getconsttable()["JOCKEY"] <- 5;
-getconsttable()["SPITTER"] <- 4;
-getconsttable()["HUNTER"] <- 3;
-getconsttable()["BOOMER"] <- 2;
-getconsttable()["SMOKER"] <- 1;
-getconsttable()["COMMON"] <- 0;
+getconsttable()["Z_WITCH_BRIDE"] <- 11;
+getconsttable()["Z_MOB"] <- 10;
+getconsttable()["Z_SURVIVOR"] <- 9;
+getconsttable()["Z_TANK"] <- 8;
+getconsttable()["Z_WITCH"] <- 7;
+getconsttable()["Z_CHARGER"] <- 6;
+getconsttable()["Z_JOCKEY"] <- 5;
+getconsttable()["Z_SPITTER"] <- 4;
+getconsttable()["Z_HUNTER"] <- 3;
+getconsttable()["Z_BOOMER"] <- 2;
+getconsttable()["Z_SMOKER"] <- 1;
+getconsttable()["Z_COMMON"] <- 0;
 
 // More button values to be used with IsPressingButton()
 getconsttable()["BUTTON_ATTACK"] <- 1;
