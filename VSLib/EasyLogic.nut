@@ -103,6 +103,8 @@
 	OnUse = {}
 	OnTeamChanged = {}
 	OnNameChanged = {}
+	OnGrabbedLedge = {}
+	OnReleasedLedge = {}
 	
 	// General infected events
 	OnAbilityUsed = {}
@@ -1037,6 +1039,23 @@ function OnGameEvent_survivor_rescued(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorRescued)
 		func(rescuer, victim, params);
+}
+
+function OnGameEvent_player_ledge_grab(params)
+{
+	local causer = EasyLogic.GetEventPlayer(params, "causer");
+	local victim = EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnGrabbedLedge)
+		func(causer, victim, params);
+}
+
+function OnGameEvent_player_ledge_release(params)
+{
+	local victim = EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnReleasedLedge)
+		func(victim, params);
 }
 
 //
