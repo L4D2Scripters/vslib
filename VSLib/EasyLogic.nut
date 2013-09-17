@@ -129,6 +129,8 @@
 	OnReviveEnd = {}
 	OnReviveSuccess = {}
 	OnWeaponGiven = {}
+	OnWeaponFire = {}
+	OnWeaponFireEmpty = {}
 	OnWeaponReload = {}
 	OnWeaponZoom = {}
 	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
@@ -782,6 +784,21 @@ function OnGameEvent_weapon_given(params)
 		func(ents.entity, giver, params);
 }
 
+function OnGameEvent_weapon_fire(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponFire)
+		func(ents.entity, params);
+}
+
+function OnGameEvent_weapon_fire_on_empty(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponFireEmpty)
+		func(ents.entity, params);
+}
 function OnGameEvent_weapon_reload(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);

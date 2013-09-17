@@ -1071,6 +1071,43 @@ function VSLib::Utils::SanitizeHeldWeapons()
 }
 
 /**
+ * Removes all held primary weapons from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeHeldPrimary()
+{
+	EntFire( "weapon_smg", "kill" );
+	EntFire( "weapon_pumpshotgun", "kill" );
+	EntFire( "weapon_autoshotgun", "kill" );
+	EntFire( "weapon_rifle", "kill" );
+	EntFire( "weapon_hunting_rifle", "kill" );
+	EntFire( "weapon_smg_silenced", "kill" );
+	EntFire( "weapon_shotgun_chrome", "kill" );
+	EntFire( "weapon_sniper_military", "kill" );
+	EntFire( "weapon_shotgun_spas", "kill" );
+	EntFire( "weapon_rifle_desert", "kill" );
+	EntFire( "weapon_rifle_ak47", "kill" );
+	EntFire( "weapon_smg_mp5", "kill" );
+	EntFire( "weapon_rifle_sg552", "kill" );
+	EntFire( "weapon_sniper_awp", "kill" );
+	EntFire( "weapon_sniper_scout", "kill" );
+	EntFire( "weapon_grenade_launcher", "kill" );
+	EntFire( "weapon_rifle_m60", "kill" );
+}
+
+/**
+ * Removes all held secondary weapons from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeHeldSecondary()
+{
+	EntFire( "weapon_pistol", "kill" );
+	EntFire( "weapon_pistol_magnum", "kill" );
+	EntFire( "weapon_melee", "kill" );
+	EntFire( "weapon_chainsaw", "kill" );
+}
+
+/**
  * Removes all held items from the map.
  * @authors Rayman1103
  */
@@ -1121,6 +1158,45 @@ function VSLib::Utils::SanitizeUnheldWeapons()
 	EntFire( "weapon_sniper_scout_spawn", "kill" );
 	EntFire( "weapon_grenade_launcher_spawn", "kill" );
 	EntFire( "weapon_rifle_m60_spawn", "kill" );
+	EntFire( "weapon_melee_spawn", "kill" );
+	EntFire( "weapon_chainsaw_spawn", "kill" );
+}
+
+/**
+ * Removes all unheld primary weapons from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeUnheldPrimary()
+{
+	EntFire( "weapon_spawn", "kill" );
+	EntFire( "weapon_smg_spawn", "kill" );
+	EntFire( "weapon_pumpshotgun_spawn", "kill" );
+	EntFire( "weapon_autoshotgun_spawn", "kill" );
+	EntFire( "weapon_rifle_spawn", "kill" );
+	EntFire( "weapon_hunting_rifle_spawn", "kill" );
+	EntFire( "weapon_smg_silenced_spawn", "kill" );
+	EntFire( "weapon_shotgun_chrome_spawn", "kill" );
+	EntFire( "weapon_sniper_military_spawn", "kill" );
+	EntFire( "weapon_shotgun_spas_spawn", "kill" );
+	EntFire( "weapon_rifle_desert_spawn", "kill" );
+	EntFire( "weapon_rifle_ak47_spawn", "kill" );
+	EntFire( "weapon_smg_mp5_spawn", "kill" );
+	EntFire( "weapon_rifle_sg552_spawn", "kill" );
+	EntFire( "weapon_sniper_awp_spawn", "kill" );
+	EntFire( "weapon_sniper_scout_spawn", "kill" );
+	EntFire( "weapon_grenade_launcher_spawn", "kill" );
+	EntFire( "weapon_rifle_m60_spawn", "kill" );
+}
+
+/**
+ * Removes all unheld secondary weapons from the map.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SanitizeUnheldSecondary()
+{
+	EntFire( "weapon_spawn", "kill" );
+	EntFire( "weapon_pistol_spawn", "kill" );
+	EntFire( "weapon_pistol_magnum_spawn", "kill" );
 	EntFire( "weapon_melee_spawn", "kill" );
 	EntFire( "weapon_chainsaw_spawn", "kill" );
 }
