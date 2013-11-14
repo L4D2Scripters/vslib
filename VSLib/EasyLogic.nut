@@ -1631,6 +1631,37 @@ function VSLib::EasyLogic::Objects::L4D1Survivors()
 }
 
 /**
+ * Returns a value of 1 or 2 depending on survivor version
+ */
+ function VSLib::EasyLogic::GetSurvivorVersion(){
+	local L4D1Survs =
+	[
+		"!bill"
+		"!francis" 
+		"!zoey" 
+		"!louis"
+	]
+	
+	local ent = null;
+	
+	foreach( s in L4D1Survs )
+	{
+		while( ent = Entities.FindByName( ent, s ) )
+		{
+			if( ent.IsValid() )
+			{
+				if( !IsPlayerABot(ent) )
+				{
+					return 1;
+				}
+			}
+		}
+	}
+	
+	return 2;
+ }
+
+/**
  * Returns all entities of a specific classname.
  *
  * E.g. foreach ( object in Objects.OfClassname("prop_physics") ) ...
