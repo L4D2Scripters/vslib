@@ -528,6 +528,19 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 	return false;
 }
 
+/**
+ * Spawns the requested commentary zombie at the location you want.
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnCommentaryZombie(zombieModel = "common_male_tshirt_cargos", pos = Vector(0,0,0), ang = Vector(0,0,0))
+{
+	local commentary_zombie_spawner = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "commentary_zombie_spawner", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang });
+	
+	DoEntFire( "!self", "SpawnZombie", zombieModel, 0, commentary_zombie_spawner, commentary_zombie_spawner );
+	DoEntFire( "!self", "Kill", "", 0, null, commentary_zombie_spawner );
+}
+
 
 //
 // Below are helper math functions.
