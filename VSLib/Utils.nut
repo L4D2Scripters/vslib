@@ -537,6 +537,7 @@ function VSLib::Utils::SpawnCommentaryZombie(zombieModel = "common_male_tshirt_c
 {
 	local commentary_zombie_spawner = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "commentary_zombie_spawner", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang });
 	
+	//::VSLib.Utils.PrecacheModel( "models/infected/" + zombieModel + ".mdl" );
 	DoEntFire( "!self", "SpawnZombie", zombieModel, 0, commentary_zombie_spawner, commentary_zombie_spawner );
 	DoEntFire( "!self", "Kill", "", 0, null, commentary_zombie_spawner );
 }
@@ -756,6 +757,19 @@ function VSLib::Utils::GetTimeTable( time )
 }
 
 /**
+ * Broadcasts a command to all clients
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::BroadcastClientCommand(command)
+{
+	local point_broadcastclientcommand = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_broadcastclientcommand", origin = Vector(0,0,0), angles = Vector(0,0,0) });
+	
+	DoEntFire( "!self", "Command", command, 0, point_broadcastclientcommand, point_broadcastclientcommand );
+	DoEntFire( "!self", "Kill", "", 0, null, point_broadcastclientcommand );
+}
+
+/**
  * Precaches a model
  *
  * @authors Rayman1103
@@ -793,6 +807,20 @@ function VSLib::Utils::SpawnPhysicsProp( mdl, pos, ang = QAngle(0,0,0), keyvalue
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity("prop_physics", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a ragdoll model at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnRagdoll( mdl, pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	::VSLib.Utils.PrecacheModel( mdl );
+	local t = { model = mdl, body = "0", fademindist = "-1", fadescale = "1", skin = "0", spawnflags = "4", StartDisabled = "false", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_ragdoll", pos, ang, keyvalues);
 }
 
 /**
@@ -941,7 +969,7 @@ function VSLib::Utils::AreVectorsEqual(vec1, vec2)
  * null, then the map is shaken globally. Returns the env_shake entity. Note that the returned entity is
  * automatically killed after its use is done.
  *
- * @auhors Rayman1103, Neil
+ * @authors Rayman1103, Neil
  */
 function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, _frequency = 35, _radius = 500)
 {
@@ -977,7 +1005,7 @@ function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, 
  * Fades player's screen with the specified color, alpha, etc. Returns the env_fade entity. Note that the entity is
  * automatically killed after its use is done.
  *
- * @auhors Rayman1103, Neil
+ * @authors Rayman1103, Neil
  */
 function VSLib::Utils::FadeScreen(player, red = 0, green = 0, blue = 0, alpha = 255, _duration = 5.0, _holdtime = 5.0, modulate = false, fadeFrom = false)
 {
