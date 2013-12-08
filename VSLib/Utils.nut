@@ -622,7 +622,7 @@ function VSLib::Utils::DrawLine(pos1, pos2, time = 10.0, red = 255, green = 0, b
  * Slows down time.
  */
 ::_vsl_func_timescale <- null;
-function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, minBlendRate = 1.0, blendDeltaMultiplier = 2.0)
+function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, minBlendRate = 1.0, blendDeltaMultiplier = 2.0, allowResumeTime = true)
 {
 	if (_vsl_func_timescale == null)
 	{
@@ -642,7 +642,8 @@ function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, m
 	
 	_vsl_func_timescale.Input("Start");
 	
-	Timers.AddTimer(1.5, 0, Utils.ResumeTime, _vsl_func_timescale);
+	if ( allowResumeTime )
+		Timers.AddTimer(1.5, 0, Utils.ResumeTime, _vsl_func_timescale);
 }
 
 /**
