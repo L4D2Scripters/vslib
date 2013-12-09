@@ -760,6 +760,7 @@ function VSLib::Utils::GetTimeTable( time )
  * Broadcasts a command to all clients
  *
  * @authors Rayman1103
+ * Currently doesn't work for other clients, only works for the host.
  */
 function VSLib::Utils::BroadcastClientCommand(command)
 {
