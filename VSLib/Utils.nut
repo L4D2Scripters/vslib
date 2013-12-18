@@ -825,6 +825,32 @@ function VSLib::Utils::SpawnRagdoll( mdl, pos, ang = QAngle(0,0,0), keyvalues = 
 }
 
 /**
+ * Spawns a minigun at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnMinigun( pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	local t = { model = "models/w_models/weapons/50cal.mdl", body = "0", fademindist = "-1", fadescale = "1", MaxAnimTime = "10", MaxPitch = "50", MaxYaw = "65", MinAnimTime = "5", MinPitch = "-25", spawnflags = "0", StartDisabled = "false", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_mounted_machine_gun", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a L4D1 minigun at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	local t = { model = "models/w_models/weapons/w_minigun.mdl", body = "0", fademindist = "-1", fadescale = "1", MaxAnimTime = "10", MaxPitch = "50", MaxYaw = "65", MinAnimTime = "5", MinPitch = "-25", spawnflags = "0", StartDisabled = "false", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_minigun_l4d1", pos, ang, keyvalues);
+}
+
+/**
  * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
