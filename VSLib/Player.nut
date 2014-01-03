@@ -169,6 +169,20 @@ function VSLib::Player::GetIPAddress()
 }
 
 /**
+ * Returns true if the player is dead.
+ */
+function VSLib::Player::GetPlayerName()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.GetPlayerName();
+}
+
+/**
  * Returns true if the player is alive.
  */
 function VSLib::Player::IsAlive()
