@@ -851,6 +851,19 @@ function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {
 }
 
 /**
+ * Spawns the requested weapon at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnWeapon( weaponName, Count = 4, pos = Vector(0,0,0), ang = Vector(0,0,90), keyvalues = {} )
+{
+	local t = { body = "0", count = Count, disableshadows = "0", spawnflags = "2", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("weapon_" + weaponName + "_spawn", pos, ang, keyvalues);
+}
+
+/**
  * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
