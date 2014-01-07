@@ -864,6 +864,19 @@ function VSLib::Utils::SpawnWeapon( weaponName, Count = 4, pos = Vector(0,0,0), 
 }
 
 /**
+ * Spawns an ammo pile at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnAmmo( mdl = "models/props/terror/ammo_stack.mdl", pos = Vector(0,0,0), ang = Vector(0,0,0), keyvalues = {} )
+{
+	local t = { model = mdl, count = "5", solid = "6", spawnflags = "2", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("weapon_ammo_spawn", pos, ang, keyvalues);
+}
+
+/**
  * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
