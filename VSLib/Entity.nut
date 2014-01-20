@@ -293,7 +293,7 @@ function VSLib::Entity::IsEntityValid()
 /**
  * Gets the entity's real health.
  * If the entity is valid, the entity's health is returned; otherwise, null is returned.
- * The health includes any andrenaline or pill health.
+ * The health includes any adrenaline or pill health.
  */
 function VSLib::Entity::GetHealth()
 {

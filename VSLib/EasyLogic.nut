@@ -799,6 +799,7 @@ function OnGameEvent_weapon_fire_on_empty(params)
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponFireEmpty)
 		func(ents.entity, params);
 }
+
 function OnGameEvent_weapon_reload(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1633,7 +1634,8 @@ function VSLib::EasyLogic::Objects::L4D1Survivors()
 /**
  * Returns a value of 1 or 2 depending on survivor version
  */
- function VSLib::EasyLogic::GetSurvivorVersion(){
+function VSLib::EasyLogic::GetSurvivorVersion()
+{
 	local L4D1Survs =
 	[
 		"!bill"
@@ -1659,7 +1661,7 @@ function VSLib::EasyLogic::Objects::L4D1Survivors()
 	}
 	
 	return 2;
- }
+}
 
 /**
  * Returns all entities of a specific classname.

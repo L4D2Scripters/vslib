@@ -672,6 +672,15 @@ function VSLib::Utils::PlaySoundToAll(sound)
 		p.PlaySound(sound);
 }
 
+/**
+ * Stops a sound on all clients
+ */
+function VSLib::Utils::StopSoundOnAll(sound)
+{
+	foreach (p in Players.All())
+		p.StopSound(sound);
+}
+
 
 /**
  * Returns the victim of the attacker player or null if there is no victim
@@ -787,6 +796,19 @@ function VSLib::Utils::PrecacheModel( mdl )
 }
 
 /**
+ * Precaches the CS:S weapons, making them usable
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::PrecacheCSSWeapons( )
+{
+	local weps = ["weapon_rifle_sg552", "weapon_smg_mp5", "weapon_sniper_awp", "weapon_sniper_scout"];
+
+	foreach(wep in weps)
+		VSLib.Utils.CreateEntity(wep).Kill();
+}
+
+/**
  * Spawns a dynamic model at the specified location
  */
 function VSLib::Utils::SpawnDynamicProp( mdl, pos, ang = QAngle(0,0,0), keyvalues = {} )
@@ -857,7 +879,13 @@ function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {
  */
 function VSLib::Utils::SpawnWeapon( weaponName, Count = 4, pos = Vector(0,0,0), ang = Vector(0,0,90), keyvalues = {} )
 {
-	local t = { body = "0", count = Count, disableshadows = "0", spawnflags = "2", };
+	local SpawnFlag = 2;
+	if ( Count == 0 )
+	{
+		SpawnFlag = 10;
+		Count = 1;
+	}
+	local t = { body = "0", count = Count, disableshadows = "0", spawnflags = SpawnFlag, };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity("weapon_" + weaponName + "_spawn", pos, ang, keyvalues);
@@ -875,6 +903,33 @@ function VSLib::Utils::SpawnAmmo( mdl = "models/props/terror/ammo_stack.mdl", po
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity("weapon_ammo_spawn", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a fuel barrel at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnFuelBarrel( pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	local t = { model = "models/props_industrial/barrel_fuel.mdl", BasePiece = "models/props_industrial/barrel_fuel_partb.mdl", DetonateParticles = "weapon_pipebomb", DetonateSound = "BaseGrenade.Explode", fademindist = "-1", fadescale = "1", FlyingParticles = "barrel_fly", FlyingPiece01 = "models/props_industrial/barrel_fuel_parta.mdl", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_fuel_barrel", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a door at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnDoor( mdl = "models/props_downtown/door_interior_112_01.mdl", pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
+{
+	::VSLib.Utils.PrecacheModel( mdl );
+	local t = { model = mdl, axis = "-1692 -2016 -376.21, -1692 -2016 -376.21", body = "0", distance = "90", fademindist = "-1", fadescale = "1", forceclosed = "0", health = "0", returndelay = "-1", spawnpos = "0", speed = "200", spawnflags = "8192", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_door_rotating", pos, ang, keyvalues);
 }
 
 /**
