@@ -1,5 +1,5 @@
 /*  
- * Copyright (c) 2013 LuKeM
+ * Copyright (c) 2013 LuKeM aka Neil - 119 and Rayman1103
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without
@@ -18,7 +18,7 @@
  * 
  */
 
- 
+
 /**
  * \brief Provides many helpful player functions.
  *
@@ -179,7 +179,7 @@ function VSLib::Player::IsAlive()
 		return false;
 	}
 	
-	return !_ent.IsDead();
+	return !_ent.IsDead() && !_ent.IsDying();
 	
 	// No longer needed after EMS 5/29 update:
 	
@@ -200,6 +200,20 @@ function VSLib::Player::IsDead()
 	}
 	
 	return _ent.IsDead();
+}
+
+/**
+ * Returns true if the player is dying.
+ */
+function VSLib::Player::IsDying()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.IsDying();
 }
 
 /**
@@ -248,6 +262,20 @@ function VSLib::Player::IsGhost()
 	}
 	
 	return _ent.IsGhost();
+}
+
+/**
+ * Returns true if the entity is on fire.
+ */
+function VSLib::Player::IsOnFire()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.IsOnFire();
 }
 
 /**
@@ -868,7 +896,7 @@ function VSLib::Player::Defib()
 		return false;
 	}
 	
-	if (IsDead())
+	if (IsDead() || IsDying())
 	{
 		_ent.ReviveByDefib();
 		return true;
@@ -1043,6 +1071,27 @@ function VSLib::Player::GetSurvivorSlot()
 	}
 	
 	return _ent.GetSurvivorSlot();
+}
+
+/**
+ * Extinguish a burning player (also checks if player is on fire first).
+ * Returns true if the player was extinguished.
+ */
+function VSLib::Player::Extinguish()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (IsOnFire())
+	{
+		_ent.Extinguish();
+		return true;
+	}
+	
+	return false;
 }
 
 /**
@@ -1332,6 +1381,34 @@ function VSLib::Player::Give(str)
 	}
 	
 	_ent.GiveItem(str);
+}
+
+/**
+ * Removes a player's weapon.
+ */
+function VSLib::Player::Remove(str)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local weapon = null;
+	if ( str.find("weapon_") != null )
+	{
+		while( weapon = Entities.FindByClassnameWithin( weapon, str, GetLocation(), 1 ) )
+		{
+			DoEntFire( "!self", "Kill", "", 0, null, weapon );
+		}
+	}
+	else
+	{
+		while( weapon = Entities.FindByClassnameWithin( weapon, "weapon_" + str, GetLocation(), 1 ) )
+		{
+			DoEntFire( "!self", "Kill", "", 0, null, weapon );
+		}
+	}
 }
 
 

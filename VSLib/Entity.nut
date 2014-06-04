@@ -1,5 +1,5 @@
 /*  
- * Copyright (c) 2013 LuKeM (Lucas Murawski)
+ * Copyright (c) 2013 LuKeM aka Neil - 119 and Rayman1103
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without
@@ -18,7 +18,7 @@
  * 
  */
 
- 
+
 /**
  * \brief Provides many helpful entity functions.
  *
@@ -277,7 +277,7 @@ getconsttable()["MASK_SPLITAREAPORTAL"] <-(getconsttable()["CONTENTS_WATER"]|get
  * Returns true if the entity is valid or false otherwise.
  * Sometimes, just because an entity or edict exists doesn't mean that
  * it hasn't freed up or become invalidated. Luckily, you will rarely use
- * thus function since VSLib uses it automatically.
+ * this function since VSLib uses it automatically.
  */
 function VSLib::Entity::IsEntityValid()
 {
@@ -2151,6 +2151,38 @@ function AllowTakeDamage(damageTable)
 	}
 	
 	return true;
+}
+
+
+
+/**
+ * Associates the AllowBash() function with ::VSLib.
+ */
+function AllowBash( basher, bashee )
+{
+	local attacker = ::VSLib.Player(basher);
+	local victim = ::VSLib.Player(bashee);
+	if ( victim.GetClassname() != "player" )
+		victim = ::VSLib.Entity(bashee);
+	
+	foreach(func in ::VSLib.EasyLogic.OnBash)
+	{
+		if (func != null)
+		{
+			local res = func(attacker, victim);
+			
+			if (res != null)
+			switch ( res )
+			{
+				case ALLOW_BASH_NONE:
+					return ALLOW_BASH_NONE;
+				case ALLOW_BASH_PUSHONLY:
+					return ALLOW_BASH_PUSHONLY;
+			}
+		}
+	}
+	
+	return ALLOW_BASH_ALL;
 }
 
 

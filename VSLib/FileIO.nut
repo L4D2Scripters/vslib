@@ -1,5 +1,5 @@
 /*  
- * Copyright (c) 2013 LuKeM aka Neil - 119
+ * Copyright (c) 2013 LuKeM aka Neil - 119 and Rayman1103
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without
@@ -17,7 +17,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  */
-
 
 
 /**
@@ -72,7 +71,7 @@ function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicate
 				break;
 			
 			case "string":
-				baseString += preCompileString + "\"" + ::VSLib.Utils.StringReplace(val, "\"", "\\\"") + "\"\n"; // "
+				baseString += preCompileString + "\"" + ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "\"", "{VSQUOTE}"), @"\\", "{VSSLASH}") + "\"\n";
 				break;
 			
 			case "integer":
@@ -109,6 +108,22 @@ function VSLib::FileIO::SaveTable(fileName, table)
 }
 
 /**
+ * This function will clean table input.
+ */
+function VSLib::FileIO::DeserializeReviseTable(t)
+{
+	foreach (idx, val in t)
+	{
+		if (typeof val == "string")
+			t[idx] = ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "{VSQUOTE}", "\""), "{VSSLASH}", @"\");
+		else if (typeof val == "table")
+			t[idx] = DeserializeReviseTable(val);
+	}
+	
+	return t;
+}
+
+/**
  * This function will deserialize and return the compiled table.
  * If the table does not exist, null is returned.
  */
@@ -133,8 +148,11 @@ function VSLib::FileIO::LoadTable(fileName)
 		}
 	}
 	
+	t = DeserializeReviseTable(t);
+	
 	return t;
 }
+
 
 /**
  * This function will make the filename unique for each mapname.

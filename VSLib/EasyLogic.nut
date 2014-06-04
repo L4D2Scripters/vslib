@@ -1,5 +1,5 @@
 /*  
- * Copyright (c) 2013 LuKeM
+ * Copyright (c) 2013 LuKeM aka Neil - 119 and Rayman1103
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without
@@ -18,7 +18,7 @@
  * 
  */
 
- 
+
 /**
  * The EasyLogic table provides helper functions that automate laborious processes.
  *
@@ -52,6 +52,12 @@
 	// Player/object helpers
 	Players = {}
 	Objects = {}
+	
+	// Bash hooks
+	OnBash = {}
+	
+	// User command hooks
+	UserCommand = {}
 	
 	// Round variables
 	RoundVars =
@@ -128,6 +134,7 @@
 	OnReviveBegin = {}
 	OnReviveEnd = {}
 	OnReviveSuccess = {}
+	OnWeaponDropped = {}
 	OnWeaponGiven = {}
 	OnWeaponFire = {}
 	OnWeaponFireEmpty = {}
@@ -135,6 +142,9 @@
 	OnWeaponZoom = {}
 	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
 	OnSurvivorRescued = {}
+	OnUpgradeDeploying = {}
+	OnUpgradeDeployed = {}
+	OnUpgradeReceived = {}
 	
 	// Charger events
 	OnChargerCharged = {}
@@ -185,7 +195,7 @@
 getconsttable()["EASY"] <- "Easy";
 getconsttable()["NORMAL"] <- "Normal";
 getconsttable()["ADVANCED"] <- "Hard";
-getconsttable()["EXPERT"] <- "Expert";
+getconsttable()["EXPERT"] <- "Impossible";
 
 // Create entity data cache system
 ::VSLib.EasyLogic.Cache <- {};
@@ -283,7 +293,7 @@ function OnGameEvent_difficulty_changed(params)
 	else if (newDiff == 2)
 		diff = "Hard";
 	else if (newDiff == 3)
-		diff = "Expert";
+		diff = "Impossible";
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
 		func(diff);
@@ -602,7 +612,10 @@ function OnGameEvent_create_panic_event(params)
 function OnGameEvent_infected_hurt(params)
 {
 	local infected = EasyLogic.GetEventEntity(params, "entityid");
-	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
+	local attackerid = EasyLogic.GetEventInt(params, "attacker");
+	local attacker = null;
+	if (attackerid > 0 && attackerid != 7)
+		attacker = EasyLogic.GetEventPlayer(params, "attacker");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnInfectedHurt)
 		func(infected, attacker, params);
@@ -610,21 +623,23 @@ function OnGameEvent_infected_hurt(params)
 
 function OnGameEvent_infected_death(params)
 {
-	local infected = EasyLogic.GetEventEntity(params, "infected_id");
-	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
+	//local infected = EasyLogic.GetEventEntity(params, "infected_id"); //infected_id doesn't exist in the params table
+	local attackerid = EasyLogic.GetEventInt(params, "attacker");
+	local attacker = null;
+	if (attackerid > 0 && attackerid != 7)
+		attacker = EasyLogic.GetEventPlayer(params, "attacker");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnInfectedDeath)
-		func(infected, attacker, params);
+		func(attacker, params);
 }
 
 function OnGameEvent_zombie_death(params)
 {
-	local infected = EasyLogic.GetEventEntity(params, "infected_id");
-	local victim = EasyLogic.GetEventEntity(params, "victim");
+	local victim = EasyLogic.GetEventInt(params, "infected_id");
 	local attacker = EasyLogic.GetEventPlayer(params, "attacker");
-	
+
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnZombieDeath)
-		func(infected, victim, attacker, params);
+		func(victim, attacker, params);
 }
 
 function OnGameEvent_witch_harasser_set(params)
@@ -782,6 +797,15 @@ function OnGameEvent_weapon_given(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponGiven)
 		func(ents.entity, giver, params);
+}
+
+function OnGameEvent_weapon_drop(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local item = ::VSLib.EasyLogic.GetEventString(params, "item");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponDropped)
+		func(ents.entity, "weapon_" + item, params);
 }
 
 function OnGameEvent_weapon_fire(params)
@@ -1057,6 +1081,32 @@ function OnGameEvent_survivor_rescued(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorRescued)
 		func(rescuer, victim, params);
+}
+
+function OnGameEvent_upgrade_pack_begin(params)
+{
+	local deployer = EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradeDeploying)
+		func(deployer, params);
+}
+
+function OnGameEvent_upgrade_pack_used(params)
+{
+	local deployer = EasyLogic.GetEventPlayer(params, "userid");
+	local upgrade = EasyLogic.GetEventEntity(params, "upgradeid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradeDeployed)
+		func(deployer, upgrade, params);
+}
+
+function OnGameEvent_receive_upgrade(params)
+{
+	local receiver = EasyLogic.GetEventPlayer(params, "userid");
+	local upgrade = EasyLogic.GetEventString(params, "upgrade");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradeReceived)
+		func(receiver, upgrade, params);
 }
 
 function OnGameEvent_player_ledge_grab(params)
@@ -1354,6 +1404,49 @@ function VSLib::EasyLogic::GetArgument(idx)
 
 
 
+//
+//	Below is the UserConsoleCommand() function.
+//
+
+
+
+/**
+ * Lets you send commands by using scripted_user_func in console
+ */
+function UserConsoleCommand( playerScript, arg )
+{
+	// Separate the commands and arguments
+	local arr = split(arg, ",");
+	
+	// Identify the command
+	local cmd = arr[0];
+	
+	// Build an argument array
+	local args = {};
+	local idx = -1;
+	foreach (k, v in arr)
+	{
+		if (k != -1 && v != null && v != "")
+		{
+			args[idx] <- v;
+			idx++;
+		}
+	}
+	
+	// Store it.
+	::VSLib.EasyLogic.LastArgs <- args;
+	
+	local player = ::VSLib.Player(playerScript);
+	
+	foreach(v in ::VSLib.EasyLogic.UserCommand)
+	{
+		if (v != null)
+			v(player, arg);
+	}
+}
+
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Player helpers
@@ -1600,6 +1693,39 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 
 
 /**
+ * Returns a value of 1 or 2 depending on survivor version
+ */
+function VSLib::EasyLogic::GetSurvivorVersion()
+{
+	local L4D1Survs =
+	[
+		"!bill"
+		"!francis" 
+		"!zoey" 
+		"!louis"
+	]
+	
+	local ent = null;
+	
+	foreach( s in L4D1Survs )
+	{
+		while( ent = Entities.FindByName( ent, s ) )
+		{
+			if( ent.IsValid() )
+			{
+				if( !IsPlayerABot(ent) )
+				{
+					return 1;
+				}
+			}
+		}
+	}
+	
+	return 2;
+}
+
+
+/**
  * Returns a table of L4D1 survivors.
  */
 function VSLib::EasyLogic::Objects::L4D1Survivors()
@@ -1632,38 +1758,6 @@ function VSLib::EasyLogic::Objects::L4D1Survivors()
 }
 
 /**
- * Returns a value of 1 or 2 depending on survivor version
- */
-function VSLib::EasyLogic::GetSurvivorVersion()
-{
-	local L4D1Survs =
-	[
-		"!bill"
-		"!francis" 
-		"!zoey" 
-		"!louis"
-	]
-	
-	local ent = null;
-	
-	foreach( s in L4D1Survs )
-	{
-		while( ent = Entities.FindByName( ent, s ) )
-		{
-			if( ent.IsValid() )
-			{
-				if( !IsPlayerABot(ent) )
-				{
-					return 1;
-				}
-			}
-		}
-	}
-	
-	return 2;
-}
-
-/**
  * Returns all entities of a specific classname.
  *
  * E.g. foreach ( object in Objects.OfClassname("prop_physics") ) ...
@@ -1686,12 +1780,124 @@ function VSLib::EasyLogic::Objects::OfClassname(classname)
 }
 
 /**
+ * Returns all entities of a specific classname within a radius.
+ *
+ * E.g. foreach ( object in Objects.OfClassnameWithin("prop_physics", Vector(0,0,0), 10) ) ...
+ */
+function VSLib::EasyLogic::Objects::OfClassnameWithin(classname, origin, radius)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassnameWithin(ent, classname, origin, radius))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a single entity of the specified classname, or null if non-existent
  */
 function VSLib::EasyLogic::Objects::AnyOfClassname(classname)
 {
 	local ent = null;
 	while (ent = Entities.FindByClassname(ent, classname))
+	{
+		if (ent.IsValid())
+			return ::VSLib.Entity(ent);
+	}
+	
+	return null;
+}
+
+/**
+ * Returns all entities of a specific targetname.
+ */
+function VSLib::EasyLogic::Objects::OfName(targetname)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByName(ent, targetname))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns all entities of a specific targetname within a radius.
+ */
+function VSLib::EasyLogic::Objects::OfNameWithin(targetname, origin, radius)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByNameWithin(ent, targetname, origin, radius))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a single entity of the specified targetname, or null if non-existent
+ */
+function VSLib::EasyLogic::Objects::AnyOfName(targetname)
+{
+	local ent = null;
+	while (ent = Entities.FindByName(ent, targetname))
+	{
+		if (ent.IsValid())
+			return ::VSLib.Entity(ent);
+	}
+	
+	return null;
+}
+
+/**
+ * Returns all entities of a particular model.
+ */
+function VSLib::EasyLogic::Objects::OfModel(model)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByModel(ent, model))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a single entity of the specified model, or null if non-existent
+ */
+function VSLib::EasyLogic::Objects::AnyOfModel(model)
+{
+	local ent = null;
+	while (ent = Entities.FindByModel(ent, model))
 	{
 		if (ent.IsValid())
 			return ::VSLib.Entity(ent);
@@ -1736,26 +1942,6 @@ function VSLib::EasyLogic::Objects::AliveAroundRadius(pos, radius)
 			delete t[idx];
 		else if (::VSLib.Player(ent).IsDead()) // tag on a branched if statement
 			delete t[idx];
-	
-	return t;
-}
-
-/**
- * Returns all entities of a particular model.
- */
-function VSLib::EasyLogic::Objects::OfModel(model)
-{
-	local t = {};
-	local ent = null;
-	local i = -1;
-	while (ent = Entities.FindByModel(ent, model))
-	{
-		if (ent.IsValid())
-		{
-			local libObj = ::VSLib.Entity(ent);
-			t[++i] <- libObj;
-		}
-	}
 	
 	return t;
 }

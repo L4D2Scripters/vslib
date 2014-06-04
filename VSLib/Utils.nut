@@ -1,3 +1,24 @@
+/*  
+ * Copyright (c) 2013 LuKeM aka Neil - 119 and Rayman1103
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ */
+
+
 /**
 * Helper functions that VSLib uses.
 */
@@ -844,6 +865,20 @@ function VSLib::Utils::SpawnRagdoll( mdl, pos, ang = QAngle(0,0,0), keyvalues = 
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity("prop_ragdoll", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns a commentary dummy model at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnCommentaryDummy( mdl = "models/survivors/survivor_gambler.mdl", weps = "weapon_pistol", anim = "Idle_Calm_Pistol", pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
+{
+	::VSLib.Utils.PrecacheModel( mdl );
+	local t = { model = mdl, startinganim = anim, eyeheight = "64", startingweapons = weps, headyawposeparam = "head_yaw", headpitchposeparam = "head_pitch", lookatplayers = "1", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("commentary_dummy", pos, ang, keyvalues);
 }
 
 /**
