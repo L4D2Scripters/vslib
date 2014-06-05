@@ -164,19 +164,6 @@ getconsttable()["Z_HUNTER"] <- 3;
 getconsttable()["Z_BOOMER"] <- 2;
 getconsttable()["Z_SMOKER"] <- 1;
 getconsttable()["Z_COMMON"] <- 0;
-// Backward compatibility player types
-getconsttable()["WITCH_BRIDE"] <- 11;
-getconsttable()["MOB"] <- 10;
-getconsttable()["SURVIVOR"] <- 9;
-getconsttable()["TANK"] <- 8;
-getconsttable()["WITCH"] <- 7;
-getconsttable()["CHARGER"] <- 6;
-getconsttable()["JOCKEY"] <- 5;
-getconsttable()["SPITTER"] <- 4;
-getconsttable()["HUNTER"] <- 3;
-getconsttable()["BOOMER"] <- 2;
-getconsttable()["SMOKER"] <- 1;
-getconsttable()["COMMON"] <- 0;
 
 // More button values to be used with IsPressingButton()
 getconsttable()["BUTTON_ATTACK"] <- 1;
