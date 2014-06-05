@@ -71,7 +71,7 @@ function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicate
 				break;
 			
 			case "string":
-				baseString += preCompileString + "\"" + ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "\"", "{VSQUOTE}"), @"\\", "{VSSLASH}") + "\"\n";
+				baseString += preCompileString + "\"" + ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "\"", "{VSQUOTE}"), @"\\", "{VSSLASH}") + "\"\n"; // "
 				break;
 			
 			case "integer":
@@ -115,7 +115,7 @@ function VSLib::FileIO::DeserializeReviseTable(t)
 	foreach (idx, val in t)
 	{
 		if (typeof val == "string")
-			t[idx] = ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "{VSQUOTE}", "\""), "{VSSLASH}", @"\");
+			t[idx] = ::VSLib.Utils.StringReplace(::VSLib.Utils.StringReplace(val, "{VSQUOTE}", "\""), "{VSSLASH}", @"\"); // "
 		else if (typeof val == "table")
 			t[idx] = DeserializeReviseTable(val);
 	}

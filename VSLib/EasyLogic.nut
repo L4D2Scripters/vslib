@@ -347,7 +347,15 @@ function OnGameEvent_round_start_post_nav(params)
 	
 	::VSLib.GlobalCache <- ::VSLib.FileIO.LoadTable( "_vslib_global_cache" );
 	if (::VSLib.GlobalCache == null)
+	{
 		::VSLib.GlobalCache <- {};
+		
+		// Attempt read from session
+		RestoreTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
+		
+		if (::VSLib.GlobalCache == null)
+			::VSLib.GlobalCache <- {};
+	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func(params);
@@ -411,6 +419,7 @@ function OnGameEvent_player_connect(params)
 		
 		// Save our changes to the global cache
 		::VSLib.FileIO.SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
+		SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
 		
 		foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerJoined)
 			func(ents.entity, name, ipAddress, steamID, params);
