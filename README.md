@@ -36,4 +36,4 @@ http://steamcommunity.com/sharedfiles/filedetails/?id=157523582
 
 Developers
 ============
-Neil-119, Rayman1103, Rectus, LFisher122
+Neil-119, Rayman1103, Rectus, LFisher122, shotgunefx
