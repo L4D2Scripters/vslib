@@ -33,3 +33,7 @@ http://steamcommunity.com/sharedfiles/filedetails/?id=157524450
 
 Vicious Infected: Inspired by the SM plugin, this plugin takes infected to new heights.
 http://steamcommunity.com/sharedfiles/filedetails/?id=157523582
+
+Developers
+============
+Neil-119, Rayman1103, Rectus, LFisher122
