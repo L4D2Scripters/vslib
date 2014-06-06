@@ -11,7 +11,10 @@ Installing
 See the "Your First Mutation" tutorial in this website:
 http://zombiescanfly.com/vslib/
 
-Download the library and just upload the contents to left4dead2/scripts/vscripts/
+[Download the library](https://github.com/L4D2Scripters/vslib/archive/master.zip) and just upload the contents to left4dead2/scripts/vscripts/
+
+For API documentation and links, see here:
+http://l4d2scripters.github.io/vslib
 
 
 Examples of plugins using VSLib
