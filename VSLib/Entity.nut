@@ -1019,7 +1019,7 @@ function VSLib::Entity::SetAngularVelocity(vec)
 /**
  * Sets the entity's current water level.
  */
-function VSLib::Entity::SetAngularVelocity(lvl)
+function VSLib::Entity::SetWaterLevel(lvl)
 {
 	if (!IsEntityValid())
 	{

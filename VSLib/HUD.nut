@@ -875,7 +875,7 @@ class ::VSLib.HUD.Bar extends ::VSLib.HUD.Item
 	/**
 	 * Gets the progress bar's value
 	 */
-	function GetBarValue(value)
+	function GetBarValue()
 	{
 		return GetValue("value");
 	}
@@ -883,7 +883,7 @@ class ::VSLib.HUD.Bar extends ::VSLib.HUD.Item
 	/**
 	 * Gets the progress bar's max value
 	 */
-	function GetBarMaxValue(value)
+	function GetBarMaxValue()
 	{
 		return GetValue("max");
 	}
