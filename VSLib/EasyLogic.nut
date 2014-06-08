@@ -96,6 +96,7 @@
 	
 	// General player events (both infected and survivors)
 	OnPlayerJoined = {}
+	OnPlayerLeft = {}
 	OnDeath = {}
 	OnInfectedDeath = {}
 	OnZombieDeath = {}
@@ -428,6 +429,17 @@ function OnGameEvent_player_connect(params)
 	{
 		::VSLib.Timers.AddTimer(1, false, RetryConnect, params);
 	}
+}
+
+
+function OnGameEvent_player_disconnect(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local name = ::VSLib.EasyLogic.GetEventString(params, "name");
+	local steamID = ::VSLib.EasyLogic.GetEventString(params, "networkid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerLeft)
+		func(ents.entity, name, steamID, params);
 }
 
 

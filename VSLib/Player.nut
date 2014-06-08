@@ -141,10 +141,10 @@ function VSLib::Player::GetName()
 	if (!(id in ::VSLib.GlobalCache))
 		return base.GetName();
 	
-	if ("_name" in ::VSLib.GlobalCache[id])
+	if ("_name" in ::VSLib.GlobalCache[id] && _ent.GetPlayerName() == this.GetCharacterName())
 		return ::VSLib.GlobalCache[id]["_name"];
 	
-	return base.GetName();
+	return _ent.GetPlayerName();
 }
 
 /**
