@@ -355,6 +355,7 @@ function OnGameEvent_round_start_post_nav(params)
 		
 		// Attempt read from session
 		RestoreTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
+		SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
 		
 		if (::VSLib.GlobalCache == null)
 			::VSLib.GlobalCache <- {};
