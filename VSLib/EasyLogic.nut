@@ -93,6 +93,7 @@
 	OnRoundStart = {}
 	OnRoundEnd = {}
 	OnMapEnd = {}
+	OnSurvivalStart = {}
 	
 	// General player events (both infected and survivors)
 	OnPlayerJoined = {}
@@ -185,6 +186,7 @@
 	// Misc
 	OnDifficulty = {}
 	OnSurvivorsDead = {}
+	OnBrokeProp = {}
 	OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
 	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
 }
@@ -366,13 +368,19 @@ function OnGameEvent_round_start_post_nav(params)
 		func(diff);
 }
 
-function OnGameEvent_map_transition (params)
+function OnGameEvent_map_transition(params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnMapEnd)
 		func();
 }
 
-function OnGameEvent_mission_lost (params)
+function OnGameEvent_survival_round_start(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivalStart)
+		func();
+}
+
+function OnGameEvent_mission_lost(params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsDead)
 		func(params);
@@ -1145,6 +1153,18 @@ function OnGameEvent_player_ledge_release(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnReleasedLedge)
 		func(victim, params);
+}
+
+function OnGameEvent_break_prop(params)
+{
+	local userid = EasyLogic.GetEventInt(params, "userid");
+	local attacker = null;
+	if ( userid > 0 )
+		attacker = EasyLogic.GetEventPlayer(params, "userid");
+	local prop = EasyLogic.GetEventEntity(params, "entindex");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnBrokeProp)
+		func(attacker, prop, params);
 }
 
 //
