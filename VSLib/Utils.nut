@@ -96,6 +96,28 @@ function VSLib::Utils::CombineArray(args, delimiter = " ")
 }
 
 /**
+ * Deserializes and returns a table of integer string indexes converted to integer indexes
+ */
+function VSLib::Utils::DeserializeIdxTable(t)
+{
+	local reg = regexp("^[0-9]+$");
+
+	foreach (idx, val in t)
+	{
+		if (typeof val == "table")
+			t[idx] <- DeserializeIdxTable(val);
+
+		if (reg.match(idx.tostring()))
+		{
+			delete t[idx];
+			t[idx.tointeger()] <- val;
+		}
+	}
+
+	return t;
+}
+
+/**
  * Returns a progress bar as a string.
  *
  * For example:  30%  ||||||--------------
@@ -430,8 +452,6 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = QAngl
 
 /**
  * Spawns the requested L4D1 Survivor at the location you want.
- *
- * \todo @TODO Possibly add a way to determine if a requested survivor should glow or not.
  *
  * @authors Rayman1103
  */

@@ -348,14 +348,17 @@ function OnGameEvent_round_start_post_nav(params)
 	VSLib_ResetRoundVars();
 	VSLib_ResetCache();
 	
+	// Restore and save session tables
+	RestoreTable( "_vslib_global_cache_session", ::VSLib.GlobalCacheSession );
+	SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCacheSession );
+	
 	::VSLib.GlobalCache <- ::VSLib.FileIO.LoadTable( "_vslib_global_cache" );
 	if (::VSLib.GlobalCache == null)
 	{
 		::VSLib.GlobalCache <- {};
 		
 		// Attempt read from session
-		RestoreTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
-		SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
+		::VSLib.GlobalCache <- Utils.DeserializeIdxTable(::VSLib.GlobalCacheSession);
 		
 		if (::VSLib.GlobalCache == null)
 			::VSLib.GlobalCache <- {};
@@ -973,7 +976,10 @@ function OnGameEvent_choke_end(params)
 function OnGameEvent_tongue_release(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
-	local victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
+	local victimid = ::VSLib.EasyLogic.GetEventInt(params, "victim");
+	local victim = null;
+	if ( victimid > 0 )
+		victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
 	if (!victim) return; if (!victim.IsPlayerEntityValid()) return;
 	
 	::VSLib.EasyLogic.Cache[victim.GetIndex()]._curAttker <- null;
