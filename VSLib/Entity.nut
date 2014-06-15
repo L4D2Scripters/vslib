@@ -1909,6 +1909,44 @@ function VSLib::Entity::BotReset()
 }
 
 /**
+ * Plays a sound file on an entity
+ */
+function VSLib::Entity::EmitSound( file )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (file == "" || !file)
+		return;
+	
+	if ( !(file in ::EasyLogic.PrecachedSounds) )
+	{
+		printf("VSLib: Precaching named sound: %s", file);
+		_ent.PrecacheScriptSound(file);
+		::EasyLogic.PrecachedSounds[file] <- 1;
+	}
+	
+	g_MapScript.EmitSoundOn(file, _ent);
+}
+
+/**
+ * Stops a sound on an entity
+ */
+function VSLib::Entity::StopSound( file )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	g_MapScript.StopSoundOn( file, _ent );
+}
+
+/**
  * Returns true if the entity is a bot.
  */
 function VSLib::Entity::IsBot()

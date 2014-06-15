@@ -1174,20 +1174,6 @@ function VSLib::Player::PlaySound( file )
 	g_MapScript.EmitSoundOnClient(file, _ent);
 }
 
-/**
- * Stops a sound on the player
- */
-function VSLib::Player::StopSound( file )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	g_MapScript.StopSoundOn( file, _ent );
-}
-
 
 
 
