@@ -1380,19 +1380,14 @@ function VSLib::Player::Remove(str)
 		return;
 	}
 	
-	local weapon = null;
-	if ( str.find("weapon_") != null )
+	local t = GetHeldItems();
+	
+	if (t)
 	{
-		while( weapon = Entities.FindByClassnameWithin( weapon, str, GetLocation(), 1 ) )
+		foreach (item in t)
 		{
-			DoEntFire( "!self", "Kill", "", 0, null, weapon );
-		}
-	}
-	else
-	{
-		while( weapon = Entities.FindByClassnameWithin( weapon, "weapon_" + str, GetLocation(), 1 ) )
-		{
-			DoEntFire( "!self", "Kill", "", 0, null, weapon );
+			if ( item.GetClassname() == str || item.GetClassname() == "weapon_" + str )
+				Entity(item).Kill();
 		}
 	}
 }
