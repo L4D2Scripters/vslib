@@ -1796,7 +1796,7 @@ function VSLib::EasyLogic::Objects::L4D1Survivors()
 		{
 			if (ent.IsValid())
 			{
-				local libObj = ::VSLib.Entity(ent);
+				local libObj = ::VSLib.Player(ent);
 				t[++i] <- libObj;
 			}
 		}
@@ -1819,7 +1819,11 @@ function VSLib::EasyLogic::Objects::OfClassname(classname)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
@@ -1841,7 +1845,11 @@ function VSLib::EasyLogic::Objects::OfClassnameWithin(classname, origin, radius)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
@@ -1858,7 +1866,12 @@ function VSLib::EasyLogic::Objects::AnyOfClassname(classname)
 	while (ent = Entities.FindByClassname(ent, classname))
 	{
 		if (ent.IsValid())
-			return ::VSLib.Entity(ent);
+		{
+			if (ent.IsPlayer())
+				return ::VSLib.Player(ent);
+			else
+				return ::VSLib.Entity(ent);
+		}
 	}
 	
 	return null;
@@ -1876,7 +1889,11 @@ function VSLib::EasyLogic::Objects::OfName(targetname)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
@@ -1896,7 +1913,11 @@ function VSLib::EasyLogic::Objects::OfNameWithin(targetname, origin, radius)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
@@ -1913,7 +1934,12 @@ function VSLib::EasyLogic::Objects::AnyOfName(targetname)
 	while (ent = Entities.FindByName(ent, targetname))
 	{
 		if (ent.IsValid())
-			return ::VSLib.Entity(ent);
+		{
+			if (ent.IsPlayer())
+				return ::VSLib.Player(ent);
+			else
+				return ::VSLib.Entity(ent);
+		}
 	}
 	
 	return null;
@@ -1931,7 +1957,11 @@ function VSLib::EasyLogic::Objects::OfModel(model)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
@@ -1948,7 +1978,12 @@ function VSLib::EasyLogic::Objects::AnyOfModel(model)
 	while (ent = Entities.FindByModel(ent, model))
 	{
 		if (ent.IsValid())
-			return ::VSLib.Entity(ent);
+		{
+			if (ent.IsPlayer())
+				return ::VSLib.Player(ent);
+			else
+				return ::VSLib.Entity(ent);
+		}
 	}
 	
 	return null;
@@ -1968,7 +2003,11 @@ function VSLib::EasyLogic::Objects::AroundRadius(pos, radius)
 	{
 		if (ent.IsValid())
 		{
-			local libObj = ::VSLib.Entity(ent);
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
 			t[++i] <- libObj;
 		}
 	}
