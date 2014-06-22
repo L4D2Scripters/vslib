@@ -195,10 +195,10 @@
  * Global constants
  */
 // "Difficulty" to be used with OnDifficulty()
-getconsttable()["EASY"] <- "Easy";
-getconsttable()["NORMAL"] <- "Normal";
-getconsttable()["ADVANCED"] <- "Hard";
-getconsttable()["EXPERT"] <- "Impossible";
+getconsttable()["EASY"] <- "easy";
+getconsttable()["NORMAL"] <- "normal";
+getconsttable()["ADVANCED"] <- "hard";
+getconsttable()["EXPERT"] <- "impossible";
 
 // Create entity data cache system
 ::VSLib.EasyLogic.Cache <- {};
@@ -289,14 +289,14 @@ function OnGameEvent_difficulty_changed(params)
 	local newDiff = params["newDifficulty"].tointeger();
 	local diff = "";
 	
-	if (newDiff == 0) // just a guess...
-		diff = "Easy";
+	if (newDiff == 0)
+		diff = "easy";
 	else if (newDiff == 1)
-		diff = "Normal";
+		diff = "normal";
 	else if (newDiff == 2)
-		diff = "Hard";
+		diff = "hard";
 	else if (newDiff == 3)
-		diff = "Impossible";
+		diff = "impossible";
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
 		func(diff);
@@ -367,7 +367,7 @@ function OnGameEvent_round_start_post_nav(params)
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func(params);
 		
-	local diff = Convars.GetStr( "z_difficulty" );
+	local diff = Convars.GetStr( "z_difficulty" ).tolower();
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
 		func(diff);
 }
