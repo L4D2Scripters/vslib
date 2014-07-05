@@ -137,12 +137,12 @@ function VSLib::Player::GetName()
 		return base.GetName();
 	}
 	
-	local id = _idx;
+	/*local id = _idx;
 	if (!(id in ::VSLib.GlobalCache))
 		return base.GetName();
 	
 	if ("_name" in ::VSLib.GlobalCache[id] && _ent.GetPlayerName() == this.GetCharacterName())
-		return ::VSLib.GlobalCache[id]["_name"];
+		return ::VSLib.GlobalCache[id]["_name"];*/
 	
 	return _ent.GetPlayerName();
 }
