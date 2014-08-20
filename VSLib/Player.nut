@@ -480,8 +480,9 @@ function VSLib::Player::GetTeam()
 		return;
 	}
 	
-	if ("_team" in ::VSLib.EasyLogic.Cache[_idx])
-		return ::VSLib.EasyLogic.Cache[_idx]._team;
+	if(_idx in ::VSLib.EasyLogic.Cache)
+		if ("_team" in ::VSLib.EasyLogic.Cache[_idx])
+			return ::VSLib.EasyLogic.Cache[_idx]._team;
 	
 	return base.GetTeam();
 }

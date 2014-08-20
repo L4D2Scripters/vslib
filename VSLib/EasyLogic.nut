@@ -240,6 +240,9 @@ function OnGameEvent_award_earned(params)
 	local award = ::VSLib.EasyLogic.GetEventInt(params, "award");
 	
 	local idx = ents.entity.GetIndex();
+	
+	if(!(idx in ::VSLib.EasyLogic.Cache))
+		::VSLib.EasyLogic.Cache[idx] <- {};
 	if (!("Awards" in ::VSLib.EasyLogic.Cache[idx]))
 		::VSLib.EasyLogic.Cache[idx].Awards <- {};
 	::VSLib.EasyLogic.Cache[idx].Awards[award] <- true;
