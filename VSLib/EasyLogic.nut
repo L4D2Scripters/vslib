@@ -120,6 +120,7 @@
 	OnReleasedLedge = {}
 	OnPlayerReplacedBot = {}
 	OnBotReplacedPlayer = {}
+	OnSay = {}
 	
 	// General infected events
 	OnAbilityUsed = {}
@@ -739,7 +740,7 @@ function OnGameEvent_infected_death(params)
 
 function OnGameEvent_zombie_death(params)
 {
-	local victim = EasyLogic.GetEventInt(params, "infected_id");
+	local victim = EasyLogic.GetEventPlayer(params, "victim");
 	local attackerid = EasyLogic.GetEventInt(params, "attacker");
 	local attacker = null;
 	if (attackerid > 0 && attackerid != 7)
@@ -1239,6 +1240,33 @@ function OnGameEvent_player_ledge_release(params)
 		func(victim, params);
 }
 
+function OnGameEvent_player_say(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local text = ::VSLib.EasyLogic.GetEventString(params, "text");
+	
+	// Separate the commands and arguments
+	local arr = split(text, " ");
+	
+	// Build an argument array
+	local args = {};
+	local idx = -1;
+	foreach (k, v in arr)
+	{
+		if (k != -1 && v != null && v != "")
+		{
+			args[idx] <- v;
+			idx++;
+		}
+	}
+	
+	// Store it.
+	::VSLib.EasyLogic.LastArgs <- args;
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSay)
+		func(player, text, params);
+}
+
 function OnGameEvent_triggered_car_alarm(params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnTriggeredCarAlarm)
@@ -1548,9 +1576,6 @@ function UserConsoleCommand( playerScript, arg )
 {
 	// Separate the commands and arguments
 	local arr = split(arg, ",");
-	
-	// Identify the command
-	local cmd = arr[0];
 	
 	// Build an argument array
 	local args = {};

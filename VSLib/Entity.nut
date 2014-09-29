@@ -1473,7 +1473,7 @@ function VSLib::Entity::GetLookingLocation()
 }
 
 /**
- * Ingites the entity for the specified time. Fractions can be used (e.g. 1.5 seconds).
+ * Ignites the entity for the specified time. Fractions can be used (e.g. 1.5 seconds).
  */
 function VSLib::Entity::Ignite(time)
 {

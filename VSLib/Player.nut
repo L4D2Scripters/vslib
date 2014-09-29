@@ -741,6 +741,34 @@ function VSLib::Player::SetHealthBuffer(value)
 }
 
 /**
+ * Sets the player's friction.
+ */
+function VSLib::Player::SetFriction(value)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetFriction(value);
+}
+
+/**
+ * Sets the player's gravity.
+ */
+function VSLib::Player::SetGravity(value)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetGravity(value);
+}
+
+/**
  * Drops a weapon from a slot.
  *
  * You can use global constants SLOT_PRIMARY, SLOT_SECONDARY, SLOT_THROW,
@@ -1352,6 +1380,22 @@ function VSLib::Player::NativePickupObject( otherEnt )
 	
 	::VSLib.EntData._objValveHolding[_idx] <- otherEnt.GetBaseEntity();
 	PickupObject(_ent, otherEnt.GetBaseEntity());
+}
+
+/**
+ * Gives a random melee weapon.
+ */
+function VSLib::Player::GiveRandomMelee( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local melee = g_ModeScript.SpawnMeleeWeapon( "any", Vector(0,0,0), QAngle(0,0,0) );
+	Use(Entity(melee));
+	Entity(melee).Input("Kill", "", 1);
 }
 
 /**

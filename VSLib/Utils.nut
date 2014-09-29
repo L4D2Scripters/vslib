@@ -988,6 +988,21 @@ function VSLib::Utils::SpawnDoor( mdl = "models/props_downtown/door_interior_112
 }
 
 /**
+ * Spawns an ambient_generic and plays the desired .wav sound everywhere
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::PlaySound( sound, keyvalues = {} )
+{
+	local t = { health = "10", message = sound, pitch = "100", pitchstart = "100", radius = "1250", spawnflags = "33", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	local ent = VSLib.Utils.CreateEntity("ambient_generic", Vector(0,0,0), QAngle(0,0,0), keyvalues);
+	ent.Input("PlaySound");
+	ent.Kill();
+}
+
+/**
  * Kills the given entity. Useful to use with timers.
  */
 function VSLib::Utils::RemoveEntity( ent )
@@ -1237,14 +1252,20 @@ function VSLib::Utils::IsValidWeapon(classname)
 /**
  * Gets a random value from an array
  */
-function VSLib::Utils::GetRandValueFromArray(arr)
+function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
 {
 	local arrlen = arr.len();
 	
 	if (arrlen <= 0)
 		return null;
 	
-	return arr[ Utils.GetRandNumber(0, arrlen - 1) ];
+	local idx = Utils.GetRandNumber(0, arrlen - 1);
+	local arrvalue = arr[ idx ];
+	if ( removeValue )
+		arr.remove( idx );
+	
+	return arrvalue;
+	//return arr[ Utils.GetRandNumber(0, arrlen - 1) ];
 }
 
 /**
