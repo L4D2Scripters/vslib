@@ -550,7 +550,7 @@ function VSLib::Player::IsSurvivorTrapped()
 
 
 /**
- * Returns the type of player. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, Z_COMMON, or UNKNOWN.
+ * Returns the type of player. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, Z_COMMON, Z_WITCH, or UNKNOWN.
  */
 function VSLib::Player::GetPlayerType()
 {
@@ -1061,6 +1061,29 @@ function VSLib::Player::IsFrustrated()
 }
 
 /**
+ * Returns true if the player is a female boomer
+ */
+function VSLib::Player::IsBoomette()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (GetPlayerType() != Z_BOOMER)
+		return false;
+	
+	foreach( boomette in Objects.OfModel("models/infected/boomette.mdl") )
+	{
+		if ( boomette.GetEntityHandle() == _ent.GetEntityHandle() )
+			return true;
+	}
+	
+	return false;
+}
+
+/**
  * Gives the entity an adrenaline effect
  */
 function VSLib::Player::GiveAdrenaline( time )
@@ -1100,6 +1123,44 @@ function VSLib::Player::GetSurvivorSlot()
 	}
 	
 	return _ent.GetSurvivorSlot();
+}
+
+/**
+ * Gets the survivor's targetname
+ */
+function VSLib::Player::GetSurvivorName()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local SurvivorNames =
+	[
+		"!coach"
+		"!ellis"
+		"!nick"
+		"!rochelle"
+		"!bill"
+		"!francis"
+		"!louis"
+		"!zoey"
+	]
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	foreach( name in SurvivorNames )
+	{
+		foreach( survivor in Objects.OfName(name) )
+		{
+			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
+				return name;
+		}
+	}
+	
+	return;
 }
 
 /**

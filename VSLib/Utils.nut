@@ -451,12 +451,43 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = QAngl
 }
 
 /**
+ * Alternative to Utils.CreateEntity(). Spawns a new entity and returns it as VSLib::Entity.
+ *
+ * @param _classname The classname of the entity
+ * @param pos Where to spawn it (a Vector object)
+ * @param ang Angles it should spawn with
+ * @param kvs Other keyvalues you may want it to have
+ * @return A VSLib entity object
+ */
+function VSLib::Utils::SpawnEntity(_classname, _targetname = "", pos = Vector(0,0,0), ang = QAngle(0,0,0), kvs = {})
+{
+	local angvec = Vector( ang.x, ang.y, ang.z );
+	kvs.targetname <- _targetname;
+	kvs.origin <- pos;
+	kvs.angles <- angvec;
+	
+	local ent = SpawnEntityFromTable(_classname, kvs);
+	ent.ValidateScriptScope();
+	
+	return ::VSLib.Entity(ent);
+}
+
+/**
  * Spawns the requested L4D1 Survivor at the location you want.
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnL4D1Survivor(survivor = 4, pos = Vector(0,0,0), ang = Vector(0,0,0))
+function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = Vector(0,0,0))
 {
+	if ( survivor == 4 )
+		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_namvet.mdl" );
+	else if ( survivor == 5 )
+		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_teenangst.mdl" );
+	else if ( survivor == 6 )
+		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_biker.mdl" );
+	else if ( survivor == 7 )
+		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_manager.mdl" );
+	
 	local info_l4d1_survivor_spawn = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_l4d1_survivor_spawn", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang, character = survivor });
 	
 	DoEntFire( "!self", "SpawnSurvivor", "", 0, info_l4d1_survivor_spawn, info_l4d1_survivor_spawn );
@@ -466,13 +497,21 @@ function VSLib::Utils::SpawnL4D1Survivor(survivor = 4, pos = Vector(0,0,0), ang 
 /**
  * Spawns the requested zombie via the Director at the specified location.
  */
-function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = true)
+function VSLib::Utils::SpawnZombie(pos, zombieType = "default", offerTank = false, victim = null)
 {
+	if ( zombieType == "witch" )
+		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
+	else if ( zombieType == "witch_bride" )
+		::VSLib.Utils.PrecacheModel( "models/infected/witch_bride.mdl" );
+	
 	local ent = VSLib.Utils.CreateEntity("info_zombie_spawn", pos);
 	ent.SetKeyValue("population", zombieType);
-	ent.SetKeyValue("AttackOnSpawn", attackOnSpawn.tointeger());
+	ent.SetKeyValue("offer_tank", offerTank.tointeger());
 	ent.Input("SpawnZombie");
-	ent.Kill();
+	if ( victim != null )
+		ent.Input("StartleZombie", victim, 0.1);
+	
+	ent.Input("Kill", "", 0.2);
 }
 
 /**
@@ -486,7 +525,7 @@ function VSLib::Utils::SpawnZombie(pos, zombieType = "default", attackOnSpawn = 
  * If by chance the survivors are looking everywhere at once,
  * the infected prob won't spawn!
  */
-function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0, minDist = 32.0, checkVisibility = true, useAltSpawn = false )
+function VSLib::Utils::SpawnZombieNearPlayer( player, zombie, maxDist = 128.0, minDist = 32.0, checkVisibility = true, offerTank = false, victim = null )
 {
 	if (!player)
 		return false;
@@ -549,19 +588,30 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
 		// If they cannot see it, then spawn.
 		if (!canSee)
 		{
-			if ( useAltSpawn )
+			if ( (typeof zombie) == "integer" )
 			{
-				local ent = VSLib.Utils.CreateEntity("info_zombie_spawn", _pos);
-				ent.SetKeyValue("population", zombieNum);
-				ent.SetKeyValue("AttackOnSpawn", attackOnSpawn.tointeger());
-				ent.Input("SpawnZombie");
-				ent.Kill();
+				if ( zombie == 7 )
+					::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
+				else if ( zombie == 11 )
+					::VSLib.Utils.PrecacheModel( "models/infected/witch_bride.mdl" );
+				ZSpawn( { type = zombie, pos = _pos } );
 				return true;
 			}
 			else
 			{
-				ZSpawn( { type = zombieNum, pos = _pos } );
-				return true;
+				if ( zombie.find("common_") != null )
+				{
+					::VSLib.Utils.SpawnCommentaryZombie(zombie, _pos);
+					return true;
+				}
+				else
+				{
+					if ( victim != null )
+						::VSLib.Utils.SpawnZombie(_pos, zombie, offerTank, victim);
+					else
+						::VSLib.Utils.SpawnZombie(_pos, zombie, offerTank);
+					return true;
+				}
 			}
 		}
 	}
@@ -574,8 +624,11 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombieNum, maxDist = 128.0
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnCommentaryZombie(zombieModel = "common_male_tshirt_cargos", pos = Vector(0,0,0), ang = Vector(0,0,0))
+function VSLib::Utils::SpawnCommentaryZombie(zombieModel, pos = Vector(0,0,0), ang = Vector(0,0,0))
 {
+	if ( zombieModel == "witch" )
+		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
+	
 	local commentary_zombie_spawner = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "commentary_zombie_spawner", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang });
 	
 	//::VSLib.Utils.PrecacheModel( "models/infected/" + zombieModel + ".mdl" );
@@ -623,19 +676,19 @@ function VSLib::Utils::VectorCrossProduct(a, b)
  */
 function VSLib::Utils::VectorFromQAngle(angles, radius = 1.0)
 {
-        local function ToRad(angle)
-        {
-                return (angle * PI) / 180;
-        }
-       
-        local yaw = ToRad(angles.Yaw());
-        local pitch = ToRad(-angles.Pitch());
-       
-        local x = radius * cos(yaw) * cos(pitch);
-        local y = radius * sin(yaw) * cos(pitch);
-        local z = radius * sin(pitch);
-       
-        return Vector(x, y, z);
+	local function ToRad(angle)
+	{
+		return (angle * PI) / 180;
+	}
+	
+	local yaw = ToRad(angles.Yaw());
+	local pitch = ToRad(-angles.Pitch());
+	
+	local x = radius * cos(yaw) * cos(pitch);
+	local y = radius * sin(yaw) * cos(pitch);
+	local z = radius * sin(pitch);
+	
+	return Vector(x, y, z);
 }
 
 
@@ -668,7 +721,7 @@ function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, m
 {
 	if (_vsl_func_timescale == null)
 	{
-		_vsl_func_timescale = VSLib.Utils.CreateEntity("func_timescale");
+		_vsl_func_timescale = VSLib.Utils.SpawnEntity("func_timescale", "vslib_timescale");
 		
 		if (_vsl_func_timescale == null)
 		{
@@ -764,6 +817,44 @@ function VSLib::Utils::ForcePanicEvent( )
 	}
 }
 
+/**
+ * Starts the finale
+ */
+function VSLib::Utils::StartFinale( )
+{
+	local ent = null;
+	if (ent = Entities.FindByClassname(ent, "trigger_finale"))
+	{
+		local vsent = Entity(ent);
+		
+		local finale_nav = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_nav_attribute_region", maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64", origin = Players.AnyAliveSurvivor().GetLocation(), angles = Vector(0, 0, 0) });
+		
+		if ( SessionState.MapName == "c2m5_concert" )
+			EntFire( "stadium_entrance_door_relay", "Kill" );
+		EntFire( "info_game_event_proxy", "Kill" );
+		vsent.Input("ForceFinaleStart");
+		DoEntFire( "!self", "Kill", "", 0, null, finale_nav );
+	}
+}
+
+/**
+ * Triggers the rescue vehicle to arrive
+ */
+function VSLib::Utils::TriggerRescue( )
+{
+	local ent = null;
+	if (ent = Entities.FindByClassname(ent, "trigger_finale"))
+	{
+		local vsent = Entity(ent);
+		
+		::VSLib.Utils.StartFinale();
+		
+		vsent.Input("FinaleEscapeStarted");
+		EntFire( "relay_car_ready", "Trigger" );
+		NavMesh.UnblockRescueVehicleNav();
+	}
+}
+
 
 /**
  * Returns a table with the hours, minutes, and seconds provided the total seconds (e.g. Time())
@@ -827,7 +918,7 @@ function VSLib::Utils::BroadcastClientCommand(command)
  */
 function VSLib::Utils::PrecacheModel( mdl )
 {
-	local Model = { classname = "prop_dynamic", model = mdl, angles = Vector(0,0,0), origin = Vector(0,0,0) }
+	local Model = { classname = "prop_dynamic", model = mdl }
 	if ( !(mdl in ::EasyLogic.PrecachedModels) )
 	{
 		printf("VSLib: Precaching: %s", mdl);
@@ -846,7 +937,10 @@ function VSLib::Utils::PrecacheCSSWeapons( )
 	local weps = ["weapon_rifle_sg552", "weapon_smg_mp5", "weapon_sniper_awp", "weapon_sniper_scout"];
 
 	foreach(wep in weps)
-		VSLib.Utils.CreateEntity(wep).Kill();
+	{
+		local weapon = { classname = wep }
+		PrecacheEntityFromTable( weapon );
+	}
 }
 
 /**

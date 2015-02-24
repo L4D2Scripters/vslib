@@ -78,6 +78,10 @@ function VSLib::Timers::RemoveTimerByName(strName)
  */
 function VSLib::Timers::AddTimer(delay, repeat, func, paramTable = null, flags = 0, value = {})
 {
+	local TIMER_FLAG_COUNTDOWN = (1 << 2);
+	local TIMER_FLAG_DURATION = (1 << 3);
+	local TIMER_FLAG_DURATION_VARIANT = (1 << 4);
+	
 	delay = delay.tofloat();
 	repeat = repeat.tointeger();
 	
@@ -147,6 +151,9 @@ function VSLib::Timers::RemoveTimer(idx)
  */
 ::VSLib.Timers._thinkFunc <- function()
 {
+	local TIMER_FLAG_COUNTDOWN = (1 << 2);
+	local TIMER_FLAG_DURATION_VARIANT = (1 << 4);
+	
 	// current time
 	local curtime = Time();
 	
@@ -198,7 +205,7 @@ function VSLib::Timers::RemoveTimer(idx)
  */
 if (!("_thinkTimer" in ::VSLib.Timers))
 {
-	::VSLib.Timers._thinkTimer <- g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_target" });
+	::VSLib.Timers._thinkTimer <- SpawnEntityFromTable("info_target", { targetname = "vslib_timer" });
 	if (::VSLib.Timers._thinkTimer != null)
 	{
 		::VSLib.Timers._thinkTimer.ValidateScriptScope();

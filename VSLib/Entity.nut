@@ -150,20 +150,33 @@ getconsttable()["SPECTATORS"] <- 1;
 getconsttable()["SURVIVORS"] <- 2;
 getconsttable()["INFECTED"] <- 3;
 
+// "Gender" types, to be used with GetGender()
+getconsttable()["MALE"] <- 1;
+getconsttable()["FEMALE"] <- 2;
 
 // "Zombie" types, to be used with GetPlayerType()
-getconsttable()["Z_WITCH_BRIDE"] <- 11;
-getconsttable()["Z_MOB"] <- 10;
-getconsttable()["Z_SURVIVOR"] <- 9;
-getconsttable()["Z_TANK"] <- 8;
-getconsttable()["Z_WITCH"] <- 7;
-getconsttable()["Z_CHARGER"] <- 6;
-getconsttable()["Z_JOCKEY"] <- 5;
-getconsttable()["Z_SPITTER"] <- 4;
-getconsttable()["Z_HUNTER"] <- 3;
-getconsttable()["Z_BOOMER"] <- 2;
-getconsttable()["Z_SMOKER"] <- 1;
+getconsttable()["Z_INFECTED"] <- 0;
 getconsttable()["Z_COMMON"] <- 0;
+getconsttable()["Z_SMOKER"] <- 1;
+getconsttable()["Z_BOOMER"] <- 2;
+getconsttable()["Z_HUNTER"] <- 3;
+getconsttable()["Z_SPITTER"] <- 4;
+getconsttable()["Z_JOCKEY"] <- 5;
+getconsttable()["Z_CHARGER"] <- 6;
+getconsttable()["Z_WITCH"] <- 7;
+getconsttable()["Z_TANK"] <- 8;
+getconsttable()["Z_SURVIVOR"] <- 9;
+getconsttable()["Z_MOB"] <- 10;
+getconsttable()["Z_WITCH_BRIDE"] <- 11;
+
+// "Uncommon" types, to be used with GetUncommonInfected()
+getconsttable()["Z_CEDA"] <- 11;
+getconsttable()["Z_MUD"] <- 12;
+getconsttable()["Z_ROADCREW"] <- 13;
+getconsttable()["Z_FALLEN"] <- 14;
+getconsttable()["Z_RIOT"] <- 15;
+getconsttable()["Z_CLOWN"] <- 16;
+getconsttable()["Z_JIMMY"] <- 17;
 
 // More button values to be used with IsPressingButton()
 getconsttable()["BUTTON_ATTACK"] <- 1;
@@ -946,6 +959,118 @@ function VSLib::Entity::SetFriction(value)
 }
 
 /**
+ * Overrides the entity's friction for the desired duration.
+ */
+function VSLib::Entity::OverrideFriction(duration, friction)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.OverrideFriction(duration, friction);
+}
+
+/**
+ * Precaches a model.
+ */
+function VSLib::Entity::PrecacheModel(mdl)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.PrecacheModel(mdl);
+}
+
+/**
+ * Precaches a scripted sound.
+ */
+function VSLib::Entity::PrecacheScriptSound(sound)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.PrecacheScriptSound(sound);
+}
+
+/**
+ * Returns the entity's forward vector.
+ */
+function VSLib::Entity::GetForwardVector()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetForwardVector();
+}
+
+/**
+ * Sets the orientation of the entity to have this forward vector.
+ */
+function VSLib::Entity::SetForwardVector(direction)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetForwardVector(direction);
+}
+
+/**
+ * Returns the entity's base velocity vector.
+ */
+function VSLib::Entity::GetBaseVelocity()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetBaseVelocity();
+}
+
+/**
+ * Returns the entity's angular velocity.
+ */
+function VSLib::Entity::GetLocalAngularVelocity()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetLocalAngularVelocity();
+}
+
+/**
+ * Returns the entity's relative velocity vector.
+ */
+function VSLib::Entity::GetLocalVelocity()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetLocalVelocity();
+}
+
+/**
  * Returns the entity's current velocity vector.
  */
 function VSLib::Entity::GetVelocity()
@@ -1160,6 +1285,141 @@ function VSLib::Entity::GetTeam()
 		return SURVIVORS;
 	else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost() || _ent.GetClassname() == "infected")
 		return INFECTED;
+}
+
+/**
+ * Returns the type of entity. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, Z_COMMON, or Z_WITCH.
+ */
+function VSLib::Entity::GetType()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+		return Z_COMMON;
+	else if ( _ent.GetClassname() == "witch" )
+		return Z_WITCH;
+	else if ( _ent.GetClassname() == "player" )
+	{
+		if (!("GetZombieType" in _ent))
+			return;
+		
+		return _ent.GetZombieType();
+	}
+	
+	return;
+}
+
+/**
+ * Returns the gender of the infected.
+ */
+function VSLib::Entity::GetGender()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local InfectedModels =
+	{
+		common_male_ceda = MALE,
+		common_male_mud = MALE,
+		common_male_roadcrew = MALE,
+		common_male_roadcrew_rain = MALE,
+		common_male_fallen_survivor = MALE,
+		common_male_riot = MALE,
+		common_male_clown = MALE,
+		common_male_jimmy = MALE,
+		common_male_tshirt_cargos = MALE,
+		common_male_tankTop_jeans = MALE,
+		common_male_dressShirt_jeans = MALE,
+		common_female_tankTop_jeans = FEMALE,
+		common_female_tshirt_skirt = FEMALE,
+		common_male_tankTop_overalls = MALE,
+		common_male_tankTop_jeans_rain = MALE,
+		common_female_tankTop_jeans_rain = FEMALE,
+		common_male_tankTop_overalls_rain = MALE,
+		common_male_tshirt_cargos_swamp = MALE,
+		common_male_tankTop_overalls_swamp = MALE,
+		common_female_tshirt_skirt_swamp = FEMALE,
+		common_male_polo_jeans = MALE,
+		common_male_formal = MALE,
+		common_female_formal = FEMALE,
+		common_male_biker = MALE,
+		common_patient_male01_l4d2 = MALE,
+		common_male01 = MALE,
+		common_female01 = FEMALE,
+		common_police_male01 = MALE,
+		common_military_male01 = MALE,
+		common_worker_male01 = MALE,
+		common_male_suit = MALE,
+		common_patient_male01 = MALE,
+		common_female_nurse01 = FEMALE,
+		common_surgeon_male01 = MALE,
+		common_male_baggagehandler_01 = MALE,
+		common_tsaagent_male01 = MALE,
+		common_male_pilot = MALE,
+		common_male_rural01 = MALE,
+		common_female_rural01 = FEMALE,
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+	{
+		foreach( model, gender in InfectedModels )
+		{
+			foreach( infected in Objects.OfModel("models/infected/" + model + ".mdl") )
+			{
+				if ( infected.GetEntityHandle() == _ent.GetEntityHandle() )
+					return gender;
+			}
+		}
+		return UNKNOWN;
+	}
+	
+	return;
+}
+
+/**
+ * Returns the type of uncommon infected.
+ */
+function VSLib::Entity::GetUncommonInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local UncommonModels =
+	{
+		common_male_ceda = Z_CEDA,
+		common_male_mud = Z_MUD,
+		common_male_roadcrew = Z_ROADCREW,
+		common_male_roadcrew_rain = Z_ROADCREW,
+		common_male_fallen_survivor = Z_FALLEN,
+		common_male_riot = Z_RIOT,
+		common_male_clown = Z_CLOWN,
+		common_male_jimmy = Z_JIMMY,
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+	{
+		foreach( model, zombie in UncommonModels )
+		{
+			foreach( uncommon in Objects.OfModel("models/infected/" + model + ".mdl") )
+			{
+				if ( uncommon.GetEntityHandle() == _ent.GetEntityHandle() )
+					return zombie;
+			}
+		}
+		return Z_COMMON;
+	}
+	
+	return;
 }
 
 /**
@@ -1573,6 +1833,118 @@ function VSLib::Entity::GetName()
 }
 
 /**
+ * Unknown.
+ */
+function VSLib::Entity::FirstMoveChild()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.FirstMoveChild();
+}
+
+/**
+ * If in hierarchy, retrieves the entity's parent.
+ */
+function VSLib::Entity::GetMoveParent()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetMoveParent();
+}
+
+/**
+ * Unknown.
+ */
+function VSLib::Entity::NextMovePeer()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.NextMovePeer();
+}
+
+/**
+ * If in hierarchy, walks up the hierarchy to find the root parent.
+ */
+function VSLib::Entity::GetRootMoveParent()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetRootMoveParent();
+}
+
+/**
+ * Looks up a context and returns it if available. May return string, float, or null (if the context isn't found).
+ */
+function VSLib::Entity::GetContext(str)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetContext(str);
+}
+
+/**
+ * Stores any key/value pair in this entity's dialog contexts. Value must be a string. Will last for duration (set 0 to mean 'forever').
+ */
+function VSLib::Entity::SetContext( name, value, duration )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetContext(name, value, duration);
+}
+
+/**
+ * Stores any key/value pair in this entity's dialog contexts. Value must be a number (int or float). Will last for duration (set 0 to mean 'forever').
+ */
+function VSLib::Entity::SetContextNum( name, value, duration )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetContextNum(name, value, duration);
+}
+
+/**
+ * Returns the entity as an EHANDLE.
+ */
+function VSLib::Entity::GetEntityHandle()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetEntityHandle();
+}
+
+/**
  * Returns the distance (in units) to the ground from the entity's origin.
  */
 function VSLib::Entity::GetDistanceToGround()
@@ -1823,6 +2195,20 @@ function VSLib::Entity::GetOwnerEntity()
 	return ::VSLib.Entity(owner);
 }
 
+/**
+ * Returns the entity's name stripped of template unique decoration.
+ */
+function VSLib::Entity::GetPreTemplateName()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetPreTemplateName();
+}
+
 
 /**
  * Commands this Entity to move to a particular location (only applies to bots).
@@ -2029,6 +2415,50 @@ function VSLib::Entity::IsHuman()
 }
 
 /**
+ * Returns true if the witch is a bride.
+ */
+function VSLib::Entity::IsWitchBride()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( _ent.GetClassname() == "witch" )
+	{
+		foreach( witch_bride in Objects.OfModel("models/infected/witch_bride.mdl") )
+		{
+			if ( witch_bride.GetEntityHandle() == _ent.GetEntityHandle() )
+				return true;
+		}
+		return false;
+	}
+	
+	return false;
+}
+
+/**
+ * Returns true if the passed in model matches the entity.
+ */
+function VSLib::Entity::IsModel( mdl )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	foreach( model in Objects.OfModel(mdl) )
+	{
+		if ( model.GetEntityHandle() == _ent.GetEntityHandle() )
+			return true;
+	}
+	
+	return false;
+}
+
+/**
  * Adds to the entity's THINK function. You can use "this.ent" when you need to use the VSLib::Entity.
  * 
  * @param func A function to add to the think timer.
@@ -2065,6 +2495,20 @@ function VSLib::Entity::GetScriptScope( )
 }
 
 /**
+ * Returns the entity's unique identifier used to refer to the entity within the scripting system.
+ */
+function VSLib::Entity::GetScriptId( )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetScriptId();
+}
+
+/**
  * Connects an output to a function
  *
  * @param output The output name (string)
@@ -2081,6 +2525,23 @@ function VSLib::Entity::ConnectOutput( output, func )
 	local oname = "_vslib_out" + UniqueString();
 	GetScriptScope()[oname] <- func;
 	_ent.ConnectOutput( output, oname );
+}
+
+/**
+ * Removes a connected script function from an I/O event.
+ *
+ * @param output The output name (string)
+ * @param func Function name (pass in a function, not a string name)
+ */
+function VSLib::Entity::DisconnectOutput( output, func )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.DisconnectOutput( output, func );
 }
 
 
