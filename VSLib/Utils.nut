@@ -797,8 +797,7 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
  */
 function VSLib::Utils::GetRandNumber( min, max )
 {
-	//return rand() % (max - min + 1) + min;
-	return g_MapScript.RandomInt(min, max);
+	return rand() % (max - min + 1) + min;
 }
 
 // Seed rand num generator
@@ -1026,18 +1025,30 @@ function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnWeapon( weaponName, Count = 4, pos = Vector(0,0,0), ang = Vector(0,0,90), keyvalues = {} )
+function VSLib::Utils::SpawnWeapon( weapon, Count = 5, pos = Vector(0,0,0), ang = Vector(0,0,90), keyvalues = {} )
 {
 	local SpawnFlag = 2;
+	
+	if ( weapon.find("weapon_") == null )
+		weapon = "weapon_" + weapon;
+	
+	if ( weapon == "weapon_smg_mp5" || weapon == "weapon_rifle_sg552" || weapon == "weapon_sniper_scout" || weapon == "weapon_sniper_awp" )
+	{
+		SpawnFlag = 1;
+		Count = 1;
+	}
+	else
+		weapon = weapon + "_spawn";
+	
 	if ( Count == 0 )
 	{
 		SpawnFlag = 10;
 		Count = 1;
 	}
-	local t = { body = "0", count = Count, disableshadows = "0", spawnflags = SpawnFlag, };
+	local t = { ammo = "999", count = Count, spawnflags = SpawnFlag, };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
-	return ::VSLib.Utils.CreateEntity("weapon_" + weaponName + "_spawn", pos, ang, keyvalues);
+	return ::VSLib.Utils.CreateEntity(weapon, pos, ang, keyvalues);
 }
 
 /**

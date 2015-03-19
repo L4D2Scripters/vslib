@@ -100,17 +100,22 @@
 	OnEscapeStarted = {}
 	OnPreRadioStart = {}
 	OnReloadedScriptedHud = {}
+	OnRoundStartPreEntity = {}
 	OnRoundStart = {}
+	OnRoundBegin = {}
+	OnRoundFreezeEnd = {}
 	OnRoundEnd = {}
 	OnMapEnd = {}
+	OnNavBlocked = {}
 	OnSurvivalStart = {}
 	OnVersusStart = {}
 	OnScavengeStart = {}
 	OnScavengeHalftime = {}
 	OnScavengeOvertime = {}
-	OnScavengeFinished = {}
+	OnScavengeRoundFinished = {}
 	OnScavengeTied = {}
 	OnScavengeMatchFinished = {}
+	OnVersusMarkerReached = {}
 	OnVersusMatchFinished = {}
 	OnServerCvarChanged = {}
 	OnServerPreShutdown = {}
@@ -119,6 +124,7 @@
 	
 	// General player events (both infected and survivors)
 	OnPlayerJoined = {}
+	OnPlayerConnected = {}
 	OnPlayerLeft = {}
 	OnDeath = {}
 	OnInfectedDeath = {}
@@ -130,6 +136,7 @@
 	OnHurt = {}
 	OnHurtConcise = {}
 	OnActivate = {}
+	OnPreSpawn = {}
 	OnSpawn = {}
 	OnPostSpawn = {}
 	OnFirstSpawn = {}
@@ -157,6 +164,8 @@
 	OnPlayerReplacedBot = {}
 	OnBotReplacedPlayer = {}
 	OnSay = {}
+	OnVoteCastYes = {}
+	OnVoteCastNo = {}
 	
 	// General infected events
 	OnAbilityUsed = {}
@@ -234,6 +243,7 @@
 	// Boomer
 	OnPlayerVomited = {}
 	OnPlayerVomitEnd = {}
+	OnBoomerExploded = {}
 	OnBoomerNear = {}
 	
 	// Tank
@@ -261,6 +271,12 @@ getconsttable()["EXPERT"] <- "impossible";
 
 // Create entity data cache system
 ::VSLib.EasyLogic.Cache <- {};
+
+// Create user data cache system
+::VSLib.EasyLogic.UserCache <- {};
+
+// This is used for the OnPreSpawn Notification
+::VSLib.EasyLogic.PreSpawnFired <- false;
 
 /*
  * All the game events are below. Note how we wrap the events to make the
@@ -482,16 +498,17 @@ function VSLib_ResetCache()
 		::VSLib.EasyLogic.Cache[i] <- { Awards = {} };
 	
 	for (local i = -1; i <= 64; i++)
-	{
 		::VSLib.EasyLogic.Cache[i]._isAlive <- true;
-	}
+}
+
+function OnGameEvent_round_start_pre_entity(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStartPreEntity)
+		func();
 }
 
 function OnGameEvent_round_start_post_nav(params)
 {
-	VSLib_ResetRoundVars();
-	VSLib_ResetCache();
-	
 	// Restore and save session tables
 	RestoreTable( "_vslib_global_cache_session", ::VSLib.GlobalCacheSession );
 	SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCacheSession );
@@ -516,8 +533,22 @@ function OnGameEvent_round_start_post_nav(params)
 		func(diff);
 }
 
+function OnGameEvent_round_start(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundBegin)
+		func(params);
+}
+
+function OnGameEvent_round_freeze_end(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundFreezeEnd)
+		func();
+}
+
 function OnGameEvent_map_transition(params)
 {
+	SaveTable( "_vslib_user_cache", ::VSLib.EasyLogic.UserCache );
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnMapEnd)
 		func();
 }
@@ -581,6 +612,15 @@ function OnGameEvent_scavenge_match_finished(params)
 		func(winners, params);
 }
 
+function OnGameEvent_versus_marker_reached(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local marker = ::VSLib.EasyLogic.GetEventInt(params, "marker");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnVersusMarkerReached)
+		func(ents.entity, marker, params);
+}
+
 function OnGameEvent_versus_match_finished(params)
 {
 	local winners = ::VSLib.EasyLogic.GetEventInt(params, "winners");
@@ -601,6 +641,8 @@ function OnGameEvent_round_end(params)
 	VSLib_ResetCache();
 	VSLib_RemoveDeadTimers();
 	
+	SaveTable( "_vslib_user_cache", ::VSLib.EasyLogic.UserCache );
+	
 	local winner = ::VSLib.EasyLogic.GetEventInt(params, "winner"); // team or player
 	local reason = ::VSLib.EasyLogic.GetEventInt(params, "reason");
 	local message = ::VSLib.EasyLogic.GetEventString(params, "message");
@@ -608,6 +650,15 @@ function OnGameEvent_round_end(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundEnd)
 		func(winner, reason, message, time, params);
+}
+
+function OnGameEvent_nav_blocked(params)
+{
+	local area = ::VSLib.EasyLogic.GetEventInt(params, "area");
+	local blocked = ::VSLib.EasyLogic.GetEventInt(params, "blocked");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnNavBlocked)
+		func(area, (blocked > 0) ? true : false, params);
 }
 
 
@@ -622,6 +673,7 @@ function OnGameEvent_player_connect(params)
 	local name = ::VSLib.EasyLogic.GetEventString(params, "name");
 	local ipAddress = ::VSLib.EasyLogic.GetEventString(params, "address");
 	local steamID = ::VSLib.EasyLogic.GetEventString(params, "networkid");
+	local xuid = ::VSLib.EasyLogic.GetEventString(params, "xuid");
 	
 	if (ents.entity != null)
 	{
@@ -634,10 +686,28 @@ function OnGameEvent_player_connect(params)
 		::VSLib.GlobalCache[_id]["_name"] <- name;
 		::VSLib.GlobalCache[_id]["_ip"] <- ipAddress;
 		::VSLib.GlobalCache[_id]["_steam"] <- steamID;
+		::VSLib.GlobalCache[_id]["_xuid"] <- xuid;
 		
 		// Save our changes to the global cache
 		::VSLib.FileIO.SaveTable( "_vslib_global_cache", ::VSLib.GlobalCache );
 		SaveTable( "_vslib_global_cache_session", ::VSLib.GlobalCache );
+		
+		if ( ents.entity.IsHuman() )
+		{
+			local _userid = "_vslUserID_" + ents.entity.GetUserID();
+			
+			if (_userid in ::VSLib.EasyLogic.UserCache)
+				delete ::VSLib.EasyLogic.UserCache[_userid];
+			
+			::VSLib.EasyLogic.UserCache[_userid] <- {};
+			::VSLib.EasyLogic.UserCache[_userid]["_name"] <- name;
+			::VSLib.EasyLogic.UserCache[_userid]["_ip"] <- ipAddress;
+			::VSLib.EasyLogic.UserCache[_userid]["_steam"] <- steamID;
+			::VSLib.EasyLogic.UserCache[_userid]["_xuid"] <- xuid;
+			
+			// Save our user data to the user cache
+			SaveTable( "_vslib_user_cache", ::VSLib.EasyLogic.UserCache );
+		}
 		
 		foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerJoined)
 			func(ents.entity, name, ipAddress, steamID, params);
@@ -646,6 +716,15 @@ function OnGameEvent_player_connect(params)
 	{
 		::VSLib.Timers.AddTimer(1, false, RetryConnect, params);
 	}
+}
+
+
+function OnGameEvent_player_connect_full(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerConnected)
+		func(ents.entity, params);
 }
 
 
@@ -780,6 +859,22 @@ function OnGameEvent_player_jump_apex(params)
 		func(ents.entity, params);
 }
 
+function _OnPreSpawnEv()
+{
+	g_ModeScript.VSLib_ResetRoundVars();
+	g_ModeScript.VSLib_ResetCache();
+	
+	RestoreTable( "_vslib_user_cache", ::VSLib.EasyLogic.UserCache );
+	
+	if (::VSLib.EasyLogic.UserCache == null)
+		::VSLib.EasyLogic.UserCache <- {};
+	else
+		SaveTable( "_vslib_user_cache", ::VSLib.EasyLogic.UserCache );
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPreSpawn)
+		func();
+}
+
 function _OnPostSpawnEv(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -795,6 +890,12 @@ function OnGameEvent_player_spawn(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	local _id = ents.entity.GetIndex();
+	
+	if ( !::VSLib.EasyLogic.PreSpawnFired )
+	{
+		_OnPreSpawnEv();
+		::VSLib.EasyLogic.PreSpawnFired <- true;
+	}
 	
 	if (!(_id in ::VSLib.EasyLogic.Cache))
 		::VSLib.EasyLogic.Cache[_id] <- {};
@@ -927,17 +1028,19 @@ function OnGameEvent_player_team(params)
 function OnGameEvent_player_bot_replace(params)
 {
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "player");
+	local bot = ::VSLib.EasyLogic.GetEventPlayer(params, "bot");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnBotReplacedPlayer)
-		func(player, params);
+		func(player, bot, params);
 }
 
 function OnGameEvent_bot_player_replace(params)
 {
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "player");
+	local bot = ::VSLib.EasyLogic.GetEventPlayer(params, "bot");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerReplacedBot)
-		func(player, params);
+		func(player, bot, params);
 }
 
 function OnGameEvent_ability_use(params)
@@ -1513,6 +1616,15 @@ function OnGameEvent_player_no_longer_it(params)
 		func(ents.entity, params);
 }
 
+function OnGameEvent_boomer_exploded(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local splashedbile = ::VSLib.EasyLogic.GetEventInt(params, "splashedbile");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnBoomerExploded)
+		func(ents.entity, ents.attacker, (splashedbile > 0) ? true : false, params);
+}
+
 function OnGameEvent_boomer_near(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1651,6 +1763,24 @@ function OnGameEvent_player_say(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSay)
 		func(player, text, params);
+}
+
+function OnGameEvent_vote_cast_yes(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "entityid");
+	local team = ::VSLib.EasyLogic.GetEventInt(params, "team");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnVoteCastYes)
+		func(player, team, params);
+}
+
+function OnGameEvent_vote_cast_no(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "entityid");
+	local team = ::VSLib.EasyLogic.GetEventInt(params, "team");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnVoteCastNo)
+		func(player, team, params);
 }
 
 function OnGameEvent_server_cvar(params)
@@ -2095,6 +2225,48 @@ function VSLib::EasyLogic::Players::Bots()
 }
 
 /**
+ * Returns a table of all survivor bots.
+ */
+function VSLib::EasyLogic::Players::SurvivorBots()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsBot() && libObj.GetTeam() == SURVIVORS)
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a table of all infected bots.
+ */
+function VSLib::EasyLogic::Players::InfectedBots()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsBot() && libObj.GetTeam() == INFECTED)
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a table of all players.
  */
 function VSLib::EasyLogic::Players::All()
@@ -2233,6 +2405,27 @@ function VSLib::EasyLogic::Players::AliveSurvivors()
 }
 
 /**
+ * Returns a table of all dead survivors.
+ */
+function VSLib::EasyLogic::Players::DeadSurvivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && !libObj.IsAlive())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns one valid survivor, or null if none exist
  */
 function VSLib::EasyLogic::Players::AnySurvivor()
@@ -2271,11 +2464,38 @@ function VSLib::EasyLogic::Players::AnyAliveSurvivor()
 }
 
 /**
+ * Returns one valid alive survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::AnyDeadSurvivor()
+{
+	local ent = null;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && !libObj.IsAlive())
+				return libObj;
+		}
+	}
+	
+	return null;
+}
+
+/**
  * Returns one RANDOM valid alive survivor, or null if none exist
  */
 function VSLib::EasyLogic::Players::RandomAliveSurvivor()
 {
 	return Utils.GetRandValueFromArray(Players.AliveSurvivors());
+}
+
+/**
+ * Returns one RANDOM valid dead survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::RandomDeadSurvivor()
+{
+	return Utils.GetRandValueFromArray(Players.DeadSurvivors());
 }
 
 /**
@@ -2351,9 +2571,9 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 
 
 /**
- * Returns a value of 1 or 2 depending on survivor version
+ * Returns a value of 1 or 2 depending on survivor set
  */
-function VSLib::EasyLogic::GetSurvivorVersion()
+function VSLib::EasyLogic::GetSurvivorSet()
 {
 	local L4D1Survs =
 	[
@@ -2442,6 +2662,30 @@ function VSLib::EasyLogic::Objects::OfClassname(classname)
 }
 
 /**
+ * Returns all entities of a specific classname nearest to the specified point.
+ */
+function VSLib::EasyLogic::Objects::OfClassnameNearest(classname, origin, radius)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassnameNearest(classname, origin, radius))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns all entities of a specific classname within a radius.
  *
  * E.g. foreach ( object in Objects.OfClassnameWithin("prop_physics", Vector(0,0,0), 10) ) ...
@@ -2496,6 +2740,30 @@ function VSLib::EasyLogic::Objects::OfName(targetname)
 	local ent = null;
 	local i = -1;
 	while (ent = Entities.FindByName(ent, targetname))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns all entities of a specific targetname nearest to a point.
+ */
+function VSLib::EasyLogic::Objects::OfNameNearest(targetname, origin, radius)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByNameNearest(targetname, origin, radius))
 	{
 		if (ent.IsValid())
 		{
@@ -2597,6 +2865,30 @@ function VSLib::EasyLogic::Objects::AnyOfModel(model)
 	}
 	
 	return null;
+}
+
+/**
+ * Returns all entities by its target.
+ */
+function VSLib::EasyLogic::Objects::OfTarget(target)
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByTarget(ent, target))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = null;
+			if (ent.IsPlayer())
+				libObj = ::VSLib.Player(ent);
+			else
+				libObj = ::VSLib.Entity(ent);
+			t[++i] <- libObj;
+		}
+	}
+	
+	return t;
 }
 
 /**

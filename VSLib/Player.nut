@@ -44,6 +44,7 @@ getconsttable()["SLOT_SECONDARY"] <- 1;
 getconsttable()["SLOT_THROW"] <- 2;
 getconsttable()["SLOT_MEDKIT"] <- 3;
 getconsttable()["SLOT_PILLS"] <- 4;
+getconsttable()["SLOT_HELD"] <- 5;
 
 
 
@@ -83,6 +84,9 @@ function VSLib::Player::GetCharacterName()
 		return "";
 	}
 	
+	if ( GetTeam() == L4D1_SURVIVORS )
+		return GetName();
+	
 	return g_MapScript.GetCharacterDisplayName(_ent);
 }
 
@@ -97,12 +101,22 @@ function VSLib::Player::GetSteamID()
 		return "";
 	}
 	
-	local id = _idx;
-	if (!(id in ::VSLib.GlobalCache))
-		return "";
+	local userid = "_vslUserID_" + GetUserID();
 	
-	if ("_steam" in ::VSLib.GlobalCache[id])
-		return ::VSLib.GlobalCache[id]["_steam"];
+	if ( userid in ::VSLib.EasyLogic.UserCache && IsHuman() )
+	{
+		if ("_steam" in ::VSLib.EasyLogic.UserCache[userid])
+			return ::VSLib.EasyLogic.UserCache[userid]["_steam"];
+	}
+	else
+	{
+		local id = _idx;
+		if (!(id in ::VSLib.GlobalCache))
+			return "";
+		
+		if ("_steam" in ::VSLib.GlobalCache[id])
+			return ::VSLib.GlobalCache[id]["_steam"];
+	}
 	
 	return "";
 }
@@ -127,6 +141,68 @@ function VSLib::Player::GetUniqueID()
 }
 
 /**
+ * Gets the player's SteamID64.
+ */
+function VSLib::Player::GetSteamID64()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return "";
+	}
+	
+	local userid = "_vslUserID_" + GetUserID();
+	
+	if ( userid in ::VSLib.EasyLogic.UserCache && IsHuman() )
+	{
+		if ("_xuid" in ::VSLib.EasyLogic.UserCache[userid])
+			return ::VSLib.EasyLogic.UserCache[userid]["_xuid"];
+	}
+	else
+	{
+		local id = _idx;
+		if (!(id in ::VSLib.GlobalCache))
+			return "";
+		
+		if ("_xuid" in ::VSLib.GlobalCache[id])
+			return ::VSLib.GlobalCache[id]["_xuid"];
+	}
+	
+	return "";
+}
+
+/**
+ * Gets the player's IP address.
+ */
+function VSLib::Player::GetIPAddress()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return "";
+	}
+	
+	local userid = "_vslUserID_" + GetUserID();
+	
+	if ( userid in ::VSLib.EasyLogic.UserCache && IsHuman() )
+	{
+		if ("_ip" in ::VSLib.EasyLogic.UserCache[userid])
+			return ::VSLib.EasyLogic.UserCache[userid]["_ip"];
+	}
+	else
+	{
+		local id = _idx;
+		if (!(id in ::VSLib.GlobalCache))
+			return "";
+		
+		if ("_ip" in ::VSLib.GlobalCache[id])
+			return ::VSLib.GlobalCache[id]["_ip"];
+	}
+	
+	return "";
+}
+
+/**
  * Gets the player's name.
  */
 function VSLib::Player::GetName()
@@ -145,27 +221,6 @@ function VSLib::Player::GetName()
 		return ::VSLib.GlobalCache[id]["_name"];*/
 	
 	return _ent.GetPlayerName();
-}
-
-/**
- * Gets the player's IP address.
- */
-function VSLib::Player::GetIPAddress()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return "";
-	}
-	
-	local id = _idx;
-	if (!(id in ::VSLib.GlobalCache))
-		return "";
-	
-	if ("_ip" in ::VSLib.GlobalCache[id])
-		return ::VSLib.GlobalCache[id]["_ip"];
-	
-	return "";
 }
 
 /**
@@ -289,7 +344,7 @@ function VSLib::Player::GetActiveWeapon()
 		return null;
 	}
 	
-	return _ent.GetActiveWeapon();
+	return ::VSLib.Entity(_ent.GetActiveWeapon());
 }
 
 /**
@@ -1100,7 +1155,7 @@ function VSLib::Player::GiveAdrenaline( time )
 /**
  * Gets the userid of the entity
  */
-function VSLib::Player::GetUserId()
+function VSLib::Player::GetUserID()
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1494,6 +1549,87 @@ function VSLib::Player::Remove(str)
 		{
 			if ( item.GetClassname() == str || item.GetClassname() == "weapon_" + str )
 				Entity(item).Kill();
+		}
+	}
+}
+
+/**
+ * Drops a player's weapon
+ */
+function VSLib::Player::Drop(str = "")
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local wep = "";
+	local dummyWep = "";
+	local slot = "";
+	local t = GetHeldItems();
+	
+	if ( str != "" )
+	{
+		if ( (typeof str) == "integer" )
+			slot = "slot" + str.tointeger();
+		else
+		{
+			if ( str.find("weapon_") != null )
+				wep = str;
+			else
+				wep = "weapon_" + str;
+		}
+	}
+	else
+	{
+		if ( GetActiveWeapon() != null )
+			wep = GetActiveWeapon().GetClassname();
+		else
+			return;
+	}
+	
+	if ( slot != "" )
+	{
+		if (t && slot in t)
+			wep = t[slot].GetClassname();
+	}
+	
+	if ( wep == "weapon_pistol" || wep == "weapon_melee" || wep == "weapon_chainsaw" )
+		dummyWep = "pistol_magnum";
+	else if ( wep == "weapon_pistol_magnum" )
+		dummyWep = "pistol";
+	else if ( wep == "weapon_first_aid_kit" || wep == "weapon_upgradepack_incendiary" || wep == "weapon_upgradepack_explosive" )
+		dummyWep = "difibrillator";
+	else if ( wep == "weapon_difibrillator" )
+		dummyWep = "first_aid_kit";
+	else if ( wep == "weapon_pain_pills" )
+		dummyWep = "adrenaline";
+	else if ( wep == "weapon_adrenaline" )
+		dummyWep = "pain_pills";
+	else if ( wep == "weapon_pipe_bomb" || wep == "weapon_vomitjar" )
+		dummyWep = "molotov";
+	else if ( wep == "weapon_molotov" )
+		dummyWep = "pipe_bomb";
+	else if ( wep == "weapon_gascan" || wep == "weapon_propanetank" || wep == "weapon_oxygentank" || wep == "weapon_fireworkcrate" || wep == "weapon_cola_bottles" )
+		dummyWep = "gnome";
+	else if ( wep == "weapon_gnome" )
+		dummyWep = "gascan";
+	else if ( wep == "weapon_rifle" )
+		dummyWep = "smg";
+	else
+		dummyWep = "rifle";
+	
+	if (t)
+	{
+		foreach (item in t)
+		{
+			if ( item.GetClassname() == wep )
+			{
+				Give(dummyWep);
+				Remove(dummyWep);
+				Input( "CancelCurrentScene" );
+			}
 		}
 	}
 }

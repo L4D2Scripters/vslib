@@ -149,6 +149,7 @@ getconsttable()["UNKNOWN"] <- 0; /**< Anything that is unknown. */
 getconsttable()["SPECTATORS"] <- 1;
 getconsttable()["SURVIVORS"] <- 2;
 getconsttable()["INFECTED"] <- 3;
+getconsttable()["L4D1_SURVIVORS"] <- 4;
 
 // "Gender" types, to be used with GetGender()
 getconsttable()["MALE"] <- 1;
@@ -468,6 +469,8 @@ function VSLib::Entity::SetKeyValue(key, value)
 	
 	if (typeof value == "instance")
 		_ent.__KeyValueFromVector(key.tostring(), value);
+	else if (typeof value == "integer")
+		_ent.__KeyValueFromInt(key.tostring(), value.tointeger());
 	else
 		_ent.__KeyValueFromString(key.tostring(), value.tostring());
 }
@@ -1269,7 +1272,7 @@ function VSLib::Entity::TeleportTo(otherEntity)
 
 /**
  * Tries to guess what team the player might be on.
- * Returns either INFECTED or SURVIVORS.
+ * Returns either INFECTED, SURVIVORS or L4D1_SURVIVORS.
  */
 function VSLib::Entity::GetTeam()
 {
@@ -1282,7 +1285,12 @@ function VSLib::Entity::GetTeam()
 	if (!("GetZombieType" in _ent))
 		return UNKNOWN;
 	else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
-		return SURVIVORS;
+	{
+		if ( ::EasyLogic.GetSurvivorSet() == 2 && (GetSurvivorName() == "!bill" || GetSurvivorName() == "!francis" || GetSurvivorName() == "!louis" || GetSurvivorName() == "!zoey") )
+			return L4D1_SURVIVORS;
+		else
+			return SURVIVORS;
+	}
 	else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost() || _ent.GetClassname() == "infected")
 		return INFECTED;
 }
@@ -1308,6 +1316,73 @@ function VSLib::Entity::GetType()
 			return;
 		
 		return _ent.GetZombieType();
+	}
+	
+	return;
+}
+
+/**
+ * Returns the inventory slot the weapon uses.
+ */
+function VSLib::Entity::GetWeaponSlot()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local WeaponNames =
+	{
+		weapon_smg = SLOT_PRIMARY,
+		weapon_smg_silenced = SLOT_PRIMARY,
+		weapon_smg_mp5 = SLOT_PRIMARY,
+		weapon_pumpshotgun = SLOT_PRIMARY,
+		weapon_shotgun_chrome = SLOT_PRIMARY,
+		weapon_rifle = SLOT_PRIMARY,
+		weapon_rifle_ak47 = SLOT_PRIMARY,
+		weapon_rifle_desert = SLOT_PRIMARY,
+		weapon_rifle_sg552 = SLOT_PRIMARY,
+		weapon_rifle_m60 = SLOT_PRIMARY,
+		weapon_autoshotgun = SLOT_PRIMARY,
+		weapon_shotgun_spas = SLOT_PRIMARY,
+		weapon_hunting_rifle = SLOT_PRIMARY,
+		weapon_sniper_military = SLOT_PRIMARY,
+		weapon_sniper_awp = SLOT_PRIMARY,
+		weapon_sniper_scout = SLOT_PRIMARY,
+		weapon_grenade_launcher = SLOT_PRIMARY,
+		weapon_pistol = SLOT_SECONDARY,
+		weapon_pistol_magnum = SLOT_SECONDARY,
+		weapon_melee = SLOT_SECONDARY,
+		weapon_chainsaw = SLOT_SECONDARY,
+		weapon_pipe_bomb = SLOT_THROW,
+		weapon_molotov = SLOT_THROW,
+		weapon_vomitjar = SLOT_THROW,
+		weapon_first_aid_kit = SLOT_MEDKIT,
+		weapon_defibrillator = SLOT_MEDKIT,
+		weapon_upgradepack_incendiary = SLOT_MEDKIT,
+		weapon_upgradepack_explosive = SLOT_MEDKIT,
+		weapon_pain_pills = SLOT_PILLS,
+		weapon_adrenaline = SLOT_PILLS,
+		weapon_gascan = SLOT_HELD,
+		weapon_propanetank = SLOT_HELD,
+		weapon_oxygentank = SLOT_HELD,
+		weapon_gnome = SLOT_HELD,
+		weapon_cola_bottles = SLOT_HELD,
+		weapon_fireworkcrate = SLOT_HELD,
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") != null )
+	{
+		foreach( weapon, slot in WeaponNames )
+		{
+			foreach( wep in Objects.OfClassname(weapon) )
+			{
+				if ( wep.GetClassname() == _ent.GetClassname() )
+					return slot;
+			}
+		}
+		return;
 	}
 	
 	return;
@@ -1417,6 +1492,52 @@ function VSLib::Entity::GetUncommonInfected()
 			}
 		}
 		return Z_COMMON;
+	}
+	
+	return;
+}
+
+/**
+ * Gets the zombie's name
+ */
+function VSLib::Entity::GetZombieName()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+		return "Infected";
+	else if ( _ent.GetClassname() == "witch" )
+	{
+		if ( IsWitchBride() )
+			return "Witch Bride";
+		else
+			return "Witch";
+	}
+	else if ( _ent.GetClassname() == "player" )
+	{
+		if (!("GetZombieType" in _ent))
+			return;
+		
+		if ( _ent.GetZombieType() == Z_SMOKER )
+			return "Smoker";
+		else if ( _ent.GetZombieType() == Z_BOOMER )
+			return "Boomer";
+		else if ( _ent.GetZombieType() == Z_HUNTER )
+			return "Hunter";
+		else if ( _ent.GetZombieType() == Z_SPITTER )
+			return "Spitter";
+		else if ( _ent.GetZombieType() == Z_JOCKEY )
+			return "Jockey";
+		else if ( _ent.GetZombieType() == Z_CHARGER )
+			return "Charger";
+		else if ( _ent.GetZombieType() == Z_TANK )
+			return "Tank";
+		else if ( _ent.GetZombieType() == Z_SURVIVOR )
+			return "Survivor";
 	}
 	
 	return;
