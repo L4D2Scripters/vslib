@@ -1600,8 +1600,8 @@ function VSLib::Player::Drop(str = "")
 	else if ( wep == "weapon_pistol_magnum" )
 		dummyWep = "pistol";
 	else if ( wep == "weapon_first_aid_kit" || wep == "weapon_upgradepack_incendiary" || wep == "weapon_upgradepack_explosive" )
-		dummyWep = "difibrillator";
-	else if ( wep == "weapon_difibrillator" )
+		dummyWep = "defibrillator";
+	else if ( wep == "weapon_defibrillator" )
 		dummyWep = "first_aid_kit";
 	else if ( wep == "weapon_pain_pills" )
 		dummyWep = "adrenaline";

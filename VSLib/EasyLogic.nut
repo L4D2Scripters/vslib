@@ -2246,6 +2246,48 @@ function VSLib::EasyLogic::Players::SurvivorBots()
 }
 
 /**
+ * Returns a table of all alive survivor bots.
+ */
+function VSLib::EasyLogic::Players::AliveSurvivorBots()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsBot() && libObj.GetTeam() == SURVIVORS && libObj.IsAlive())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
+ * Returns a table of all dead survivor bots.
+ */
+function VSLib::EasyLogic::Players::DeadSurvivorBots()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsBot() && libObj.GetTeam() == SURVIVORS && !libObj.IsAlive())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a table of all infected bots.
  */
 function VSLib::EasyLogic::Players::InfectedBots()
@@ -2571,6 +2613,39 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 
 
 /**
+ * Returns a table of L4D1 survivors.
+ */
+function VSLib::EasyLogic::Players::L4D1Survivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	
+	local L4D1Survs =
+	[
+		"!bill"
+		"!francis" 
+		"!zoey" 
+		"!louis"
+	]
+	
+	foreach (s in L4D1Survs)
+	{
+		while (ent = Entities.FindByName( ent, s ))
+		{
+			if (ent.IsValid())
+			{
+				local libObj = ::VSLib.Player(ent);
+				t[++i] <- libObj;
+			}
+		}
+	}
+	
+	return t;
+}
+
+
+/**
  * Returns a value of 1 or 2 depending on survivor set
  */
 function VSLib::EasyLogic::GetSurvivorSet()
@@ -2602,38 +2677,6 @@ function VSLib::EasyLogic::GetSurvivorSet()
 	return 2;
 }
 
-
-/**
- * Returns a table of L4D1 survivors.
- */
-function VSLib::EasyLogic::Objects::L4D1Survivors()
-{
-	local t = {};
-	local ent = null;
-	local i = -1;
-	
-	local L4D1Survs =
-	[
-		"!bill"
-		"!francis" 
-		"!zoey" 
-		"!louis"
-	]
-	
-	foreach (s in L4D1Survs)
-	{
-		while (ent = Entities.FindByName( ent, s ))
-		{
-			if (ent.IsValid())
-			{
-				local libObj = ::VSLib.Player(ent);
-				t[++i] <- libObj;
-			}
-		}
-	}
-	
-	return t;
-}
 
 /**
  * Returns all entities of a specific classname.
