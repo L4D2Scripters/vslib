@@ -528,15 +528,20 @@ function VSLib::Entity::SetHealth(value)
 	value = value.tointeger();
 	
 	local hp = GetHealth();
-	if (value <= 0)
-	{
-		SetRawHealth(1);
-		Hurt(1, (1 << 2));
-	}
-	else if (value < hp)
-		Hurt(hp - value, 0);
+	if ( _ent.IsPlayer() )
+		Input("SetHealth", value);
 	else
-		SetRawHealth(value);
+	{
+		if (value <= 0)
+		{
+			SetRawHealth(0);
+			Hurt(1, (1 << 2));
+		}
+		else if (value < hp)
+			Hurt(hp - value, 0);
+		else
+			SetRawHealth(value);
+	}
 }
 
 /**
@@ -1286,7 +1291,7 @@ function VSLib::Entity::GetTeam()
 		return UNKNOWN;
 	else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
 	{
-		if ( ::EasyLogic.GetSurvivorSet() == 2 && (GetSurvivorName() == "!bill" || GetSurvivorName() == "!francis" || GetSurvivorName() == "!louis" || GetSurvivorName() == "!zoey") )
+		if ( ::EasyLogic.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
 			return L4D1_SURVIVORS;
 		else
 			return SURVIVORS;
@@ -1555,6 +1560,20 @@ function VSLib::Entity::Kill()
 	}
 	
 	Input("Kill");
+}
+
+/**
+ * Alternative method to kill/remove the entity from the map.
+ */
+function VSLib::Entity::KillEntity()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.Kill();
 }
 
 /**
@@ -1948,6 +1967,44 @@ function VSLib::Entity::GetName()
 	{
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return false;
+	}
+	
+	return _ent.GetName();
+}
+
+/**
+ * Returns the targetname of the entity.
+ */
+function VSLib::Entity::GetTargetname()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	local SurvivorNames =
+	[
+		"!coach"
+		"!ellis"
+		"!nick"
+		"!rochelle"
+		"!bill"
+		"!francis"
+		"!louis"
+		"!zoey"
+	]
+	
+	if ( _ent.GetClassname() == "player" && GetType() == Z_SURVIVOR )
+	{
+		foreach( name in SurvivorNames )
+		{
+			foreach( survivor in Objects.OfName(name) )
+			{
+				if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
+					return name;
+			}
+		}
 	}
 	
 	return _ent.GetName();

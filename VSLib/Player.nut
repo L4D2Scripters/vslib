@@ -641,9 +641,8 @@ function VSLib::Player::Incapacitate()
 	if (IsIncapacitated())
 		return;
 	
-	SetRawHealth(1);
 	SetHealthBuffer(0);
-	Hurt(5, 0);
+	Input("SetHealth", "0");
 }
 
 /**
@@ -651,8 +650,22 @@ function VSLib::Player::Incapacitate()
  */
 function VSLib::Player::Kill()
 {
+	local val = Convars.GetFloat("survivor_max_incapacitated_count");
+	
+	if ( "SurvivorMaxIncapacitatedCount" in SessionOptions )
+	{
+		local ScriptCount = SessionOptions.SurvivorMaxIncapacitatedCount;
+		
+		if ( ScriptCount > val )
+			val = ScriptCount;
+	}
+	
 	if (IsPlayerEntityValid())
-		Hurt(65535, 0);
+	{
+		SetReviveCount(val);
+		SetHealthBuffer(0);
+		Input("SetHealth", "0");
+	}
 	else
 		base.Kill();
 }
@@ -1178,44 +1191,6 @@ function VSLib::Player::GetSurvivorSlot()
 	}
 	
 	return _ent.GetSurvivorSlot();
-}
-
-/**
- * Gets the survivor's targetname
- */
-function VSLib::Player::GetSurvivorName()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	local SurvivorNames =
-	[
-		"!coach"
-		"!ellis"
-		"!nick"
-		"!rochelle"
-		"!bill"
-		"!francis"
-		"!louis"
-		"!zoey"
-	]
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	foreach( name in SurvivorNames )
-	{
-		foreach( survivor in Objects.OfName(name) )
-		{
-			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
-				return name;
-		}
-	}
-	
-	return;
 }
 
 /**
