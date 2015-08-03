@@ -44,7 +44,8 @@ getconsttable()["SLOT_SECONDARY"] <- 1;
 getconsttable()["SLOT_THROW"] <- 2;
 getconsttable()["SLOT_MEDKIT"] <- 3;
 getconsttable()["SLOT_PILLS"] <- 4;
-getconsttable()["SLOT_HELD"] <- 5;
+getconsttable()["SLOT_CARRIED"] <- 5;
+getconsttable()["SLOT_HELD"] <- "Held";
 
 
 
@@ -272,7 +273,7 @@ function VSLib::Player::IsDying()
 }
 
 /**
- * Returns true if the entity is incapped.
+ * Returns true if the player is incapped.
  */
 function VSLib::Player::IsIncapacitated()
 {
@@ -289,7 +290,7 @@ function VSLib::Player::IsIncapacitated()
 }
 
 /**
- * Returns true if the entity is hanging off a ledge.
+ * Returns true if the player is hanging off a ledge.
  */
 function VSLib::Player::IsHangingFromLedge()
 {
@@ -306,7 +307,7 @@ function VSLib::Player::IsHangingFromLedge()
 }
 
 /**
- * Returns true if the entity is in ghost mode (i.e. infected ghost).
+ * Returns true if the player is in ghost mode (i.e. infected ghost).
  */
 function VSLib::Player::IsGhost()
 {
@@ -320,7 +321,7 @@ function VSLib::Player::IsGhost()
 }
 
 /**
- * Returns true if the entity is on fire.
+ * Returns true if the player is on fire.
  */
 function VSLib::Player::IsOnFire()
 {
@@ -331,6 +332,20 @@ function VSLib::Player::IsOnFire()
 	}
 	
 	return _ent.IsOnFire();
+}
+
+/**
+ * Returns true if the player is on the survivor team (Otherwise, infected).
+ */
+function VSLib::Player::IsSurvivor()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.IsSurvivor();
 }
 
 /**
@@ -605,19 +620,13 @@ function VSLib::Player::IsSurvivorTrapped()
 
 
 /**
- * Returns the type of player. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, Z_COMMON, Z_WITCH, or UNKNOWN.
+ * Returns the type of player. E.g. Z_SPITTER, Z_TANK, Z_SURVIVOR, Z_HUNTER, Z_JOCKEY, Z_SMOKER, Z_BOOMER, Z_CHARGER, or UNKNOWN.
  */
 function VSLib::Player::GetPlayerType()
 {
 	if (!IsPlayerEntityValid())
 	{
-		if (IsEntityValid())
-		{
-			if (_ent.GetClassname() == "infected")
-				return Z_COMMON;
-			else if (_ent.GetClassname() == "witch")
-				return Z_WITCH;
-		}
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
 		return UNKNOWN;
 	}
 	
@@ -625,6 +634,43 @@ function VSLib::Player::GetPlayerType()
 		return UNKNOWN;
 	
 	return _ent.GetZombieType();
+}
+
+/**
+ * Returns the survivor's modelname.
+ */
+function VSLib::Player::GetSurvivorModel()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local SurvivorModels =
+	[
+		"models/survivors/survivor_coach.mdl"
+		"models/survivors/survivor_mechanic.mdl"
+		"models/survivors/survivor_gambler.mdl"
+		"models/survivors/survivor_producer.mdl"
+		"models/survivors/survivor_namvet.mdl"
+		"models/survivors/survivor_biker.mdl"
+		"models/survivors/survivor_manager.mdl"
+		"models/survivors/survivor_teenangst.mdl"
+		"models/survivors/survivor_biker_light.mdl"
+		"models/survivors/survivor_teenangst_light.mdl"
+	]
+	
+	foreach( modelname in SurvivorModels )
+	{
+		foreach( survivor in Objects.OfModel(modelname) )
+		{
+			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
+				return modelname;
+		}
+	}
+	
+	return;
 }
 
 /**
@@ -648,26 +694,69 @@ function VSLib::Player::Incapacitate()
 /**
  * Kills the player.
  */
-function VSLib::Player::Kill()
+function VSLib::Player::Kill(dmgtype = null)
 {
-	local val = Convars.GetFloat("survivor_max_incapacitated_count");
-	
-	if ( "SurvivorMaxIncapacitatedCount" in SessionOptions )
-	{
-		local ScriptCount = SessionOptions.SurvivorMaxIncapacitatedCount;
-		
-		if ( ScriptCount > val )
-			val = ScriptCount;
-	}
-	
 	if (IsPlayerEntityValid())
 	{
-		SetReviveCount(val);
-		SetHealthBuffer(0);
-		Input("SetHealth", "0");
+		if ( _ent.IsSurvivor() )
+		{
+			SetLastStrike();
+			SetHealthBuffer(0);
+		}
+		if ( dmgtype )
+		{
+			SetRawHealth(0);
+			Hurt(1, dmgtype);
+		}
+		else
+			Input("SetHealth", "0");
 	}
 	else
 		base.Kill();
+}
+
+/**
+ * Shows the player a hint.
+ */
+function VSLib::Player::ShowHint( text, duration = 5, icon = "icon_tip", color = "255 255 255" )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	duration = duration.tofloat();
+	
+	local hinttbl =
+	{
+		hint_allow_nodraw_target = "1",
+		hint_alphaoption = "0",
+		hint_auto_start = "0",
+		//hint_binding = "+use",
+		hint_caption = text.tostring(),
+		hint_color = color,
+		hint_forcecaption = "0",
+		hint_icon_offscreen = icon,
+		hint_icon_offset = "0",
+		hint_icon_onscreen = icon,
+		hint_instance_type = "2",
+		hint_nooffscreen = "0",
+		hint_pulseoption = "0",
+		hint_range = "0",
+		hint_shakeoption = "0",
+		hint_static = "1",
+		hint_target = "",
+		hint_timeout = duration,
+		targetname = "vslib_tmp_" + UniqueString(),
+	};
+	
+	local hint = Utils.CreateEntity("env_instructor_hint", Vector(0, 0, 0), QAngle(0, 0, 0), hinttbl);
+	
+	hint.Input("ShowHint", "", 0, this);
+	
+	if ( duration > 0 )
+		hint.Input("Kill", "", duration);
 }
 
 /**
@@ -850,8 +939,8 @@ function VSLib::Player::DropWeaponSlot(slot)
 		return;
 	}
 	
-	
-	slot = "slot" + slot;
+	if ( slot != "Held" )
+		slot = "slot" + slot;
 	local t = GetHeldItems();
 	
 	if (t && slot in t)
@@ -958,6 +1047,33 @@ function VSLib::Player::GetReviveCount()
 	if(_idx in ::VSLib.EasyLogic.Cache)
 		if ("_reviveCount" in ::VSLib.EasyLogic.Cache[_idx])
 			return ::VSLib.EasyLogic.Cache[_idx]._reviveCount;
+}
+
+/**
+ * Makes the player black & white.
+ */
+function VSLib::Player::SetLastStrike()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	local max_incap = Convars.GetFloat("survivor_max_incapacitated_count");
+	
+	if ( "SurvivorMaxIncapacitatedCount" in SessionOptions )
+	{
+		local MaxIncap = SessionOptions.SurvivorMaxIncapacitatedCount;
+		
+		if ( MaxIncap > max_incap )
+			max_incap = MaxIncap;
+	}
+	
+	SetReviveCount(max_incap);
 }
 
 /**
@@ -1166,7 +1282,7 @@ function VSLib::Player::GiveAdrenaline( time )
 }
 
 /**
- * Gets the userid of the entity
+ * Gets the userid of the player
  */
 function VSLib::Player::GetUserID()
 {
@@ -1292,6 +1408,70 @@ function VSLib::Player::PlaySound( file )
 	}
 	
 	g_MapScript.EmitSoundOnClient(file, _ent);
+}
+
+
+/**
+ * Makes the player speak a scene
+ */
+function VSLib::Player::Speak( scene, delay = 0 )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	delay = delay.tofloat();
+	
+	local function SpeakScene( params )
+	{
+		local Name = params.player.GetActorName();
+		local Scene = "";
+		
+		if ( params.scene.find("scenes") != null )
+		{
+			if ( params.scene.find(".vcd") != null )
+				Scene = params.scene;
+			else
+				Scene = params.scene + ".vcd";
+		}
+		else
+		{
+			if ( params.scene.find(".vcd") != null )
+				Scene = "scenes/" + Name + "/" + params.scene;
+			else
+				Scene = "scenes/" + Name + "/" + params.scene + ".vcd";
+		}
+		
+		local vsl_speak =
+		[
+			{
+				name = "VSLibScene",
+				criteria =
+				[
+					[ "Concept", "VSLibScene" ],
+					[ "Coughing", 0 ],
+					[ "Who", Name ],
+				],
+				responses =
+				[
+					{
+						scenename = Scene,
+					}
+				],
+				group_params = ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
+			},
+		]
+		ResponseRules.ProcessRules( vsl_speak );
+		
+		params.player.Input("SpeakResponseConcept", "VSLibScene");
+	}
+	
+	if ( delay > 0 )
+		Timers.AddTimer(delay, false, SpeakScene { scene = scene, player = this });
+	else
+		SpeakScene( { scene = scene, player = this } );
 }
 
 

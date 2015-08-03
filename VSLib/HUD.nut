@@ -78,6 +78,14 @@ _panelt[g_ModeScript.HUD_SCORE_4] <- { xpos = 100, ypos = 300, width = 440, heig
 ::HUD_SCORE_4 <- g_ModeScript.HUD_SCORE_4;
 
 
+// Timer enums to be used with HUDManageTimers().
+getconsttable()["TIMER_DISABLE"] <- 0;
+getconsttable()["TIMER_COUNTUP"] <- 1;
+getconsttable()["TIMER_COUNTDOWN"] <- 2;
+getconsttable()["TIMER_STOP"] <- 3;
+getconsttable()["TIMER_SET"] <- 4;
+
+
 /**
  * \brief Binds external data in an intuitive way.
  *

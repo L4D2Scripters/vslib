@@ -34,6 +34,34 @@ getconsttable()["ZOEY"] <- 5;
 getconsttable()["FRANCIS"] <- 6;
 getconsttable()["LOUIS"] <- 7;
 
+// Campaigns to be used with GetCampaign()
+getconsttable()["DEAD_CENTER"] <- 1;
+getconsttable()["DARK_CARNIVAL"] <- 2;
+getconsttable()["SWAMP_FEVER"] <- 3;
+getconsttable()["HARD_RAIN"] <- 4;
+getconsttable()["THE_PARISH"] <- 5;
+getconsttable()["THE_PASSING"] <- 6;
+getconsttable()["THE_SACRIFICE"] <- 7;
+getconsttable()["NO_MERCY"] <- 8;
+getconsttable()["CRASH_COURSE"] <- 9;
+getconsttable()["DEATH_TOLL"] <- 10;
+getconsttable()["DEAD_AIR"] <- 11;
+getconsttable()["BLOOD_HARVEST"] <- 12;
+getconsttable()["COLD_STREAM"] <- 13;
+
+// Stages to be used with GetNextStage() or Utils.TriggerStage().
+getconsttable()["STAGE_PANIC"] <- 0;
+getconsttable()["STAGE_TANK"] <- 1;
+getconsttable()["STAGE_DELAY"] <- 2;
+getconsttable()["STAGE_ONSLAUGHT"] <- 3;
+getconsttable()["STAGE_SCRIPTED"] <- 3;
+getconsttable()["STAGE_CLEAROUT"] <- 4;
+getconsttable()["STAGE_SETUP"] <- 5;
+getconsttable()["STAGE_UNKNOWN"] <- 6;
+getconsttable()["STAGE_ESCAPE"] <- 7;
+getconsttable()["STAGE_RESULTS"] <- 8;
+getconsttable()["STAGE_NONE"] <- 9;
+
 
 /**
  * Replaces parts of a string with another string,
@@ -115,6 +143,47 @@ function VSLib::Utils::DeserializeIdxTable(t)
 	}
 
 	return t;
+}
+
+/**
+ * Prints a table or array
+ */
+function VSLib::Utils::PrintTable(debugTable, prefix = "")
+{
+	if (prefix == "")
+	{
+		if ( typeof(debugTable) == "table" )
+			printl("{")
+		else if ( typeof(debugTable) == "array" )
+			printl("[")
+		prefix = "   "
+	}
+	foreach (idx, val in debugTable)
+	{
+		if ( typeof(val) == "table" )
+		{
+			printl( prefix + idx + " = \n" + prefix + "{")
+			::VSLib.Utils.PrintTable( val, prefix + "   " )
+			printl(prefix + "}")
+		}
+		else if ( typeof(val) == "array" )
+		{
+			printl( prefix + idx + " = \n" + prefix + "[")
+			::VSLib.Utils.PrintTable( val, prefix + "   " )
+			printl(prefix + "]")
+		}
+		else if ( typeof(val) == "string" )
+			printl(prefix + idx + "\t= \"" + val + "\"")
+		else
+			printl(prefix + idx + "\t= " + val)
+	}
+	if (prefix == "   ")
+	{
+		if ( typeof(debugTable) == "table" )
+			printl("}")
+		else if ( typeof(debugTable) == "array" )
+			printl("]")
+	}
 }
 
 /**
@@ -454,6 +523,7 @@ function VSLib::Utils::CreateEntity(_classname, pos = Vector(0,0,0), ang = QAngl
  * Alternative to Utils.CreateEntity(). Spawns a new entity and returns it as VSLib::Entity.
  *
  * @param _classname The classname of the entity
+ * @param _targetname The targetname of the entity
  * @param pos Where to spawn it (a Vector object)
  * @param ang Angles it should spawn with
  * @param kvs Other keyvalues you may want it to have
@@ -477,7 +547,7 @@ function VSLib::Utils::SpawnEntity(_classname, _targetname = "", pos = Vector(0,
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = Vector(0,0,0))
+function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = QAngle(0,0,0))
 {
 	if ( survivor == 4 )
 		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_namvet.mdl" );
@@ -488,23 +558,22 @@ function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = Ve
 	else if ( survivor == 7 )
 		::VSLib.Utils.PrecacheModel( "models/survivors/survivor_manager.mdl" );
 	
-	local info_l4d1_survivor_spawn = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "info_l4d1_survivor_spawn", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang, character = survivor });
-	
-	DoEntFire( "!self", "SpawnSurvivor", "", 0, info_l4d1_survivor_spawn, info_l4d1_survivor_spawn );
-	DoEntFire( "!self", "Kill", "", 0, null, info_l4d1_survivor_spawn );
+	local ent = ::VSLib.Utils.CreateEntity("info_l4d1_survivor_spawn", pos, ang, { character = survivor });
+	ent.Input( "SpawnSurvivor" );
+	ent.Input( "Kill" );
 }
 
 /**
  * Spawns the requested zombie via the Director at the specified location.
  */
-function VSLib::Utils::SpawnZombie(pos, zombieType = "default", offerTank = false, victim = null)
+function VSLib::Utils::SpawnZombie(zombieType, pos = Vector(0,0,0), ang = QAngle(0,0,0), offerTank = false, victim = null)
 {
 	if ( zombieType == "witch" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
 	else if ( zombieType == "witch_bride" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch_bride.mdl" );
 	
-	local ent = VSLib.Utils.CreateEntity("info_zombie_spawn", pos);
+	local ent = ::VSLib.Utils.CreateEntity("info_zombie_spawn", pos, ang);
 	ent.SetKeyValue("population", zombieType);
 	ent.SetKeyValue("offer_tank", offerTank.tointeger());
 	ent.Input("SpawnZombie");
@@ -607,9 +676,9 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombie, maxDist = 128.0, m
 				else
 				{
 					if ( victim != null )
-						::VSLib.Utils.SpawnZombie(_pos, zombie, offerTank, victim);
+						::VSLib.Utils.SpawnZombie(zombie, _pos, QAngle(0,0,0), offerTank, victim);
 					else
-						::VSLib.Utils.SpawnZombie(_pos, zombie, offerTank);
+						::VSLib.Utils.SpawnZombie(zombie, _pos, QAngle(0,0,0), offerTank);
 					return true;
 				}
 			}
@@ -624,16 +693,15 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombie, maxDist = 128.0, m
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnCommentaryZombie(zombieModel, pos = Vector(0,0,0), ang = Vector(0,0,0))
+function VSLib::Utils::SpawnCommentaryZombie(zombieModel, pos = Vector(0,0,0), ang = QAngle(0,0,0))
 {
 	if ( zombieModel == "witch" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
 	
-	local commentary_zombie_spawner = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "commentary_zombie_spawner", targetname = "vslib_tmp_" + UniqueString(), origin = pos, angles = ang });
-	
 	//::VSLib.Utils.PrecacheModel( "models/infected/" + zombieModel + ".mdl" );
-	DoEntFire( "!self", "SpawnZombie", zombieModel, 0, commentary_zombie_spawner, commentary_zombie_spawner );
-	DoEntFire( "!self", "Kill", "", 0, null, commentary_zombie_spawner );
+	local ent = ::VSLib.Utils.CreateEntity("commentary_zombie_spawner", pos, ang);
+	ent.Input("SpawnZombie", zombieModel);
+	ent.Input("Kill");
 }
 
 
@@ -738,7 +806,7 @@ function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, m
 	_vsl_func_timescale.Input("Start");
 	
 	if ( allowResumeTime )
-		Timers.AddTimer(1.5, 0, Utils.ResumeTime, _vsl_func_timescale);
+		Timers.AddTimer(1.5, 0, ::VSLib.Utils.ResumeTime, _vsl_func_timescale);
 }
 
 /**
@@ -777,6 +845,17 @@ function VSLib::Utils::StopSoundOnAll(sound)
 
 
 /**
+ * Returns a table with some infected counts.
+ */
+function VSLib::Utils::InfectedStats()
+{
+	local t = {};
+	GetInfectedStats(t);
+	
+	return t;
+}
+
+/**
  * Returns the victim of the attacker player or null if there is no victim
  */
 function VSLib::Utils::GetVictimOfAttacker( attacker )
@@ -790,6 +869,22 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
 		if (curattker != null && curattker.GetIndex() == attacker.GetIndex())
 			return surv;
 	}
+}
+
+/**
+ * Checks if the entity belongs to CBaseEntity or CTerrorPlayer, then returns it as a VSLib entity
+ */
+function VSLib::Utils::GetEntityOrPlayer( ent )
+{
+	if (ent.IsValid())
+	{
+		if ( ent.IsPlayer() )
+			return ::VSLib.Player(ent);
+		else
+			return ::VSLib.Entity(ent);
+	}
+	
+	return null;
 }
 
 /**
@@ -814,6 +909,35 @@ function VSLib::Utils::ForcePanicEvent( )
 		local vsent = Entity(ent);
 		vsent.Input("ForcePanicEvent");
 	}
+	else
+	{
+		ent = ::VSLib.Utils.CreateEntity("info_director");
+		ent.Input("ForcePanicEvent");
+		ent.Input("Kill");
+	}
+}
+
+/**
+ * Triggers a stage type
+ */
+function VSLib::Utils::TriggerStage( stage, value = 1 )
+{
+	SessionOptions.A_CustomFinale_StageCount <- 1;
+	SessionOptions.A_CustomFinale1 <- stage.tointeger();
+	SessionOptions.A_CustomFinaleValue1 <- value.tofloat();
+	
+	local ent = null;
+	if (ent = Entities.FindByClassname(ent, "info_director"))
+	{
+		local vsent = Entity(ent);
+		vsent.Input("ScriptedPanicEvent");
+	}
+	else
+	{
+		ent = ::VSLib.Utils.CreateEntity("info_director");
+		ent.Input("ScriptedPanicEvent");
+		ent.Input("Kill");
+	}
 }
 
 /**
@@ -826,13 +950,13 @@ function VSLib::Utils::StartFinale( )
 	{
 		local vsent = Entity(ent);
 		
-		local finale_nav = g_ModeScript.CreateSingleSimpleEntityFromTable({ classname = "point_nav_attribute_region", maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64", origin = Players.AnyAliveSurvivor().GetLocation(), angles = Vector(0, 0, 0) });
+		local finale_nav = ::VSLib.Utils.CreateEntity("point_nav_attribute_region", Players.AnyAliveSurvivor().GetLocation(), QAngle(0,0,0), { maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64" });
 		
 		if ( SessionState.MapName == "c2m5_concert" )
 			EntFire( "stadium_entrance_door_relay", "Kill" );
 		EntFire( "info_game_event_proxy", "Kill" );
 		vsent.Input("ForceFinaleStart");
-		DoEntFire( "!self", "Kill", "", 0, null, finale_nav );
+		finale_nav.Input("Kill");
 	}
 }
 
@@ -852,6 +976,25 @@ function VSLib::Utils::TriggerRescue( )
 		EntFire( "relay_car_ready", "Trigger" );
 		NavMesh.UnblockRescueVehicleNav();
 	}
+}
+
+/**
+ * Generates a game event
+ */
+function VSLib::Utils::GenerateGameEvent( str )
+{
+	local eventtbl =
+	{
+		event_name = str.tostring(),
+		range = "0",
+		spawnflags = "0",
+		targetname = "vslib_tmp_" + UniqueString(),
+	};
+	
+	local hint = ::Utils.CreateEntity("info_game_event_proxy", Vector(0, 0, 0), QAngle(0, 0, 0), eventtbl);
+	
+	hint.Input("GenerateGameEvent");
+	hint.Input("Kill");
 }
 
 
@@ -1025,7 +1168,7 @@ function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnWeapon( weapon, Count = 5, pos = Vector(0,0,0), ang = Vector(0,0,90), keyvalues = {} )
+function VSLib::Utils::SpawnWeapon( weapon, Count = 5, pos = Vector(0,0,0), ang = QAngle(0,0,90), keyvalues = {} )
 {
 	local SpawnFlag = 2;
 	
@@ -1056,13 +1199,38 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, pos = Vector(0,0,0), ang 
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnAmmo( mdl = "models/props/terror/ammo_stack.mdl", pos = Vector(0,0,0), ang = Vector(0,0,0), keyvalues = {} )
+function VSLib::Utils::SpawnAmmo( mdl = "models/props/terror/ammo_stack.mdl", pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
 {
 	::VSLib.Utils.PrecacheModel( mdl );
 	local t = { model = mdl, count = "5", solid = "6", spawnflags = "2", };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity("weapon_ammo_spawn", pos, ang, keyvalues);
+}
+
+/**
+ * Spawns an already deployed upgrade at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnUpgrade( upgrade, Count = 4, pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
+{
+	if ( typeof(upgrade) == "integer" )
+	{
+		if ( upgrade == 0 )
+			upgrade = "upgrade_ammo_incendiary";
+		else if ( upgrade == 1 )
+			upgrade = "upgrade_ammo_explosive";
+		else if ( upgrade == 2 )
+			upgrade = "upgrade_laser_sight";
+	}
+	local t = { count = Count, spawnflags = "2", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	
+	local ent = ::VSLib.Utils.CreateEntity(upgrade, pos, ang, keyvalues);
+	ent.SetKeyValue("count", Count);
+	return ent;
 }
 
 /**
@@ -1351,7 +1519,7 @@ function VSLib::Utils::IsValidFireWeapon(weapon)
  */
 function VSLib::Utils::IsValidWeapon(classname)
 {
-	return Utils.IsValidMeleeWeapon(classname) || Utils.IsValidFireWeapon(classname);
+	return ::VSLib.Utils.IsValidMeleeWeapon(classname) || ::VSLib.Utils.IsValidFireWeapon(classname);
 }
 
 /**
@@ -1364,13 +1532,343 @@ function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
 	if (arrlen <= 0)
 		return null;
 	
-	local idx = Utils.GetRandNumber(0, arrlen - 1);
+	local idx = RandomInt( 0, arrlen - 1 );
 	local arrvalue = arr[ idx ];
 	if ( removeValue )
 		arr.remove( idx );
 	
 	return arrvalue;
-	//return arr[ Utils.GetRandNumber(0, arrlen - 1) ];
+	//return arr[ ::VSLib.Utils.GetRandNumber(0, arrlen - 1) ];
+}
+
+/**
+ * Returns a value of 1 or 2 depending on survivor set
+ */
+function VSLib::Utils::GetSurvivorSet()
+{
+	local L4D1Survs =
+	[
+		"!bill"
+		"!francis"
+		"!zoey"
+		"!louis"
+	]
+	
+	local ent = null;
+	
+	foreach( s in L4D1Survs )
+	{
+		while ( ent = Entities.FindByName( ent, s ) )
+		{
+			if ( ent.IsValid() )
+			{
+				if ( !IsPlayerABot(ent) )
+				{
+					return 1;
+				}
+			}
+		}
+	}
+	
+	return 2;
+}
+
+/**
+ * Gets the base mode
+ */
+function VSLib::Utils::GetBaseMode()
+{
+	return ::VSLib.EasyLogic.BaseModeName;
+}
+
+/**
+ * Gets the campaign
+ */
+function VSLib::Utils::GetCampaign()
+{
+	if ( SessionState.MapName.find("c1m") != null )
+		return DEAD_CENTER;
+	else if ( SessionState.MapName.find("c2m") != null )
+		return DARK_CARNIVAL;
+	else if ( SessionState.MapName.find("c3m") != null )
+		return SWAMP_FEVER;
+	else if ( SessionState.MapName.find("c4m") != null )
+		return HARD_RAIN;
+	else if ( SessionState.MapName.find("c5m") != null )
+		return THE_PARISH;
+	else if ( SessionState.MapName.find("c6m") != null )
+		return THE_PASSING;
+	else if ( SessionState.MapName.find("c7m") != null )
+		return THE_SACRIFICE;
+	else if ( SessionState.MapName.find("c8m") != null )
+		return NO_MERCY;
+	else if ( SessionState.MapName.find("c9m") != null )
+		return CRASH_COURSE;
+	else if ( SessionState.MapName.find("c10m") != null )
+		return DEATH_TOLL;
+	else if ( SessionState.MapName.find("c11m") != null )
+		return DEAD_AIR;
+	else if ( SessionState.MapName.find("c12m") != null )
+		return BLOOD_HARVEST;
+	else if ( SessionState.MapName.find("c13m") != null )
+		return COLD_STREAM;
+	else
+		return 0;
+}
+
+/**
+ * Gets the origin vector for the ending saferoom
+ */
+function VSLib::Utils::GetSaferoomLocation()
+{
+	local furthestDistance = 0;
+	
+	if ( SessionState.MapName == "c1m1_hotel" )
+		return Vector( 2031.436035, 4465.583984, 1184.031250 );
+	else if ( SessionState.MapName == "c3m1_plankcountry" )
+		return Vector( -2666.985352, 460.419403, 56.031250 );
+	else if ( SessionState.MapName == "c4m1_milltown_a" )
+		return Vector( 3911.232422, -1564.834961, 232.281250 );
+	else if ( SessionState.MapName == "c4m3_sugarmill_b" )
+		return Vector( 3668.776123, -1693.819092, 232.281250 );
+	else if ( SessionState.MapName == "c5m4_quarter" )
+		return Vector( 1476.493408, -3572.280518, 64.031250 );
+	else if ( SessionState.MapName == "c8m3_sewers" )
+		return Vector( 12362.519531, 12528.189453, 16.031250 );
+	else if ( SessionState.MapName == "c10m2_drainage" )
+		return Vector( -8597.331055, -5553.929688, -30.968748 );
+	else if ( SessionState.MapName == "c10m3_ranchhouse" )
+		return Vector( -2563.044678, -43.700687, 160.031250 );
+	else if ( SessionState.MapName == "c12m1_hilltop" )
+		return Vector( -6549.538574, -6711.419434, 348.031250 );
+	else if ( SessionState.MapName == "c13m3_memorialbridge" )
+		return Vector( 6117.068848, -6170.154785, 386.031250 );
+	else
+	{
+		foreach( landmark in Objects.OfClassname("info_landmark") )
+		{
+			local dist = ::VSLib.Utils.CalculateDistance(landmark.GetLocation(), Players.AnyAliveSurvivor().GetSpawnLocation());
+			
+			if ( dist > furthestDistance )
+			{
+				foreach( saferoomDoor in Objects.OfClassname("prop_door_rotating_checkpoint") )
+				{
+					if ( ::VSLib.Utils.CalculateDistance(saferoomDoor.GetLocation(), landmark.GetLocation()) < 2000 )
+					{
+						furthestDistance = dist;
+						return landmark.GetLocation();
+					}
+				}
+			}
+		}
+	}
+}
+
+::VSLib_DirectorDisabled <- false;
+::VSLib_Restore_cm_DominatorLimit <- null;
+::VSLib_Restore_DominatorLimit <- null;
+::VSLib_Restore_cm_MaxSpecials <- null;
+::VSLib_Restore_MaxSpecials <- null;
+::VSLib_Restore_cm_CommonLimit <- null;
+::VSLib_Restore_CommonLimit <- null;
+::VSLib_Restore_SmokerLimit <- null;
+::VSLib_Restore_BoomerLimit <- null;
+::VSLib_Restore_HunterLimit <- null;
+::VSLib_Restore_SpitterLimit <- null;
+::VSLib_Restore_JockeyLimit <- null;
+::VSLib_Restore_ChargerLimit <- null;
+::VSLib_Restore_WitchLimit <- null;
+::VSLib_Restore_cm_WitchLimit <- null;
+::VSLib_Restore_TankLimit <- null;
+::VSLib_Restore_cm_TankLimit <- null;
+/**
+ * Enables the Director
+ */
+function VSLib::Utils::StartDirector()
+{
+	if ( !::VSLib_DirectorDisabled )
+		return;
+	
+	SessionOptions.cm_DominatorLimit = VSLib_Restore_cm_DominatorLimit;
+	SessionOptions.DominatorLimit = VSLib_Restore_DominatorLimit;
+	SessionOptions.cm_MaxSpecials = VSLib_Restore_cm_MaxSpecials;
+	SessionOptions.cm_CommonLimit = VSLib_Restore_cm_CommonLimit;
+	SessionOptions.CommonLimit = VSLib_Restore_CommonLimit;
+	SessionOptions.SmokerLimit = VSLib_Restore_SmokerLimit;
+	SessionOptions.BoomerLimit = VSLib_Restore_BoomerLimit;
+	SessionOptions.HunterLimit = VSLib_Restore_HunterLimit;
+	SessionOptions.SpitterLimit = VSLib_Restore_SpitterLimit;
+	SessionOptions.JockeyLimit = VSLib_Restore_JockeyLimit;
+	SessionOptions.ChargerLimit = VSLib_Restore_ChargerLimit;
+	SessionOptions.WitchLimit = VSLib_Restore_WitchLimit;
+	SessionOptions.cm_WitchLimit = VSLib_Restore_cm_WitchLimit;
+	SessionOptions.TankLimit = VSLib_Restore_TankLimit;
+	SessionOptions.cm_TankLimit = VSLib_Restore_cm_TankLimit;
+}
+
+/**
+ * Disables the Director
+ */
+function VSLib::Utils::StopDirector()
+{
+	if ( ::VSLib_DirectorDisabled )
+		return;
+	
+	if ( "cm_DominatorLimit" in SessionOptions )
+		VSLib_Restore_cm_DominatorLimit = SessionOptions.cm_DominatorLimit;
+	else
+		VSLib_Restore_cm_DominatorLimit = 2;
+	if ( "DominatorLimit" in SessionOptions )
+		VSLib_Restore_DominatorLimit = SessionOptions.DominatorLimit;
+	else
+		VSLib_Restore_DominatorLimit = 2;
+	if ( "cm_MaxSpecials" in SessionOptions )
+		VSLib_Restore_cm_MaxSpecials = SessionOptions.cm_MaxSpecials;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_cm_MaxSpecials = Convars.GetFloat("survival_max_specials");
+		else
+			VSLib_Restore_cm_MaxSpecials = 2;
+	}
+	if ( "MaxSpecials" in SessionOptions )
+		VSLib_Restore_MaxSpecials = SessionOptions.MaxSpecials;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_MaxSpecials = Convars.GetFloat("survival_max_specials");
+		else
+			VSLib_Restore_MaxSpecials = 2;
+	}
+	if ( "cm_CommonLimit" in SessionOptions )
+		VSLib_Restore_cm_CommonLimit = SessionOptions.cm_CommonLimit;
+	else
+		VSLib_Restore_cm_CommonLimit = Convars.GetFloat("z_common_limit");
+	if ( "CommonLimit" in SessionOptions )
+		VSLib_Restore_CommonLimit = SessionOptions.CommonLimit;
+	else
+		VSLib_Restore_CommonLimit = Convars.GetFloat("z_common_limit");
+	if ( "SmokerLimit" in SessionOptions )
+		VSLib_Restore_SmokerLimit = SessionOptions.SmokerLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_SmokerLimit = Convars.GetFloat("survival_max_smokers");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_SmokerLimit = Convars.GetFloat("z_versus_smoker_limit");
+		else
+			VSLib_Restore_SmokerLimit = Convars.GetFloat("z_smoker_limit");
+	}
+	if ( "BoomerLimit" in SessionOptions )
+		VSLib_Restore_BoomerLimit = SessionOptions.BoomerLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_BoomerLimit = Convars.GetFloat("survival_max_boomers");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_BoomerLimit = Convars.GetFloat("z_versus_boomer_limit");
+		else
+			VSLib_Restore_BoomerLimit = Convars.GetFloat("z_boomer_limit");
+	}
+	if ( "HunterLimit" in SessionOptions )
+		VSLib_Restore_HunterLimit = SessionOptions.HunterLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_HunterLimit = Convars.GetFloat("survival_max_hunters");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_HunterLimit = Convars.GetFloat("z_versus_hunter_limit");
+		else
+			VSLib_Restore_HunterLimit = Convars.GetFloat("z_hunter_limit");
+	}
+	if ( "SpitterLimit" in SessionOptions )
+		VSLib_Restore_SpitterLimit = SessionOptions.SpitterLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_SpitterLimit = Convars.GetFloat("survival_max_spitters");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_SpitterLimit = Convars.GetFloat("z_versus_spitter_limit");
+		else
+			VSLib_Restore_SpitterLimit = Convars.GetFloat("z_spitter_limit");
+	}
+	if ( "JockeyLimit" in SessionOptions )
+		VSLib_Restore_JockeyLimit = SessionOptions.JockeyLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_JockeyLimit = Convars.GetFloat("survival_max_jockeys");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_JockeyLimit = Convars.GetFloat("z_versus_jockey_limit");
+		else
+			VSLib_Restore_JockeyLimit = Convars.GetFloat("z_jockey_limit");
+	}
+	if ( "ChargerLimit" in SessionOptions )
+		VSLib_Restore_ChargerLimit = SessionOptions.ChargerLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_ChargerLimit = Convars.GetFloat("survival_max_chargers");
+		else if ( ::VSLib.Utils.GetBaseMode() == "versus" )
+			VSLib_Restore_ChargerLimit = Convars.GetFloat("z_versus_charger_limit");
+		else
+			VSLib_Restore_ChargerLimit = Convars.GetFloat("z_charger_limit");
+	}
+	if ( "WitchLimit" in SessionOptions )
+		VSLib_Restore_WitchLimit = SessionOptions.WitchLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_WitchLimit = 0;
+		else
+			VSLib_Restore_WitchLimit = 1;
+	}
+	if ( "cm_WitchLimit" in SessionOptions )
+		VSLib_Restore_cm_WitchLimit = SessionOptions.cm_WitchLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_cm_WitchLimit = 0;
+		else
+			VSLib_Restore_cm_WitchLimit = 1;
+	}
+	if ( "TankLimit" in SessionOptions )
+		VSLib_Restore_TankLimit = SessionOptions.TankLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_TankLimit = 2;
+		else
+			VSLib_Restore_TankLimit = 1;
+	}
+	if ( "cm_TankLimit" in SessionOptions )
+		VSLib_Restore_cm_TankLimit = SessionOptions.cm_TankLimit;
+	else
+	{
+		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
+			VSLib_Restore_cm_TankLimit = 2;
+		else
+			VSLib_Restore_cm_TankLimit = 1;
+	}
+	
+	SessionOptions.cm_DominatorLimit <- 0;
+	SessionOptions.DominatorLimit <- 0;
+	SessionOptions.cm_MaxSpecials <- 0;
+	SessionOptions.MaxSpecials <- 0;
+	SessionOptions.cm_CommonLimit <- 0;
+	SessionOptions.CommonLimit <- 0;
+	SessionOptions.SmokerLimit <- 0;
+	SessionOptions.BoomerLimit <- 0;
+	SessionOptions.HunterLimit <- 0;
+	SessionOptions.SpitterLimit <- 0;
+	SessionOptions.JockeyLimit <- 0;
+	SessionOptions.ChargerLimit <- 0;
+	SessionOptions.WitchLimit <- 0;
+	SessionOptions.cm_WitchLimit <- 0;
+	SessionOptions.TankLimit <- 0;
+	SessionOptions.cm_TankLimit <- 0;
+	
+	::VSLib_DirectorDisabled = true;
 }
 
 /**

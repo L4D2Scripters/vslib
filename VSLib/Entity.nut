@@ -227,16 +227,56 @@ getconsttable()["DMG_NERVEGAS"] <- (1 << 16);
 getconsttable()["DMG_POISON"] <- (1 << 17);
 getconsttable()["DMG_RADIATION"] <- (1 << 18);
 getconsttable()["DMG_DROWNRECOVER"] <- (1 << 19);
+getconsttable()["DMG_CHOKE"] <- (1 << 20);
 getconsttable()["DMG_ACID"] <- (1 << 20);
+getconsttable()["DMG_MELEE"] <- (1 << 21);
 getconsttable()["DMG_SLOWBURN"] <- (1 << 21);
 getconsttable()["DMG_REMOVENORAGDOLL"] <- (1 << 22);
 getconsttable()["DMG_PHYSGUN"] <- (1 << 23);
 getconsttable()["DMG_PLASMA"] <- (1 << 24);
+getconsttable()["DMG_STUMBLE"] <- (1 << 25);
 getconsttable()["DMG_AIRBOAT"] <- (1 << 25);
 getconsttable()["DMG_DISSOLVE"] <- (1 << 26);
 getconsttable()["DMG_BLAST_SURFACE"] <- (1 << 27);
 getconsttable()["DMG_DIRECT"] <- (1 << 28);
 getconsttable()["DMG_BUCKSHOT"] <- (1 << 29);
+getconsttable()["DMG_HEADSHOT"] <- (1 << 30);
+getconsttable()["DMG_DISMEMBER"] <- (1 << 31);
+
+
+// Upgrades that can be used with GiveUpgrade(), etc
+getconsttable()["UPGRADE_INCENDIARY_AMMO"] <- 0;
+getconsttable()["UPGRADE_EXPLOSIVE_AMMO"] <- 1;
+getconsttable()["UPGRADE_LASER_SIGHT"] <- 2;
+
+// Bash values that can be used with OnBash().
+getconsttable()["ALLOW_BASH_ALL"] <- 0;
+getconsttable()["ALLOW_BASH_PUSHONLY"] <- 1;
+getconsttable()["ALLOW_BASH_NONE"] <- 2;
+
+// Bot sense flags.
+getconsttable()["BOT_CANT_SEE"] <- (1 << 0);
+getconsttable()["BOT_CANT_HEAR"] <- (1 << 1);
+getconsttable()["BOT_CANT_FEEL"] <- (1 << 2);
+
+// Values that can be used to command bots.
+getconsttable()["BOT_CMD_ATTACK"] <- 0;
+getconsttable()["BOT_CMD_MOVE"] <- 1;
+getconsttable()["BOT_CMD_RETREAT"] <- 2;
+getconsttable()["BOT_CMD_RESET"] <- 3;
+
+// Infected bot sense flags.
+getconsttable()["INFECTED_FLAG_CANT_SEE_SURVIVORS"] <- (1 << 13);
+getconsttable()["INFECTED_FLAG_CANT_HEAR_SURVIVORS"] <- (1 << 14);
+getconsttable()["INFECTED_FLAG_CANT_FEEL_SURVIVORS"] <- (1 << 15);
+
+// Trace masks for TraceLine().
+getconsttable()["TRACE_MASK_ALL"] <- -1;
+getconsttable()["TRACE_MASK_VISION"] <- 33579073;
+getconsttable()["TRACE_MASK_VISIBLE_AND_NPCS"] <- 33579137;
+getconsttable()["TRACE_MASK_PLAYER_SOLID"] <- 33636363;
+getconsttable()["TRACE_MASK_NPC_SOLID"] <- 33701899;
+getconsttable()["TRACE_MASK_SHOT"] <- 1174421507;
 
 
 // Content flags
@@ -318,7 +358,7 @@ function VSLib::Entity::GetHealth()
 	}
 	
 	local hp = _ent.GetHealth();
-	if (_ent.IsPlayer())
+	if (IsPlayer())
 		hp += _ent.GetHealthBuffer();
 	
 	return hp;
@@ -528,7 +568,7 @@ function VSLib::Entity::SetHealth(value)
 	value = value.tointeger();
 	
 	local hp = GetHealth();
-	if ( _ent.IsPlayer() )
+	if ( IsPlayer() )
 		Input("SetHealth", value);
 	else
 	{
@@ -626,6 +666,22 @@ function VSLib::Entity::SetParentName(name)
 	name = name.tostring();
 	
 	_ent.__KeyValueFromString("parentname", name);
+}
+
+/**
+ * Sets the entity's name.
+ */
+function VSLib::Entity::SetName(name)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	name = name.tostring();
+	
+	_ent.__KeyValueFromString("targetname", name);
 }
 
 /**
@@ -1287,17 +1343,24 @@ function VSLib::Entity::GetTeam()
 		return;
 	}
 	
-	if (!("GetZombieType" in _ent))
-		return UNKNOWN;
-	else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
-	{
-		if ( ::EasyLogic.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
-			return L4D1_SURVIVORS;
-		else
-			return SURVIVORS;
-	}
-	else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost() || _ent.GetClassname() == "infected")
+	if ( _ent.GetClassname() == "infected" )
 		return INFECTED;
+	else if ( _ent.GetClassname() == "player" )
+	{
+		if (!("GetZombieType" in _ent))
+			return UNKNOWN;
+		else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
+		{
+			if ( ::Utils.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
+				return L4D1_SURVIVORS;
+			else
+				return SURVIVORS;
+		}
+		else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost())
+			return INFECTED;
+	}
+	
+	return UNKNOWN;
 }
 
 /**
@@ -1369,12 +1432,12 @@ function VSLib::Entity::GetWeaponSlot()
 		weapon_upgradepack_explosive = SLOT_MEDKIT,
 		weapon_pain_pills = SLOT_PILLS,
 		weapon_adrenaline = SLOT_PILLS,
-		weapon_gascan = SLOT_HELD,
-		weapon_propanetank = SLOT_HELD,
-		weapon_oxygentank = SLOT_HELD,
-		weapon_gnome = SLOT_HELD,
-		weapon_cola_bottles = SLOT_HELD,
-		weapon_fireworkcrate = SLOT_HELD,
+		weapon_gascan = SLOT_CARRIED,
+		weapon_propanetank = SLOT_CARRIED,
+		weapon_oxygentank = SLOT_CARRIED,
+		weapon_gnome = SLOT_CARRIED,
+		weapon_cola_bottles = SLOT_CARRIED,
+		weapon_fireworkcrate = SLOT_CARRIED,
 	}
 	
 	if ( _ent.GetClassname().find("weapon_") != null )
@@ -1549,9 +1612,9 @@ function VSLib::Entity::GetZombieName()
 }
 
 /**
- * Kills/removes the entity from the map.
+ * Kills common infected and witches, and removes other entities from the map.
  */
-function VSLib::Entity::Kill()
+function VSLib::Entity::Kill(dmgtype = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -1559,7 +1622,13 @@ function VSLib::Entity::Kill()
 		return;
 	}
 	
-	Input("Kill");
+	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
+	{
+		SetRawHealth(0);
+		Hurt(1, dmgtype);
+	}
+	else
+		Input("Kill");
 }
 
 /**
@@ -1795,10 +1864,7 @@ function VSLib::Entity::GetLookingEntity()
 	if (m_trace.enthit.GetClassname() == "worldspawn" || !m_trace.enthit.IsValid())
 		return null;
 	
-	local vsEnt = ::VSLib.Entity(m_trace.enthit);
-	if (vsEnt.IsPlayer())
-		return ::VSLib.Player(vsEnt);
-	return vsEnt;
+	return ::VSLib.Utils.GetEntityOrPlayer(m_trace.enthit);
 }
 
 /**
@@ -1863,7 +1929,7 @@ function VSLib::Entity::GetLookingLocation()
 	local startPt = GetEyePosition();
 	local endPt = startPt + _ent.EyeAngles().Forward().Scale(999999);
 	
-	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == _ent)
@@ -1995,7 +2061,7 @@ function VSLib::Entity::GetTargetname()
 		"!zoey"
 	]
 	
-	if ( _ent.GetClassname() == "player" && GetType() == Z_SURVIVOR )
+	if ( IsPlayer() && GetType() == Z_SURVIVOR )
 	{
 		foreach( name in SurvivorNames )
 		{
@@ -2008,6 +2074,71 @@ function VSLib::Entity::GetTargetname()
 	}
 	
 	return _ent.GetName();
+}
+
+/**
+ * Gets the actor name of the entity.
+ */
+function VSLib::Entity::GetActorName()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return "";
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+	{
+		if ( IsUncommonInfected() )
+		{
+			if ( GetUncommonInfected() == Z_CEDA )
+				return "Ceda";
+			else if ( GetUncommonInfected() == Z_MUD )
+				return "Crawler";
+			else if ( GetUncommonInfected() == Z_ROADCREW )
+				return "Undistractable";
+			else if ( GetUncommonInfected() == Z_FALLEN )
+				return "Fallen";
+			else if ( GetUncommonInfected() == Z_RIOT )
+				return "riot_control";
+			else if ( GetUncommonInfected() == Z_CLOWN )
+				return "Clown";
+			else if ( GetUncommonInfected() == Z_JIMMY )
+				return "Jimmy";
+		}
+		else
+			return "Common";
+	}
+	else if ( _ent.GetClassname() == "witch" )
+		return "Witch";
+	else if ( _ent.GetClassname() == "player" )
+	{
+		if ( GetType() == Z_SURVIVOR )
+		{
+			if ( GetTargetname() == "!coach" )
+				return "Coach";
+			else if ( GetTargetname() == "!ellis" )
+				return "Mechanic";
+			else if ( GetTargetname() == "!nick" )
+				return "Gambler";
+			else if ( GetTargetname() == "!rochelle" )
+				return "Producer";
+			else if ( GetTargetname() == "!bill" )
+				return "NamVet";
+			else if ( GetTargetname() == "!francis" )
+				return "Biker";
+			else if ( GetTargetname() == "!louis" )
+				return "Manager";
+			else if ( GetTargetname() == "!zoey" )
+				return "TeenGirl";
+		}
+		else
+		{
+			return GetZombieName();
+		}
+	}
+	
+	return "";
 }
 
 /**
@@ -2136,7 +2267,7 @@ function VSLib::Entity::GetDistanceToGround()
 	local startPt = GetLocation();
 	local endPt = startPt + Vector(0, 0, -9999999);
 	
-	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (m_trace.enthit == _ent || !m_trace.hit)
@@ -2556,9 +2687,9 @@ function VSLib::Entity::ChangeBotEyes(hasEyes)
 		return;
 	
 	if (!hasEyes)
-		_ent.SetSenseFlags(_ent.GetSenseFlags() | g_MapScript.BOT_CANT_SEE);
+		_ent.SetSenseFlags(_ent.GetSenseFlags() | BOT_CANT_SEE);
 	else
-		_ent.SetSenseFlags(_ent.GetSenseFlags() & ~g_MapScript.BOT_CANT_SEE);
+		_ent.SetSenseFlags(_ent.GetSenseFlags() & ~BOT_CANT_SEE);
 }
 
 /**
@@ -2610,8 +2741,24 @@ function VSLib::Entity::IsWitchBride()
 			if ( witch_bride.GetEntityHandle() == _ent.GetEntityHandle() )
 				return true;
 		}
+	}
+	
+	return false;
+}
+
+/**
+ * Returns true if the infected is an uncommon.
+ */
+function VSLib::Entity::IsUncommonInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return false;
 	}
+	
+	if ( GetUncommonInfected() > 0 )
+		return true;
 	
 	return false;
 }
@@ -2691,8 +2838,9 @@ function VSLib::Entity::GetScriptId( )
  *
  * @param output The output name (string)
  * @param func Function to fire (pass in a function, not a string name)
+ * @param name Function name (pass in a string name, not a function)
  */
-function VSLib::Entity::ConnectOutput( output, func )
+function VSLib::Entity::ConnectOutput( output, func, name = "" )
 {
 	if (!IsEntityValid())
 	{
@@ -2700,7 +2848,13 @@ function VSLib::Entity::ConnectOutput( output, func )
 		return;
 	}
 	
-	local oname = "_vslib_out" + UniqueString();
+	local oname = "";
+	
+	if ( name != "" )
+		oname = "_vslib_out" + name;
+	else
+		oname = "_vslib_out" + UniqueString();
+	
 	GetScriptScope()[oname] <- func;
 	_ent.ConnectOutput( output, oname );
 }
@@ -2709,9 +2863,9 @@ function VSLib::Entity::ConnectOutput( output, func )
  * Removes a connected script function from an I/O event.
  *
  * @param output The output name (string)
- * @param func Function name (pass in a function, not a string name)
+ * @param name Function name (pass in a string name, not a function)
  */
-function VSLib::Entity::DisconnectOutput( output, func )
+function VSLib::Entity::DisconnectOutput( output, name )
 {
 	if (!IsEntityValid())
 	{
@@ -2719,7 +2873,8 @@ function VSLib::Entity::DisconnectOutput( output, func )
 		return;
 	}
 	
-	_ent.DisconnectOutput( output, func );
+	local oname = "_vslib_out" + name;
+	_ent.DisconnectOutput( output, oname );
 }
 
 
@@ -2756,7 +2911,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 	local finish = otherEntity.GetLocation() + Vector(0, 0, height);
 	
 	// add 5 to z-axis so it doesn't collide with level ground
-	local m_trace = { start = begin, end = finish, ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	local m_trace = { start = begin, end = finish, ignore = _ent, mask = TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)
@@ -2805,8 +2960,8 @@ function AllowTakeDamage(damageTable)
 			local name = damageTable.Victim.GetClassname();
 			if (name in ::VSLib.EasyLogic.OnDamage)
 			{
-				local victim = ::VSLib.Player(damageTable.Victim);
-				local attacker = ::VSLib.Player(damageTable.Attacker);
+				local victim = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Victim);
+				local attacker = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Attacker);
 				
 				local damagesave = damageTable.DamageDone;
 				damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
@@ -2837,10 +2992,8 @@ function AllowTakeDamage(damageTable)
  */
 function AllowBash( basher, bashee )
 {
-	local attacker = ::VSLib.Player(basher);
-	local victim = ::VSLib.Player(bashee);
-	if ( victim.GetClassname() != "player" )
-		victim = ::VSLib.Entity(bashee);
+	local attacker = ::VSLib.Utils.GetEntityOrPlayer(basher);
+	local victim = ::VSLib.Utils.GetEntityOrPlayer(bashee);
 	
 	foreach(func in ::VSLib.EasyLogic.OnBash)
 	{

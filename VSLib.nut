@@ -18,7 +18,7 @@
  * 
  */
 
-::__VSLIB_VERSION__ <- 1.5;
+::__VSLIB_VERSION__ <- 2.0;
 
 /*
  * Create global namespace
@@ -38,7 +38,8 @@ IncludeScript ("VSLib/Entity.nut");
 IncludeScript ("VSLib/Player.nut");
 IncludeScript ("VSLib/EasyLogic.nut");
 IncludeScript ("VSLib/HUD.nut");
+IncludeScript ("VSLib/ResponseRules.nut");
 IncludeScript ("VSLib/RandomItemSpawner.nut");
 IncludeScript ("VSLib/FileIO.nut");
 
-printf( "\nLoaded VSLib version %f\n", __VSLIB_VERSION__);
+printf( "Loaded VSLib version %f", __VSLIB_VERSION__);
