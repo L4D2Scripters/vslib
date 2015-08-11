@@ -647,6 +647,9 @@ function VSLib::Player::GetSurvivorModel()
 		return;
 	}
 	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
 	local SurvivorModels =
 	[
 		"models/survivors/survivor_coach.mdl"
@@ -713,6 +716,33 @@ function VSLib::Player::Kill(dmgtype = null)
 	}
 	else
 		base.Kill();
+}
+
+/**
+ * Ragdolls the player
+ */
+function VSLib::Player::Ragdoll()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	local origin = GetLocation();
+	local angles = GetAngles();
+	
+	if ( GetTeam() == 4 )
+		Input( "Kill" );
+	else
+	{
+		Kill();
+		EntFire( "survivor_death_model", "Kill" );
+	}
+	::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
 }
 
 /**
