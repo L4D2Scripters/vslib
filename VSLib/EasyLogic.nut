@@ -77,12 +77,17 @@
 	// Holds precached models
 	PrecachedModels = {}
 	
-	// This is used for the OnPreSpawn Notification
+	// These are used for custom event notifications
 	PreSpawnFired = false
+	PlayersSpawned = false
+	PlayersLeftStart = false
 	
 	// This is used to store the base mode name
 	BaseModeName = ""
 	CheckedMode = false
+	
+	// This is used to store the current difficulty
+	Difficulty = ""
 }
 
 // Game event wrapper.
@@ -195,6 +200,7 @@
 	OnJumpApex = {}
 	FirstSurvLeftStartArea = {}
 	OnSurvivorsLeftStartArea = {}
+	OnSurvivorsSpawned = {}
 	OnReviveBegin = {}
 	OnReviveEnd = {}
 	OnReviveSuccess = {}
@@ -517,6 +523,8 @@ function OnGameEvent_difficulty_changed(params)
 	else if (newDiff == 3)
 		diff = "impossible";
 	
+	::VSLib.EasyLogic.Difficulty <- diff;
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
 		func(diff);
 }
@@ -593,10 +601,12 @@ function OnGameEvent_round_start_post_nav(params)
 			::VSLib.EasyLogic.BaseModeName <- SessionState.ModeName;
 	}
 	
+	local diff = Convars.GetStr( "z_difficulty" ).tolower();
+	::VSLib.EasyLogic.Difficulty <- diff;
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func();
-		
-	local diff = Convars.GetStr( "z_difficulty" ).tolower();
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
 		func(diff);
 }
@@ -956,6 +966,21 @@ function _OnPostSpawnEv(params)
 		func(ents.entity, params);
 }
 
+function VSLib::EasyLogic::Update::_VSLib_SurvsSpawned()
+{
+	if ( !::VSLib.EasyLogic.PlayersSpawned && Entities.FindByClassname( null, "player" ) )
+	{
+		::VSLib.EasyLogic.PlayersSpawned <- true;
+		vslib_survivors_spawned();
+	}
+}
+
+function vslib_survivors_spawned()
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
+		func();
+}
+
 function OnGameEvent_player_spawn(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -977,7 +1002,7 @@ function OnGameEvent_player_spawn(params)
 						func = VSLib_OnMode
 					}
 				],
-				group_params = ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
+				group_params = ::VSLib.ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
 			},
 		]
 		::VSLib.ResponseRules.ProcessRules( vsl_mode_check );
@@ -1356,18 +1381,16 @@ function OnGameEvent_player_left_start_area(params)
 
 
 
-::VSLib.EasyLogic.PlayersLeftStart <- false;
-
 function VSLib::EasyLogic::Update::_VSLib_SurvsLeft()
 {
-	if ( ::VSLib.EasyLogic.PlayersLeftStart == false && Director.HasAnySurvivorLeftSafeArea() )
+	if ( !::VSLib.EasyLogic.PlayersLeftStart && Director.HasAnySurvivorLeftSafeArea() )
 	{
 		::VSLib.EasyLogic.PlayersLeftStart <- true;
-		survivors_left_start_area();
+		vslib_survivors_left_start_area();
 	}
 }
 
-function survivors_left_start_area()
+function vslib_survivors_left_start_area()
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
 		func();

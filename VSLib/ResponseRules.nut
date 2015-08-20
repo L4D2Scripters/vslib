@@ -277,7 +277,7 @@
 	Isc11m3_garage = [ "Map", "c11m3_garage" ]
 	Isc11m4_terminal = [ "Map", "c11m4_terminal" ]
 	Isc11m5_runway = [ "Map", "c11m5_runway" ]
-	Isc12m1_hilltop = [ "Map", "c12m1_hilltop" ]
+	Isc12m1_hilltop = [ "Map", "C12m1_hilltop" ]
 	Isc12m2_traintunnel = [ "Map", "c12m2_traintunnel" ]
 	Isc12m3_bridge = [ "Map", "c12m3_bridge" ]
 	Isc12m4_barn = [ "Map", "c12m4_barn" ]

@@ -134,9 +134,9 @@ function VSLib::Player::GetUniqueID()
 	}
 	
 	local steamid = GetSteamID();
-	steamid = Utils.StringReplace(steamid, "STEAM_1:", "S");
-	steamid = Utils.StringReplace(steamid, "STEAM_0:", "S");
-	steamid = Utils.StringReplace(steamid, ":", "");
+	steamid = ::VSLib.Utils.StringReplace(steamid, "STEAM_1:", "S");
+	steamid = ::VSLib.Utils.StringReplace(steamid, "STEAM_0:", "S");
+	steamid = ::VSLib.Utils.StringReplace(steamid, ":", "");
 	
 	return steamid;
 }
@@ -735,14 +735,24 @@ function VSLib::Player::Ragdoll()
 	local origin = GetLocation();
 	local angles = GetAngles();
 	
+	local function VSLib_RemoveDeathModel( args )
+	{
+		foreach ( death_model in Objects.OfClassnameWithin( "survivor_death_model", args.origin, 1 ) )
+			death_model.KillEntity();
+		
+		::VSLib.Utils.SpawnRagdoll( args.model, args.origin, args.angles );
+	}
+	
 	if ( GetTeam() == 4 )
+	{
 		Input( "Kill" );
+		::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
+	}
 	else
 	{
 		Kill();
-		EntFire( "survivor_death_model", "Kill" );
+		::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { origin = origin, angles = angles, model = GetSurvivorModel() });
 	}
-	::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
 }
 
 /**
@@ -781,7 +791,7 @@ function VSLib::Player::ShowHint( text, duration = 5, icon = "icon_tip", color =
 		targetname = "vslib_tmp_" + UniqueString(),
 	};
 	
-	local hint = Utils.CreateEntity("env_instructor_hint", Vector(0, 0, 0), QAngle(0, 0, 0), hinttbl);
+	local hint = ::VSLib.Utils.CreateEntity("env_instructor_hint", Vector(0, 0, 0), QAngle(0, 0, 0), hinttbl);
 	
 	hint.Input("ShowHint", "", 0, this);
 	
@@ -831,7 +841,7 @@ function VSLib::Player::CanSeeOtherEntity(otherEntity, tolerance = 50)
 		return false;
 	
 	// Next check to make sure it's not behind a wall or something
-	local m_trace = { start = GetEyePosition(), end = otherEntity.GetLocation(), ignore = _ent, mask = g_MapScript.TRACE_MASK_SHOT };
+	local m_trace = { start = GetEyePosition(), end = otherEntity.GetLocation(), ignore = _ent, mask = TRACE_MASK_SHOT };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)
@@ -863,7 +873,7 @@ function VSLib::Player::CanTraceToLocation(finishPos, traceMask = MASK_NPCWORLDS
 	local m_trace = { start = begin, end = finish, ignore = _ent, mask = traceMask };
 	TraceLine(m_trace);
 	
-	if (Utils.AreVectorsEqual(m_trace.pos, finish))
+	if (::VSLib.Utils.AreVectorsEqual(m_trace.pos, finish))
 		return true;
 	
 	return false;
@@ -1594,7 +1604,7 @@ function VSLib::Player::__CalcPickups( )
 			local holdPos = HoldingEntity.GetLocation();
 			if (holdPos == null) return;
 			
-			if (Utils.CalculateDistance(vecPos, holdPos) < DISTANCE_CLOSE)
+			if (::VSLib.Utils.CalculateDistance(vecPos, holdPos) < DISTANCE_CLOSE)
 			{
 				// update object 
 				vecPos.x += vecDir.x * DISTANCE_TO_HOLD;
@@ -1657,7 +1667,7 @@ function VSLib::Player::DropPickup( )
 	// Drop valve object
 	if (_idx in ::VSLib.EntData._objValveHolding)
 	{
-		::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), 100));
+		::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), 100));
 		delete ::VSLib.EntData._objValveHolding[_idx];
 	}
 }
@@ -1975,9 +1985,9 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 		local traceTable =
 		{
 			start = GetEyePosition()
-			end = GetEyePosition() + Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValvePickupRange[_idx])
+			end = GetEyePosition() + ::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValvePickupRange[_idx])
 			ignore = _ent
-			mask = g_MapScript.TRACE_MASK_SHOT 
+			mask = TRACE_MASK_SHOT 
 		}
 
 		local result = TraceLine(traceTable);
@@ -1996,7 +2006,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 	{
 		try
 		{
-			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
+			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
 			
 			if (::VSLib.EntData._objEnableDmg[_idx])
 				Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );

@@ -1351,7 +1351,7 @@ function VSLib::Entity::GetTeam()
 			return UNKNOWN;
 		else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
 		{
-			if ( ::Utils.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
+			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
 				return L4D1_SURVIVORS;
 			else
 				return SURVIVORS;
@@ -2920,7 +2920,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 	if (m_trace.enthit.GetClassname() == "worldspawn" || !m_trace.enthit.IsValid())
 		return false;
 	
-	if (m_trace.enthit == otherEntity.GetBaseEntity() || Utils.AreVectorsEqual(m_trace.pos, finish))
+	if (m_trace.enthit == otherEntity.GetBaseEntity() || ::VSLib.Utils.AreVectorsEqual(m_trace.pos, finish))
 		return true;
 	
 	return false;

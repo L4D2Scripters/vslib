@@ -35,6 +35,7 @@ getconsttable()["FRANCIS"] <- 6;
 getconsttable()["LOUIS"] <- 7;
 
 // Campaigns to be used with GetCampaign()
+getconsttable()["CUSTOM"] <- 0;
 getconsttable()["DEAD_CENTER"] <- 1;
 getconsttable()["DARK_CARNIVAL"] <- 2;
 getconsttable()["SWAMP_FEVER"] <- 3;
@@ -568,19 +569,26 @@ function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = QA
  */
 function VSLib::Utils::SpawnZombie(zombieType, pos = Vector(0,0,0), ang = QAngle(0,0,0), offerTank = false, victim = null)
 {
-	if ( zombieType == "witch" )
+	if ( zombieType == 7 || zombieType == "witch" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
-	else if ( zombieType == "witch_bride" )
+	else if ( zombieType == 11 || zombieType == "witch_bride" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch_bride.mdl" );
 	
-	local ent = ::VSLib.Utils.CreateEntity("info_zombie_spawn", pos, ang);
-	ent.SetKeyValue("population", zombieType);
-	ent.SetKeyValue("offer_tank", offerTank.tointeger());
-	ent.Input("SpawnZombie");
-	if ( victim != null )
-		ent.Input("StartleZombie", victim, 0.1);
-	
-	ent.Input("Kill", "", 0.2);
+	if ( (typeof zombieType) == "integer" )
+	{
+		ZSpawn( { type = zombieType, pos = pos, ang = ang } );
+	}
+	else
+	{
+		local ent = ::VSLib.Utils.CreateEntity("info_zombie_spawn", pos, ang);
+		ent.SetKeyValue("population", zombieType);
+		ent.SetKeyValue("offer_tank", offerTank.tointeger());
+		ent.Input("SpawnZombie");
+		if ( victim != null )
+			ent.Input("StartleZombie", victim, 0.1);
+		
+		ent.Input("Kill", "", 0.2);
+	}
 }
 
 /**
@@ -659,11 +667,7 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombie, maxDist = 128.0, m
 		{
 			if ( (typeof zombie) == "integer" )
 			{
-				if ( zombie == 7 )
-					::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );
-				else if ( zombie == 11 )
-					::VSLib.Utils.PrecacheModel( "models/infected/witch_bride.mdl" );
-				ZSpawn( { type = zombie, pos = _pos } );
+				::VSLib.Utils.SpawnZombie(zombie, _pos);
 				return true;
 			}
 			else
@@ -675,7 +679,7 @@ function VSLib::Utils::SpawnZombieNearPlayer( player, zombie, maxDist = 128.0, m
 				}
 				else
 				{
-					if ( victim != null )
+					if ( victim )
 						::VSLib.Utils.SpawnZombie(zombie, _pos, QAngle(0,0,0), offerTank, victim);
 					else
 						::VSLib.Utils.SpawnZombie(zombie, _pos, QAngle(0,0,0), offerTank);
@@ -789,7 +793,7 @@ function VSLib::Utils::SlowTime(desiredTimeScale = 0.2, re_Acceleration = 2.0, m
 {
 	if (_vsl_func_timescale == null)
 	{
-		_vsl_func_timescale = VSLib.Utils.SpawnEntity("func_timescale", "vslib_timescale");
+		_vsl_func_timescale = ::VSLib.Utils.SpawnEntity("func_timescale", "vslib_timescale");
 		
 		if (_vsl_func_timescale == null)
 		{
@@ -1079,10 +1083,7 @@ function VSLib::Utils::PrecacheCSSWeapons( )
 	local weps = ["weapon_rifle_sg552", "weapon_smg_mp5", "weapon_sniper_awp", "weapon_sniper_scout"];
 
 	foreach(wep in weps)
-	{
-		local weapon = { classname = wep }
-		PrecacheEntityFromTable( weapon );
-	}
+		PrecacheEntityFromTable( { classname = wep } );
 }
 
 /**
@@ -1138,6 +1139,19 @@ function VSLib::Utils::SpawnCommentaryDummy( mdl = "models/survivors/survivor_ga
 }
 
 /**
+ * Spawns a mounted machine gun at the specified location
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnMountedGun( pos, ang = QAngle(0,0,0), keyvalues = {} )
+{
+	local t = { model = "models/w_models/weapons/50cal.mdl", body = "0", fademindist = "-1", fadescale = "1", MaxAnimTime = "10", MaxPitch = "50", MaxYaw = "65", MinAnimTime = "5", MinPitch = "-25", spawnflags = "0", StartDisabled = "false", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	return ::VSLib.Utils.CreateEntity("prop_mounted_machine_gun", pos, ang, keyvalues);
+}
+
+/**
  * Spawns a minigun at the specified location
  *
  * @authors Rayman1103
@@ -1147,7 +1161,7 @@ function VSLib::Utils::SpawnMinigun( pos, ang = QAngle(0,0,0), keyvalues = {} )
 	local t = { model = "models/w_models/weapons/50cal.mdl", body = "0", fademindist = "-1", fadescale = "1", MaxAnimTime = "10", MaxPitch = "50", MaxYaw = "65", MinAnimTime = "5", MinPitch = "-25", spawnflags = "0", StartDisabled = "false", };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
-	return ::VSLib.Utils.CreateEntity("prop_mounted_machine_gun", pos, ang, keyvalues);
+	return ::VSLib.Utils.CreateEntity("prop_minigun", pos, ang, keyvalues);
 }
 
 /**
@@ -1168,27 +1182,25 @@ function VSLib::Utils::SpawnL4D1Minigun( pos, ang = QAngle(0,0,0), keyvalues = {
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnWeapon( weapon, Count = 5, pos = Vector(0,0,0), ang = QAngle(0,0,90), keyvalues = {} )
+function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(0,0,0), ang = QAngle(0,0,90), keyvalues = {} )
 {
-	local SpawnFlag = 2;
+	local SpawnFlags = 2;
 	
 	if ( weapon.find("weapon_") == null )
 		weapon = "weapon_" + weapon;
 	
-	if ( weapon == "weapon_smg_mp5" || weapon == "weapon_rifle_sg552" || weapon == "weapon_sniper_scout" || weapon == "weapon_sniper_awp" )
+	if ( weapon.find("_spawn") == null )
 	{
-		SpawnFlag = 1;
+		SpawnFlags = 1;
 		Count = 1;
 	}
-	else
-		weapon = weapon + "_spawn";
 	
 	if ( Count == 0 )
 	{
-		SpawnFlag = 10;
+		SpawnFlags = 10;
 		Count = 1;
 	}
-	local t = { ammo = "999", count = Count, spawnflags = SpawnFlag, };
+	local t = { ammo = Ammo, count = Count, spawnflags = SpawnFlags, };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	return ::VSLib.Utils.CreateEntity(weapon, pos, ang, keyvalues);
@@ -1213,7 +1225,7 @@ function VSLib::Utils::SpawnAmmo( mdl = "models/props/terror/ammo_stack.mdl", po
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnUpgrade( upgrade, Count = 4, pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
+function VSLib::Utils::SpawnUpgrade( upgrade, count = 4, pos = Vector(0,0,0), ang = QAngle(0,0,0), keyvalues = {} )
 {
 	if ( typeof(upgrade) == "integer" )
 	{
@@ -1224,12 +1236,12 @@ function VSLib::Utils::SpawnUpgrade( upgrade, Count = 4, pos = Vector(0,0,0), an
 		else if ( upgrade == 2 )
 			upgrade = "upgrade_laser_sight";
 	}
-	local t = { count = Count, spawnflags = "2", };
+	local t = { spawnflags = "2", };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
 	
 	local ent = ::VSLib.Utils.CreateEntity(upgrade, pos, ang, keyvalues);
-	ent.SetKeyValue("count", Count);
+	ent.SetKeyValue("count", count);
 	return ent;
 }
 
@@ -1270,7 +1282,7 @@ function VSLib::Utils::PlaySound( sound, keyvalues = {} )
 	local t = { health = "10", message = sound, pitch = "100", pitchstart = "100", radius = "1250", spawnflags = "33", };
 	foreach (idx, val in t)
 		keyvalues[idx] <- val;
-	local ent = VSLib.Utils.CreateEntity("ambient_generic", Vector(0,0,0), QAngle(0,0,0), keyvalues);
+	local ent = ::VSLib.Utils.CreateEntity("ambient_generic", Vector(0,0,0), QAngle(0,0,0), keyvalues);
 	ent.Input("PlaySound");
 	ent.Kill();
 }
@@ -1330,7 +1342,7 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
 	local function CalcPlayerPos()
 	{
 		foreach (surv in Players.AliveSurvivors())
-			if (Utils.CalculateDistance(surv.GetLocation(), this.ent.GetLocation()) < 32.0)
+			if (::VSLib.Utils.CalculateDistance(surv.GetLocation(), this.ent.GetLocation()) < 32.0)
 				if (surv.CanTraceToOtherEntity(this.ent))
 				{
 					foreach (func in ::VSLib.EasyLogic.Notifications.OnPickupInvItem)
@@ -1582,38 +1594,48 @@ function VSLib::Utils::GetBaseMode()
 }
 
 /**
+ * Gets the current difficulty
+ */
+function VSLib::Utils::GetDifficulty()
+{
+	return ::VSLib.EasyLogic.Difficulty;
+}
+
+/**
  * Gets the campaign
  */
 function VSLib::Utils::GetCampaign()
 {
-	if ( SessionState.MapName.find("c1m") != null )
+	local mapname = SessionState.MapName.tolower();
+	
+	if ( mapname.find("c1m") != null )
 		return DEAD_CENTER;
-	else if ( SessionState.MapName.find("c2m") != null )
+	else if ( mapname.find("c2m") != null )
 		return DARK_CARNIVAL;
-	else if ( SessionState.MapName.find("c3m") != null )
+	else if ( mapname.find("c3m") != null )
 		return SWAMP_FEVER;
-	else if ( SessionState.MapName.find("c4m") != null )
+	else if ( mapname.find("c4m") != null )
 		return HARD_RAIN;
-	else if ( SessionState.MapName.find("c5m") != null )
+	else if ( mapname.find("c5m") != null )
 		return THE_PARISH;
-	else if ( SessionState.MapName.find("c6m") != null )
+	else if ( mapname.find("c6m") != null )
 		return THE_PASSING;
-	else if ( SessionState.MapName.find("c7m") != null )
+	else if ( mapname.find("c7m") != null )
 		return THE_SACRIFICE;
-	else if ( SessionState.MapName.find("c8m") != null )
+	else if ( mapname.find("c8m") != null )
 		return NO_MERCY;
-	else if ( SessionState.MapName.find("c9m") != null )
+	else if ( mapname.find("c9m") != null )
 		return CRASH_COURSE;
-	else if ( SessionState.MapName.find("c10m") != null )
+	else if ( mapname.find("c10m") != null )
 		return DEATH_TOLL;
-	else if ( SessionState.MapName.find("c11m") != null )
+	else if ( mapname.find("c11m") != null )
 		return DEAD_AIR;
-	else if ( SessionState.MapName.find("c12m") != null )
+	else if ( mapname.find("c12m") != null )
 		return BLOOD_HARVEST;
-	else if ( SessionState.MapName.find("c13m") != null )
+	else if ( mapname.find("c13m") != null )
 		return COLD_STREAM;
 	else
-		return 0;
+		return CUSTOM;
 }
 
 /**
@@ -1621,43 +1643,40 @@ function VSLib::Utils::GetCampaign()
  */
 function VSLib::Utils::GetSaferoomLocation()
 {
-	local furthestDistance = 0;
+	local mapname = SessionState.MapName.tolower();
 	
-	if ( SessionState.MapName == "c1m1_hotel" )
+	if ( mapname == "c1m1_hotel" )
 		return Vector( 2031.436035, 4465.583984, 1184.031250 );
-	else if ( SessionState.MapName == "c3m1_plankcountry" )
+	else if ( mapname == "c3m1_plankcountry" )
 		return Vector( -2666.985352, 460.419403, 56.031250 );
-	else if ( SessionState.MapName == "c4m1_milltown_a" )
+	else if ( mapname == "c4m1_milltown_a" )
 		return Vector( 3911.232422, -1564.834961, 232.281250 );
-	else if ( SessionState.MapName == "c4m3_sugarmill_b" )
+	else if ( mapname == "c4m3_sugarmill_b" )
 		return Vector( 3668.776123, -1693.819092, 232.281250 );
-	else if ( SessionState.MapName == "c5m4_quarter" )
+	else if ( mapname == "c5m4_quarter" )
 		return Vector( 1476.493408, -3572.280518, 64.031250 );
-	else if ( SessionState.MapName == "c8m3_sewers" )
+	else if ( mapname == "c8m3_sewers" )
 		return Vector( 12362.519531, 12528.189453, 16.031250 );
-	else if ( SessionState.MapName == "c10m2_drainage" )
+	else if ( mapname == "c10m2_drainage" )
 		return Vector( -8597.331055, -5553.929688, -30.968748 );
-	else if ( SessionState.MapName == "c10m3_ranchhouse" )
+	else if ( mapname == "c10m3_ranchhouse" )
 		return Vector( -2563.044678, -43.700687, 160.031250 );
-	else if ( SessionState.MapName == "c12m1_hilltop" )
-		return Vector( -6549.538574, -6711.419434, 348.031250 );
-	else if ( SessionState.MapName == "c13m3_memorialbridge" )
+	else if ( mapname == "c12m1_hilltop" )
+		return Vector( -6610.457520, -6730.503906, 348.031250 );
+	else if ( mapname == "c13m3_memorialbridge" )
 		return Vector( 6117.068848, -6170.154785, 386.031250 );
 	else
 	{
 		foreach( landmark in Objects.OfClassname("info_landmark") )
 		{
-			local dist = ::VSLib.Utils.CalculateDistance(landmark.GetLocation(), Players.AnyAliveSurvivor().GetSpawnLocation());
+			local dist = ::VSLib.Utils.CalculateDistance(landmark.GetLocation(), Players.AnySurvivor().GetSpawnLocation());
 			
-			if ( dist > furthestDistance )
+			if ( dist > 2000 )
 			{
 				foreach( saferoomDoor in Objects.OfClassname("prop_door_rotating_checkpoint") )
 				{
 					if ( ::VSLib.Utils.CalculateDistance(saferoomDoor.GetLocation(), landmark.GetLocation()) < 2000 )
-					{
-						furthestDistance = dist;
 						return landmark.GetLocation();
-					}
 				}
 			}
 		}
@@ -1877,27 +1896,27 @@ function VSLib::Utils::StopDirector()
  */
 function VSLib::Utils::SanitizeHeldWeapons()
 {
-	EntFire( "weapon_pistol", "kill" );
-	EntFire( "weapon_pistol_magnum", "kill" );
-	EntFire( "weapon_smg", "kill" );
-	EntFire( "weapon_pumpshotgun", "kill" );
-	EntFire( "weapon_autoshotgun", "kill" );
-	EntFire( "weapon_rifle", "kill" );
-	EntFire( "weapon_hunting_rifle", "kill" );
-	EntFire( "weapon_smg_silenced", "kill" );
-	EntFire( "weapon_shotgun_chrome", "kill" );
-	EntFire( "weapon_sniper_military", "kill" );
-	EntFire( "weapon_shotgun_spas", "kill" );
-	EntFire( "weapon_rifle_desert", "kill" );
-	EntFire( "weapon_rifle_ak47", "kill" );
-	EntFire( "weapon_smg_mp5", "kill" );
-	EntFire( "weapon_rifle_sg552", "kill" );
-	EntFire( "weapon_sniper_awp", "kill" );
-	EntFire( "weapon_sniper_scout", "kill" );
-	EntFire( "weapon_grenade_launcher", "kill" );
-	EntFire( "weapon_rifle_m60", "kill" );
-	EntFire( "weapon_melee", "kill" );
-	EntFire( "weapon_chainsaw", "kill" );
+	EntFire( "weapon_pistol", "Kill" );
+	EntFire( "weapon_pistol_magnum", "Kill" );
+	EntFire( "weapon_smg", "Kill" );
+	EntFire( "weapon_pumpshotgun", "Kill" );
+	EntFire( "weapon_autoshotgun", "Kill" );
+	EntFire( "weapon_rifle", "Kill" );
+	EntFire( "weapon_hunting_rifle", "Kill" );
+	EntFire( "weapon_smg_silenced", "Kill" );
+	EntFire( "weapon_shotgun_chrome", "Kill" );
+	EntFire( "weapon_sniper_military", "Kill" );
+	EntFire( "weapon_shotgun_spas", "Kill" );
+	EntFire( "weapon_rifle_desert", "Kill" );
+	EntFire( "weapon_rifle_ak47", "Kill" );
+	EntFire( "weapon_smg_mp5", "Kill" );
+	EntFire( "weapon_rifle_sg552", "Kill" );
+	EntFire( "weapon_sniper_awp", "Kill" );
+	EntFire( "weapon_sniper_scout", "Kill" );
+	EntFire( "weapon_grenade_launcher", "Kill" );
+	EntFire( "weapon_rifle_m60", "Kill" );
+	EntFire( "weapon_melee", "Kill" );
+	EntFire( "weapon_chainsaw", "Kill" );
 }
 
 /**
@@ -1906,23 +1925,23 @@ function VSLib::Utils::SanitizeHeldWeapons()
  */
 function VSLib::Utils::SanitizeHeldPrimary()
 {
-	EntFire( "weapon_smg", "kill" );
-	EntFire( "weapon_pumpshotgun", "kill" );
-	EntFire( "weapon_autoshotgun", "kill" );
-	EntFire( "weapon_rifle", "kill" );
-	EntFire( "weapon_hunting_rifle", "kill" );
-	EntFire( "weapon_smg_silenced", "kill" );
-	EntFire( "weapon_shotgun_chrome", "kill" );
-	EntFire( "weapon_sniper_military", "kill" );
-	EntFire( "weapon_shotgun_spas", "kill" );
-	EntFire( "weapon_rifle_desert", "kill" );
-	EntFire( "weapon_rifle_ak47", "kill" );
-	EntFire( "weapon_smg_mp5", "kill" );
-	EntFire( "weapon_rifle_sg552", "kill" );
-	EntFire( "weapon_sniper_awp", "kill" );
-	EntFire( "weapon_sniper_scout", "kill" );
-	EntFire( "weapon_grenade_launcher", "kill" );
-	EntFire( "weapon_rifle_m60", "kill" );
+	EntFire( "weapon_smg", "Kill" );
+	EntFire( "weapon_pumpshotgun", "Kill" );
+	EntFire( "weapon_autoshotgun", "Kill" );
+	EntFire( "weapon_rifle", "Kill" );
+	EntFire( "weapon_hunting_rifle", "Kill" );
+	EntFire( "weapon_smg_silenced", "Kill" );
+	EntFire( "weapon_shotgun_chrome", "Kill" );
+	EntFire( "weapon_sniper_military", "Kill" );
+	EntFire( "weapon_shotgun_spas", "Kill" );
+	EntFire( "weapon_rifle_desert", "Kill" );
+	EntFire( "weapon_rifle_ak47", "Kill" );
+	EntFire( "weapon_smg_mp5", "Kill" );
+	EntFire( "weapon_rifle_sg552", "Kill" );
+	EntFire( "weapon_sniper_awp", "Kill" );
+	EntFire( "weapon_sniper_scout", "Kill" );
+	EntFire( "weapon_grenade_launcher", "Kill" );
+	EntFire( "weapon_rifle_m60", "Kill" );
 }
 
 /**
@@ -1931,10 +1950,10 @@ function VSLib::Utils::SanitizeHeldPrimary()
  */
 function VSLib::Utils::SanitizeHeldSecondary()
 {
-	EntFire( "weapon_pistol", "kill" );
-	EntFire( "weapon_pistol_magnum", "kill" );
-	EntFire( "weapon_melee", "kill" );
-	EntFire( "weapon_chainsaw", "kill" );
+	EntFire( "weapon_pistol", "Kill" );
+	EntFire( "weapon_pistol_magnum", "Kill" );
+	EntFire( "weapon_melee", "Kill" );
+	EntFire( "weapon_chainsaw", "Kill" );
 }
 
 /**
@@ -1943,11 +1962,11 @@ function VSLib::Utils::SanitizeHeldSecondary()
  */
 function VSLib::Utils::SanitizeHeldItems()
 {
-	EntFire( "weapon_pipe_bomb", "kill" );
-	EntFire( "weapon_molotov", "kill" );
-	EntFire( "weapon_vomitjar", "kill" );
-	EntFire( "weapon_upgradepack_incendiary", "kill" );
-	EntFire( "weapon_upgradepack_explosive", "kill" );
+	EntFire( "weapon_pipe_bomb", "Kill" );
+	EntFire( "weapon_molotov", "Kill" );
+	EntFire( "weapon_vomitjar", "Kill" );
+	EntFire( "weapon_upgradepack_incendiary", "Kill" );
+	EntFire( "weapon_upgradepack_explosive", "Kill" );
 }
 
 /**
@@ -1956,10 +1975,10 @@ function VSLib::Utils::SanitizeHeldItems()
  */
 function VSLib::Utils::SanitizeHeldMeds()
 {
-	EntFire( "weapon_first_aid_kit", "kill" );
-	EntFire( "weapon_pain_pills", "kill" );
-	EntFire( "weapon_adrenaline", "kill" );
-	EntFire( "weapon_defibrillator", "kill" );
+	EntFire( "weapon_first_aid_kit", "Kill" );
+	EntFire( "weapon_pain_pills", "Kill" );
+	EntFire( "weapon_adrenaline", "Kill" );
+	EntFire( "weapon_defibrillator", "Kill" );
 }
 
 /**
@@ -1968,28 +1987,28 @@ function VSLib::Utils::SanitizeHeldMeds()
  */
 function VSLib::Utils::SanitizeUnheldWeapons()
 {
-	EntFire( "weapon_spawn", "kill" );
-	EntFire( "weapon_pistol_spawn", "kill" );
-	EntFire( "weapon_pistol_magnum_spawn", "kill" );
-	EntFire( "weapon_smg_spawn", "kill" );
-	EntFire( "weapon_pumpshotgun_spawn", "kill" );
-	EntFire( "weapon_autoshotgun_spawn", "kill" );
-	EntFire( "weapon_rifle_spawn", "kill" );
-	EntFire( "weapon_hunting_rifle_spawn", "kill" );
-	EntFire( "weapon_smg_silenced_spawn", "kill" );
-	EntFire( "weapon_shotgun_chrome_spawn", "kill" );
-	EntFire( "weapon_sniper_military_spawn", "kill" );
-	EntFire( "weapon_shotgun_spas_spawn", "kill" );
-	EntFire( "weapon_rifle_desert_spawn", "kill" );
-	EntFire( "weapon_rifle_ak47_spawn", "kill" );
-	EntFire( "weapon_smg_mp5_spawn", "kill" );
-	EntFire( "weapon_rifle_sg552_spawn", "kill" );
-	EntFire( "weapon_sniper_awp_spawn", "kill" );
-	EntFire( "weapon_sniper_scout_spawn", "kill" );
-	EntFire( "weapon_grenade_launcher_spawn", "kill" );
-	EntFire( "weapon_rifle_m60_spawn", "kill" );
-	EntFire( "weapon_melee_spawn", "kill" );
-	EntFire( "weapon_chainsaw_spawn", "kill" );
+	EntFire( "weapon_spawn", "Kill" );
+	EntFire( "weapon_pistol_spawn", "Kill" );
+	EntFire( "weapon_pistol_magnum_spawn", "Kill" );
+	EntFire( "weapon_smg_spawn", "Kill" );
+	EntFire( "weapon_pumpshotgun_spawn", "Kill" );
+	EntFire( "weapon_autoshotgun_spawn", "Kill" );
+	EntFire( "weapon_rifle_spawn", "Kill" );
+	EntFire( "weapon_hunting_rifle_spawn", "Kill" );
+	EntFire( "weapon_smg_silenced_spawn", "Kill" );
+	EntFire( "weapon_shotgun_chrome_spawn", "Kill" );
+	EntFire( "weapon_sniper_military_spawn", "Kill" );
+	EntFire( "weapon_shotgun_spas_spawn", "Kill" );
+	EntFire( "weapon_rifle_desert_spawn", "Kill" );
+	EntFire( "weapon_rifle_ak47_spawn", "Kill" );
+	EntFire( "weapon_smg_mp5_spawn", "Kill" );
+	EntFire( "weapon_rifle_sg552_spawn", "Kill" );
+	EntFire( "weapon_sniper_awp_spawn", "Kill" );
+	EntFire( "weapon_sniper_scout_spawn", "Kill" );
+	EntFire( "weapon_grenade_launcher_spawn", "Kill" );
+	EntFire( "weapon_rifle_m60_spawn", "Kill" );
+	EntFire( "weapon_melee_spawn", "Kill" );
+	EntFire( "weapon_chainsaw_spawn", "Kill" );
 }
 
 /**
@@ -1998,24 +2017,24 @@ function VSLib::Utils::SanitizeUnheldWeapons()
  */
 function VSLib::Utils::SanitizeUnheldPrimary()
 {
-	EntFire( "weapon_spawn", "kill" );
-	EntFire( "weapon_smg_spawn", "kill" );
-	EntFire( "weapon_pumpshotgun_spawn", "kill" );
-	EntFire( "weapon_autoshotgun_spawn", "kill" );
-	EntFire( "weapon_rifle_spawn", "kill" );
-	EntFire( "weapon_hunting_rifle_spawn", "kill" );
-	EntFire( "weapon_smg_silenced_spawn", "kill" );
-	EntFire( "weapon_shotgun_chrome_spawn", "kill" );
-	EntFire( "weapon_sniper_military_spawn", "kill" );
-	EntFire( "weapon_shotgun_spas_spawn", "kill" );
-	EntFire( "weapon_rifle_desert_spawn", "kill" );
-	EntFire( "weapon_rifle_ak47_spawn", "kill" );
-	EntFire( "weapon_smg_mp5_spawn", "kill" );
-	EntFire( "weapon_rifle_sg552_spawn", "kill" );
-	EntFire( "weapon_sniper_awp_spawn", "kill" );
-	EntFire( "weapon_sniper_scout_spawn", "kill" );
-	EntFire( "weapon_grenade_launcher_spawn", "kill" );
-	EntFire( "weapon_rifle_m60_spawn", "kill" );
+	EntFire( "weapon_spawn", "Kill" );
+	EntFire( "weapon_smg_spawn", "Kill" );
+	EntFire( "weapon_pumpshotgun_spawn", "Kill" );
+	EntFire( "weapon_autoshotgun_spawn", "Kill" );
+	EntFire( "weapon_rifle_spawn", "Kill" );
+	EntFire( "weapon_hunting_rifle_spawn", "Kill" );
+	EntFire( "weapon_smg_silenced_spawn", "Kill" );
+	EntFire( "weapon_shotgun_chrome_spawn", "Kill" );
+	EntFire( "weapon_sniper_military_spawn", "Kill" );
+	EntFire( "weapon_shotgun_spas_spawn", "Kill" );
+	EntFire( "weapon_rifle_desert_spawn", "Kill" );
+	EntFire( "weapon_rifle_ak47_spawn", "Kill" );
+	EntFire( "weapon_smg_mp5_spawn", "Kill" );
+	EntFire( "weapon_rifle_sg552_spawn", "Kill" );
+	EntFire( "weapon_sniper_awp_spawn", "Kill" );
+	EntFire( "weapon_sniper_scout_spawn", "Kill" );
+	EntFire( "weapon_grenade_launcher_spawn", "Kill" );
+	EntFire( "weapon_rifle_m60_spawn", "Kill" );
 }
 
 /**
@@ -2024,11 +2043,11 @@ function VSLib::Utils::SanitizeUnheldPrimary()
  */
 function VSLib::Utils::SanitizeUnheldSecondary()
 {
-	EntFire( "weapon_spawn", "kill" );
-	EntFire( "weapon_pistol_spawn", "kill" );
-	EntFire( "weapon_pistol_magnum_spawn", "kill" );
-	EntFire( "weapon_melee_spawn", "kill" );
-	EntFire( "weapon_chainsaw_spawn", "kill" );
+	EntFire( "weapon_spawn", "Kill" );
+	EntFire( "weapon_pistol_spawn", "Kill" );
+	EntFire( "weapon_pistol_magnum_spawn", "Kill" );
+	EntFire( "weapon_melee_spawn", "Kill" );
+	EntFire( "weapon_chainsaw_spawn", "Kill" );
 }
 
 /**
@@ -2037,13 +2056,13 @@ function VSLib::Utils::SanitizeUnheldSecondary()
  */
 function VSLib::Utils::SanitizeUnheldItems()
 {
-	EntFire( "weapon_pipe_bomb_spawn", "kill" );
-	EntFire( "weapon_molotov_spawn", "kill" );
-	EntFire( "weapon_vomitjar_spawn", "kill" );
-	EntFire( "weapon_upgradepack_incendiary_spawn", "kill" );
-	EntFire( "weapon_upgradepack_explosive_spawn", "kill" );
-	EntFire( "upgrade_item", "kill" );
-	EntFire( "ammo", "kill" );
+	EntFire( "weapon_pipe_bomb_spawn", "Kill" );
+	EntFire( "weapon_molotov_spawn", "Kill" );
+	EntFire( "weapon_vomitjar_spawn", "Kill" );
+	EntFire( "weapon_upgradepack_incendiary_spawn", "Kill" );
+	EntFire( "weapon_upgradepack_explosive_spawn", "Kill" );
+	EntFire( "upgrade_item", "Kill" );
+	EntFire( "ammo", "Kill" );
 }
 
 /**
@@ -2052,10 +2071,10 @@ function VSLib::Utils::SanitizeUnheldItems()
  */
 function VSLib::Utils::SanitizeUnheldMeds()
 {
-	EntFire( "weapon_first_aid_kit_spawn", "kill" );
-	EntFire( "weapon_pain_pills_spawn", "kill" );
-	EntFire( "weapon_adrenaline_spawn", "kill" );
-	EntFire( "weapon_defibrillator_spawn", "kill" );
+	EntFire( "weapon_first_aid_kit_spawn", "Kill" );
+	EntFire( "weapon_pain_pills_spawn", "Kill" );
+	EntFire( "weapon_adrenaline_spawn", "Kill" );
+	EntFire( "weapon_defibrillator_spawn", "Kill" );
 }
 
 /**
@@ -2064,9 +2083,9 @@ function VSLib::Utils::SanitizeUnheldMeds()
  */
 function VSLib::Utils::SanitizeMiniguns()
 {
-	EntFire( "prop_minigun", "kill" );
-	EntFire( "prop_minigun_l4d1", "kill" );
-	EntFire( "prop_mounted_machine_gun", "kill" );
+	EntFire( "prop_minigun", "Kill" );
+	EntFire( "prop_minigun_l4d1", "Kill" );
+	EntFire( "prop_mounted_machine_gun", "Kill" );
 }
 
 /**
@@ -2075,32 +2094,32 @@ function VSLib::Utils::SanitizeMiniguns()
  */
 function VSLib::Utils::KillZombieSpawns()
 {
-	EntFire( "intro_zombie_spawn", "kill" );
-    EntFire( "zspawn_lobby_fall_1", "kill" );
-    EntFire( "zspawn_lobby_fall_2", "kill" );
-    EntFire( "zspawn_lobby_fall_3", "kill" );
-    EntFire( "zspawn_lobby_fall_4", "kill" );
-    EntFire( "zspawn_lobby_fall_5", "kill" );
-    EntFire( "zspawn_fall_1", "kill" );
-    EntFire( "zspawn_fall_2", "kill" );
-    EntFire( "zombie_outro", "kill" );
-    EntFire( "escape_zombie", "kill" );
-    EntFire( "zspawn_zombie_safe", "kill" );
-    EntFire( "zspawn_zombie_safe2", "kill" );
-    EntFire( "spawn_zombie_van", "kill" );
-    EntFire( "spawn_zombie_alarm", "kill" );
-    EntFire( "spawn_zombie_alarm2", "kill" );
-    EntFire( "zombie_spawn1", "kill" );
-    EntFire( "spawn_zombie_run", "kill" );
-    EntFire( "spawn_zombie_end", "kill" );
-    EntFire( "infected_spawner", "kill" );
-    EntFire( "infected_spawner2", "kill" );
-    EntFire( "spawn_zombie_location1", "kill" );
-    EntFire( "spawn_zombie_location2", "kill" );
-    EntFire( "spawn_zombie_location3", "kill" );
-    EntFire( "spawn_zombie_location4", "kill" );
-    EntFire( "spawn_zombie_location5", "kill" );
-    EntFire( "spawn_zombie_location6", "kill" );
+	EntFire( "intro_zombie_spawn", "Kill" );
+    EntFire( "zspawn_lobby_fall_1", "Kill" );
+    EntFire( "zspawn_lobby_fall_2", "Kill" );
+    EntFire( "zspawn_lobby_fall_3", "Kill" );
+    EntFire( "zspawn_lobby_fall_4", "Kill" );
+    EntFire( "zspawn_lobby_fall_5", "Kill" );
+    EntFire( "zspawn_fall_1", "Kill" );
+    EntFire( "zspawn_fall_2", "Kill" );
+    EntFire( "zombie_outro", "Kill" );
+    EntFire( "escape_zombie", "Kill" );
+    EntFire( "zspawn_zombie_safe", "Kill" );
+    EntFire( "zspawn_zombie_safe2", "Kill" );
+    EntFire( "spawn_zombie_van", "Kill" );
+    EntFire( "spawn_zombie_alarm", "Kill" );
+    EntFire( "spawn_zombie_alarm2", "Kill" );
+    EntFire( "zombie_spawn1", "Kill" );
+    EntFire( "spawn_zombie_run", "Kill" );
+    EntFire( "spawn_zombie_end", "Kill" );
+    EntFire( "infected_spawner", "Kill" );
+    EntFire( "infected_spawner2", "Kill" );
+    EntFire( "spawn_zombie_location1", "Kill" );
+    EntFire( "spawn_zombie_location2", "Kill" );
+    EntFire( "spawn_zombie_location3", "Kill" );
+    EntFire( "spawn_zombie_location4", "Kill" );
+    EntFire( "spawn_zombie_location5", "Kill" );
+    EntFire( "spawn_zombie_location6", "Kill" );
 }
 
 /**
@@ -2113,59 +2132,59 @@ function VSLib::Utils::DisableCarAlarms()
         car.Kill();
     
     foreach (car in Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
-        car.Input("enable");
+        car.Input("Enable");
     
-    EntFire( "prop_car_alarm", "disable" );
-    EntFire( "instructor_impound", "kill" );
-    EntFire( "InstanceAuto5-remark_caralarm", "kill" );
-    EntFire( "alarm1-remark_caralarm", "kill" );
-    EntFire( "alarm2-remark_caralarm", "kill" );
-    EntFire( "alarm3-remark_caralarm", "kill" );
-    EntFire( "alarm4-remark_caralarm", "kill" );
-    EntFire( "alarm5-remark_caralarm", "kill" );
-    EntFire( "alarm6-remark_caralarm", "kill" );
-    EntFire( "alarm7-remark_caralarm", "kill" );
-    EntFire( "alarm8-remark_caralarm", "kill" );
-    EntFire( "remark_caralarm-car1_alarm", "kill" );
-    EntFire( "remark_caralarm-car2_alarm", "kill" );
-    EntFire( "remark_caralarm-car3_alarm", "kill" );
-    EntFire( "car_alarm-remark_caralarm", "kill" );
-    EntFire( "remark_caralarm", "kill" );
-    EntFire( "InstanceAuto1-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto2-remark_caralarm", "kill" );
-    EntFire( "car_alarm1-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto12-remark_caralarm", "kill" );
-    EntFire( "remark_caralarm-car1", "kill" );
-    EntFire( "remark_caralarm-car2", "kill" );
-    EntFire( "remark_caralarm-car3", "kill" );
-    EntFire( "remark_caralarm-car4", "kill" );
-    EntFire( "remark_caralarm-car5", "kill" );
-    EntFire( "caralarm_1-remark_caralarm", "kill" );
-    EntFire( "caralarm_2-remark_caralarm", "kill" );
-    EntFire( "caralarm_3-remark_caralarm", "kill" );
-    EntFire( "caralarm_4-remark_caralarm", "kill" );
-    EntFire( "caralarm_6-remark_caralarm", "kill" );
-    EntFire( "caralarm_7-remark_caralarm", "kill" );
-    EntFire( "caralarm_8-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto24-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto44-remark_caralarm", "kill" );
-    EntFire( "car1-remark_caralarm", "kill" );
-    EntFire( "car2-remark_caralarm", "kill" );
-    EntFire( "car3-remark_caralarm", "kill" );
-    EntFire( "car4-remark_caralarm", "kill" );
-    EntFire( "car5-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto128-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto4-remark_caralarm", "kill" );
-    EntFire( "InstanceAuto5-remark_caralarm", "kill" );
-    EntFire( "alarma1-remark_caralarm", "kill" );
-    EntFire( "alarma2-remark_caralarm", "kill" );
-    EntFire( "alarma3-remark_caralarm", "kill" );
-    EntFire( "alarma4-remark_caralarm", "kill" );
-    EntFire( "alarma5-remark_caralarm", "kill" );
-    EntFire( "alarma6-remark_caralarm", "kill" );
-    EntFire( "alarma7-remark_caralarm", "kill" );
-    EntFire( "alarma8-remark_caralarm", "kill" );
-    EntFire( "alarma9-remark_caralarm", "kill" );
+    EntFire( "prop_car_alarm", "Disable" );
+    EntFire( "instructor_impound", "Kill" );
+    EntFire( "InstanceAuto5-remark_caralarm", "Kill" );
+    EntFire( "alarm1-remark_caralarm", "Kill" );
+    EntFire( "alarm2-remark_caralarm", "Kill" );
+    EntFire( "alarm3-remark_caralarm", "Kill" );
+    EntFire( "alarm4-remark_caralarm", "Kill" );
+    EntFire( "alarm5-remark_caralarm", "Kill" );
+    EntFire( "alarm6-remark_caralarm", "Kill" );
+    EntFire( "alarm7-remark_caralarm", "Kill" );
+    EntFire( "alarm8-remark_caralarm", "Kill" );
+    EntFire( "remark_caralarm-car1_alarm", "Kill" );
+    EntFire( "remark_caralarm-car2_alarm", "Kill" );
+    EntFire( "remark_caralarm-car3_alarm", "Kill" );
+    EntFire( "car_alarm-remark_caralarm", "Kill" );
+    EntFire( "remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto1-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto2-remark_caralarm", "Kill" );
+    EntFire( "car_alarm1-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto12-remark_caralarm", "Kill" );
+    EntFire( "remark_caralarm-car1", "Kill" );
+    EntFire( "remark_caralarm-car2", "Kill" );
+    EntFire( "remark_caralarm-car3", "Kill" );
+    EntFire( "remark_caralarm-car4", "Kill" );
+    EntFire( "remark_caralarm-car5", "Kill" );
+    EntFire( "caralarm_1-remark_caralarm", "Kill" );
+    EntFire( "caralarm_2-remark_caralarm", "Kill" );
+    EntFire( "caralarm_3-remark_caralarm", "Kill" );
+    EntFire( "caralarm_4-remark_caralarm", "Kill" );
+    EntFire( "caralarm_6-remark_caralarm", "Kill" );
+    EntFire( "caralarm_7-remark_caralarm", "Kill" );
+    EntFire( "caralarm_8-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto24-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto44-remark_caralarm", "Kill" );
+    EntFire( "car1-remark_caralarm", "Kill" );
+    EntFire( "car2-remark_caralarm", "Kill" );
+    EntFire( "car3-remark_caralarm", "Kill" );
+    EntFire( "car4-remark_caralarm", "Kill" );
+    EntFire( "car5-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto128-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto4-remark_caralarm", "Kill" );
+    EntFire( "InstanceAuto5-remark_caralarm", "Kill" );
+    EntFire( "alarma1-remark_caralarm", "Kill" );
+    EntFire( "alarma2-remark_caralarm", "Kill" );
+    EntFire( "alarma3-remark_caralarm", "Kill" );
+    EntFire( "alarma4-remark_caralarm", "Kill" );
+    EntFire( "alarma5-remark_caralarm", "Kill" );
+    EntFire( "alarma6-remark_caralarm", "Kill" );
+    EntFire( "alarma7-remark_caralarm", "Kill" );
+    EntFire( "alarma8-remark_caralarm", "Kill" );
+    EntFire( "alarma9-remark_caralarm", "Kill" );
 }
 
  
