@@ -892,6 +892,20 @@ function VSLib::Utils::GetEntityOrPlayer( ent )
 }
 
 /**
+ * Returns the EHANDLE as a VSLib entity
+ */
+function VSLib::Utils::GetEntityFromHandle( ehandle )
+{
+	foreach( ent in Objects.OfClassname("*") )
+	{
+		if ( ent.GetEntityHandle() == ehandle )
+			return ent;
+	}
+	
+	return null;
+}
+
+/**
  * Returns a pseudorandom number from min to max
  */
 function VSLib::Utils::GetRandNumber( min, max )
@@ -1071,6 +1085,25 @@ function VSLib::Utils::PrecacheModel( mdl )
 		PrecacheEntityFromTable( Model );
 		::EasyLogic.PrecachedModels[mdl] <- 1;
 	}
+}
+
+/**
+ * Precaches all survivor models
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::PrecacheSurvivors( )
+{
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_coach.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_gambler.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_mechanic.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_producer.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_biker.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_manager.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_namvet.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_teenangst.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_biker_light.mdl" );
+	::VSLib.Utils.PrecacheModel( "models/survivors/survivor_teenangst_light.mdl" );
 }
 
 /**
@@ -1532,6 +1565,28 @@ function VSLib::Utils::IsValidFireWeapon(weapon)
 function VSLib::Utils::IsValidWeapon(classname)
 {
 	return ::VSLib.Utils.IsValidMeleeWeapon(classname) || ::VSLib.Utils.IsValidFireWeapon(classname);
+}
+
+/**
+ * Returns true if the current map has a finale.
+ */
+function VSLib::Utils::IsFinale()
+{
+	if ( Entities.FindByClassname( null, "trigger_finale" ) )
+		return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if the current map has a scavenge finale.
+ */
+function VSLib::Utils::IsScavengeFinale()
+{
+	if ( Entities.FindByClassname( null, "trigger_finale" ) && Entities.FindByClassname( null, "game_scavenge_progress_display" ) )
+		return true;
+	
+	return false;
 }
 
 /**
@@ -2089,10 +2144,10 @@ function VSLib::Utils::SanitizeMiniguns()
 }
 
 /**
- * Kills common spawn locations.
+ * Removes common spawn locations.
  * @authors Rayman1103
  */
-function VSLib::Utils::KillZombieSpawns()
+function VSLib::Utils::RemoveZombieSpawns()
 {
 	EntFire( "intro_zombie_spawn", "Kill" );
     EntFire( "zspawn_lobby_fall_1", "Kill" );
@@ -2123,16 +2178,42 @@ function VSLib::Utils::KillZombieSpawns()
 }
 
 /**
+ * Removes foot lockers.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::RemoveFootLockers()
+{
+    EntFire( "button_locker-1", "Kill" );
+	EntFire( "button_locker-2", "Kill" );
+	EntFire( "button_locker-3", "Kill" );
+	EntFire( "button_locker-4", "Kill" );
+	EntFire( "button_locker-5", "Kill" );
+	EntFire( "button_locker-6", "Kill" );
+	EntFire( "locker-1", "Kill" );
+	EntFire( "locker-2", "Kill" );
+	EntFire( "locker-3", "Kill" );
+	EntFire( "locker-4", "Kill" );
+	EntFire( "locker-5", "Kill" );
+	EntFire( "locker-6", "Kill" );
+	EntFire( "WorldFootLocker-1", "Kill" );
+	EntFire( "WorldFootLocker-2", "Kill" );
+	EntFire( "WorldFootLocker-3", "Kill" );
+	EntFire( "WorldFootLocker-4", "Kill" );
+	EntFire( "WorldFootLocker-5", "Kill" );
+	EntFire( "WorldFootLocker-6", "Kill" );
+}
+
+/**
  * Disables car alarms.
  * @authors Rayman1103
  */
 function VSLib::Utils::DisableCarAlarms()
 {
-    foreach (car in Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
-        car.Kill();
+    foreach (glass in Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
+        glass.Kill();
     
-    foreach (car in Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
-        car.Input("Enable");
+    foreach (glass in Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
+        glass.Input("Enable");
     
     EntFire( "prop_car_alarm", "Disable" );
     EntFire( "instructor_impound", "Kill" );

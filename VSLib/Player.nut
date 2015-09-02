@@ -92,6 +92,32 @@ function VSLib::Player::GetCharacterName()
 }
 
 /**
+ * Gets the base character name. E.g. Bill will return "Nick" or Zoey will return "Rochelle"
+ */
+function VSLib::Player::GetBaseCharacterName()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return "";
+	}
+	
+	if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
+	{
+		if ( GetTargetname() == "!bill" )
+			return "Nick";
+		else if ( GetTargetname() == "!francis" )
+			return "Ellis";
+		else if ( GetTargetname() == "!louis" )
+			return "Coach";
+		else if ( GetTargetname() == "!zoey" )
+			return "Rochelle";
+	}
+	
+	return GetCharacterName();
+}
+
+/**
  * Gets the player's Steam ID.
  */
 function VSLib::Player::GetSteamID()
@@ -332,20 +358,6 @@ function VSLib::Player::IsOnFire()
 	}
 	
 	return _ent.IsOnFire();
-}
-
-/**
- * Returns true if the player is on the survivor team (Otherwise, infected).
- */
-function VSLib::Player::IsSurvivor()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	return _ent.IsSurvivor();
 }
 
 /**
@@ -708,8 +720,8 @@ function VSLib::Player::Kill(dmgtype = null)
 		}
 		if ( dmgtype )
 		{
-			SetRawHealth(0);
-			Hurt(1, dmgtype);
+			SetRawHealth(1);
+			Hurt(999, dmgtype);
 		}
 		else
 			Input("SetHealth", "0");
@@ -750,8 +762,12 @@ function VSLib::Player::Ragdoll()
 	}
 	else
 	{
-		Kill();
-		::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { origin = origin, angles = angles, model = GetSurvivorModel() });
+		if ( IsAlive() )
+			Kill();
+		if ( Entities.FindByClassnameWithin( null, "survivor_death_model", origin, 1 ) )
+			VSLib_RemoveDeathModel( { origin = origin, angles = angles, model = GetSurvivorModel() } );
+		else
+			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { origin = origin, angles = angles, model = GetSurvivorModel() });
 	}
 }
 

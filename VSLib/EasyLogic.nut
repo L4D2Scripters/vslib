@@ -46,6 +46,11 @@
 	OnDamage = {}
 	OnTakeDamage = {}
 	
+	// Script hooks
+	OnGameplayStart = {}
+	OnActivate = {}
+	OnShutdown = {}
+	
 	// User defined data storage
 	UserDefinedVars = {}
 	
@@ -147,7 +152,7 @@
 	OnLeaveSaferoom = {}
 	OnHurt = {}
 	OnHurtConcise = {}
-	OnActivate = {}
+	OnPlayerActivate = {}
 	OnPreSpawn = {}
 	OnSpawn = {}
 	OnPostSpawn = {}
@@ -199,8 +204,6 @@
 	OnJump = {}
 	OnJumpApex = {}
 	FirstSurvLeftStartArea = {}
-	OnSurvivorsLeftStartArea = {}
-	OnSurvivorsSpawned = {}
 	OnReviveBegin = {}
 	OnReviveEnd = {}
 	OnReviveSuccess = {}
@@ -285,6 +288,10 @@
 	OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
 	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
 	OnModeStart = {}
+	OnSurvivorsLeftStartArea = {}
+	OnPlayersSpawned = {}
+	OnSurvivorsLeftSafeArea = {}
+	OnSurvivorsSpawned = {}
 }
 
 /**
@@ -342,6 +349,24 @@ function VSLib_SpawnInfoGamemode()
 
 if ( !Entities.FindByName( null, "vslib_gamemode" ) )
 	VSLib_SpawnInfoGamemode();
+
+function OnGameplayStart()
+{
+	foreach (func in ::VSLib.EasyLogic.OnGameplayStart)
+		func();
+}
+
+function OnActivate()
+{
+	foreach (func in ::VSLib.EasyLogic.OnActivate)
+		func();
+}
+
+function OnShutdown()
+{
+	foreach (func in ::VSLib.EasyLogic.OnShutdown)
+		func();
+}
 
 /*
  * All the game events are below. Note how we wrap the events to make the
@@ -574,6 +599,43 @@ function OnGameEvent_round_start_pre_entity(params)
 		func();
 }
 
+function VSLib_SurvivorsSpawnedCheck(params)
+{
+	local survs = 0;
+	if ( Entities.FindByClassname( null, "player" ) )
+	{
+		foreach (survivor in Players.AliveSurvivors())
+			survs++;
+		
+		if ( survs > 0 )
+		{
+			::VSLib.Timers.RemoveTimerByName("VSLib_SurvivorsSpawnedCheck");
+			g_ModeScript.vslib_survivors_spawned();
+		}
+	}
+}
+
+function vslib_survivors_spawned()
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
+		func();
+}
+
+function VSLib_LeftSafeAreaCheck(params)
+{
+	if ( Director.HasAnySurvivorLeftSafeArea() )
+	{
+		::VSLib.Timers.RemoveTimerByName("VSLib_LeftSafeAreaCheck");
+		g_ModeScript.vslib_survivors_left_safe_area();
+	}
+}
+
+function vslib_survivors_left_safe_area()
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftSafeArea)
+		func();
+}
+
 function OnGameEvent_round_start_post_nav(params)
 {
 	// Restore and save session tables
@@ -600,6 +662,9 @@ function OnGameEvent_round_start_post_nav(params)
 		if ( ::VSLib.EasyLogic.BaseModeName == "" )
 			::VSLib.EasyLogic.BaseModeName <- SessionState.ModeName;
 	}
+	
+	::VSLib.Timers.AddTimerByName("VSLib_SurvivorsSpawnedCheck", 0.1, true, VSLib_SurvivorsSpawnedCheck);
+	::VSLib.Timers.AddTimerByName("VSLib_LeftSafeAreaCheck", 0.1, true, VSLib_LeftSafeAreaCheck);
 	
 	local diff = Convars.GetStr( "z_difficulty" ).tolower();
 	::VSLib.EasyLogic.Difficulty <- diff;
@@ -821,7 +886,7 @@ function OnGameEvent_player_activate(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	
-	foreach (func in ::VSLib.EasyLogic.Notifications.OnActivate)
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerActivate)
 		func(ents.entity, params);
 }
 
@@ -966,18 +1031,18 @@ function _OnPostSpawnEv(params)
 		func(ents.entity, params);
 }
 
-function VSLib::EasyLogic::Update::_VSLib_SurvsSpawned()
+function VSLib::EasyLogic::Update::_VSLib_PlayersSpawned()
 {
 	if ( !::VSLib.EasyLogic.PlayersSpawned && Entities.FindByClassname( null, "player" ) )
 	{
 		::VSLib.EasyLogic.PlayersSpawned <- true;
-		vslib_survivors_spawned();
+		vslib_players_spawned();
 	}
 }
 
-function vslib_survivors_spawned()
+function vslib_players_spawned()
 {
-	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayersSpawned)
 		func();
 }
 

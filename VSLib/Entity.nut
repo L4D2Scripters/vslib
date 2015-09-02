@@ -497,6 +497,47 @@ function VSLib::Entity::Break()
 }
 
 /**
+ * Makes the entity become a ragdoll
+ */
+function VSLib::Entity::BecomeRagdoll()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local origin = GetLocation();
+	local angles = GetAngles();
+	
+	local function VSLib_RagdollDeathModel( origin )
+	{
+		foreach ( death_model in Objects.OfClassnameWithin( "survivor_death_model", origin, 1 ) )
+			death_model.Input( "BecomeRagdoll" );
+	}
+	
+	if ( IsSurvivor() )
+	{
+		if ( GetTeam() == 4 )
+		{
+			Input( "Kill" );
+			::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
+		}
+		else
+		{
+			if ( IsAlive() )
+				Kill();
+			if ( Entities.FindByClassnameWithin( null, "survivor_death_model", origin, 1 ) )
+				VSLib_RagdollDeathModel( origin );
+			else
+				::VSLib.Timers.AddTimer(0.1, false, VSLib_RagdollDeathModel, origin);
+		}
+	}
+	else if ( GetTeam() == 3 )
+		Input("BecomeRagdoll");
+}
+
+/**
  * Dispatches a keyvalue to the entity
  */
 function VSLib::Entity::SetKeyValue(key, value)
@@ -1624,8 +1665,8 @@ function VSLib::Entity::Kill(dmgtype = 0)
 	
 	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
 	{
-		SetRawHealth(0);
-		Hurt(1, dmgtype);
+		SetRawHealth(1);
+		Hurt(999, dmgtype);
 	}
 	else
 		Input("Kill");
@@ -2007,6 +2048,23 @@ function VSLib::Entity::IsPlayer()
 		return _ent.IsPlayer();
 	
 	return "player" == _ent.GetClassname().tolower();
+}
+
+/**
+ * Returns true if the player is on the survivor team (Otherwise, infected).
+ */
+function VSLib::Entity::IsSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (!IsPlayer())
+		return false;
+	
+	return _ent.IsSurvivor();
 }
 
 /**
