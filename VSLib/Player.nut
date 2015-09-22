@@ -47,6 +47,16 @@ getconsttable()["SLOT_PILLS"] <- 4;
 getconsttable()["SLOT_CARRIED"] <- 5;
 getconsttable()["SLOT_HELD"] <- "Held";
 
+// Survivor IDs to be used with GetCharacterID() and Utils.SpawnL4D1Survivor()
+getconsttable()["NICK"] <- 0;
+getconsttable()["ROCHELLE"] <- 1;
+getconsttable()["COACH"] <- 2;
+getconsttable()["ELLIS"] <- 3;
+getconsttable()["BILL"] <- 4;
+getconsttable()["ZOEY"] <- 5;
+getconsttable()["FRANCIS"] <- 6;
+getconsttable()["LOUIS"] <- 7;
+
 
 
 /**
@@ -1366,6 +1376,37 @@ function VSLib::Player::GetSurvivorSlot()
 }
 
 /**
+ * Gets the survivor ID
+ */
+function VSLib::Player::GetCharacterID()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( GetTargetname() == "!nick" )
+		return 0;
+	else if ( GetTargetname() == "!rochelle" )
+		return 1;
+	else if ( GetTargetname() == "!coach" )
+		return 2;
+	else if ( GetTargetname() == "!ellis" )
+		return 3;
+	else if ( GetTargetname() == "!bill" )
+		return 4;
+	else if ( GetTargetname() == "!zoey" )
+		return 5;
+	else if ( GetTargetname() == "!francis" )
+		return 6;
+	else if ( GetTargetname() == "!louis" )
+		return 7;
+	
+	return;
+}
+
+/**
  * Extinguish a burning player (also checks if player is on fire first).
  * Returns true if the player was extinguished.
  */
@@ -1525,7 +1566,7 @@ function VSLib::Player::Speak( scene, delay = 0 )
 	}
 	
 	if ( delay > 0 )
-		Timers.AddTimer(delay, false, SpeakScene { scene = scene, player = this });
+		::VSLib.Timers.AddTimer(delay, false, SpeakScene { scene = scene, player = this });
 	else
 		SpeakScene( { scene = scene, player = this } );
 }
@@ -1546,7 +1587,7 @@ function VSLib::Player::DisablePickups( )
 	}
 	
 	if (_idx in ::VSLib.EntData._objPickupTimer)
-		Timers.RemoveTimer(::VSLib.EntData._objPickupTimer[_idx]);
+		::VSLib.Timers.RemoveTimer(::VSLib.EntData._objPickupTimer[_idx]);
 }
 
 /**
@@ -1886,7 +1927,7 @@ function VSLib::Player::EndValvePickupObjects( )
 	}
 	
 	if (_idx in ::VSLib.EntData._objValveTimer)
-		Timers.RemoveTimer( ::VSLib.EntData._objValveTimer[_idx] );
+		::VSLib.Timers.RemoveTimer( ::VSLib.EntData._objValveTimer[_idx] );
 }
 
 /**
@@ -1982,7 +2023,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 	if (_idx in ::VSLib.EntData._objValveHolding && (!("Held" in curinv) || ::VSLib.EntData._objValveHolding[_idx] != curinv["Held"]))
 	{
 		if (::VSLib.EntData._objEnableDmg[_idx])
-			Timers.RemoveTimerByName("vPickup" + _idx);
+			::VSLib.Timers.RemoveTimerByName("vPickup" + _idx);
 		
 		delete ::VSLib.EntData._objValveHolding[_idx];
 		
@@ -2015,7 +2056,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 			PlaySound(pickupSound);
 			
 			if (::VSLib.EntData._objEnableDmg[_idx])
-				Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
+				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
 		}
 	}
 	else if (IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
@@ -2025,7 +2066,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
 			
 			if (::VSLib.EntData._objEnableDmg[_idx])
-				Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
+				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
 			
 			delete ::VSLib.EntData._objValveHolding[_idx];
 			PlaySound(throwSound);

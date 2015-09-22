@@ -86,6 +86,10 @@
 	PreSpawnFired = false
 	PlayersSpawned = false
 	PlayersLeftStart = false
+	SurvivorSpawned = false
+	TwoSurvivorsSpawned = false
+	ThreeSurvivorsSpawned = false
+	SurvivorsSpawned = false
 	
 	// This is used to store the base mode name
 	BaseModeName = ""
@@ -601,24 +605,41 @@ function OnGameEvent_round_start_pre_entity(params)
 
 function VSLib_SurvivorsSpawnedCheck(params)
 {
-	local survs = 0;
 	if ( Entities.FindByClassname( null, "player" ) )
 	{
+		local survs = 0;
+		
 		foreach (survivor in Players.AliveSurvivors())
 			survs++;
 		
-		if ( survs > 0 )
+		if ( survs == 1 && !::VSLib.EasyLogic.SurvivorSpawned )
+		{
+			::VSLib.EasyLogic.SurvivorSpawned <- true;
+			g_ModeScript.vslib_survivors_spawned(1);
+		}
+		else if ( survs == 2 && !::VSLib.EasyLogic.TwoSurvivorsSpawned )
+		{
+			::VSLib.EasyLogic.TwoSurvivorsSpawned <- true;
+			g_ModeScript.vslib_survivors_spawned(2);
+		}
+		else if ( survs == 3 && !::VSLib.EasyLogic.ThreeSurvivorsSpawned )
+		{
+			::VSLib.EasyLogic.ThreeSurvivorsSpawned <- true;
+			g_ModeScript.vslib_survivors_spawned(3);
+		}
+		else if ( survs >= 4 && !::VSLib.EasyLogic.SurvivorsSpawned )
 		{
 			::VSLib.Timers.RemoveTimerByName("VSLib_SurvivorsSpawnedCheck");
-			g_ModeScript.vslib_survivors_spawned();
+			::VSLib.EasyLogic.SurvivorsSpawned <- true;
+			g_ModeScript.vslib_survivors_spawned(4);
 		}
 	}
 }
 
-function vslib_survivors_spawned()
+function vslib_survivors_spawned( amount )
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
-		func();
+		func(amount);
 }
 
 function VSLib_LeftSafeAreaCheck(params)
@@ -1035,8 +1056,39 @@ function VSLib::EasyLogic::Update::_VSLib_PlayersSpawned()
 {
 	if ( !::VSLib.EasyLogic.PlayersSpawned && Entities.FindByClassname( null, "player" ) )
 	{
-		::VSLib.EasyLogic.PlayersSpawned <- true;
-		vslib_players_spawned();
+		local survs = 0;
+		
+		foreach (survivor in Players.AliveSurvivors())
+			survs++;
+		
+		if ( survs > 0 )
+		{
+			::VSLib.EasyLogic.PlayersSpawned <- true;
+			vslib_players_spawned();
+			
+			::VSLib.Timers.RemoveTimerByName("VSLib_SurvivorsSpawnedCheck");
+			
+			if ( survs == 1 && !::VSLib.EasyLogic.SurvivorSpawned )
+			{
+				::VSLib.EasyLogic.SurvivorSpawned <- true;
+				g_ModeScript.vslib_survivors_spawned(1);
+			}
+			else if ( survs == 2 && !::VSLib.EasyLogic.TwoSurvivorsSpawned )
+			{
+				::VSLib.EasyLogic.TwoSurvivorsSpawned <- true;
+				g_ModeScript.vslib_survivors_spawned(2);
+			}
+			else if ( survs == 3 && !::VSLib.EasyLogic.ThreeSurvivorsSpawned )
+			{
+				::VSLib.EasyLogic.ThreeSurvivorsSpawned <- true;
+				g_ModeScript.vslib_survivors_spawned(3);
+			}
+			else if ( survs >= 4 && !::VSLib.EasyLogic.SurvivorsSpawned )
+			{
+				::VSLib.EasyLogic.SurvivorsSpawned <- true;
+				g_ModeScript.vslib_survivors_spawned(4);
+			}
+		}
 	}
 }
 
@@ -1096,7 +1148,7 @@ function OnGameEvent_player_spawn(params)
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
 		func(ents.entity, params);
 	
-	Timers.AddTimer(1.0, false, _OnPostSpawnEv, params);
+	::VSLib.Timers.AddTimer(1.0, false, _OnPostSpawnEv, params);
 }
 
 function OnGameEvent_player_first_spawn(params)

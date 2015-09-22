@@ -956,6 +956,14 @@ class ::VSLib.HUD.Bar extends ::VSLib.HUD.Item
  * See the API for example usage.
  *
  * \todo @TODO finish this.
+ *
+ * @authors shotgunefx
+ # added GetSelection()
+ * modified DisplayMenu() to retain it's size when redisplayed, added sticky parameter , also added optional resize
+ * added ScrollBack() method, unbound unless a button is specified
+ * added SetSticky() method to retain selections
+ * modified OverrideButtons to take an option third parameter to scroll back (scrollBackBtn), if specified, menu selection won't wrap
+ * modified Tick() to support scrollback if specified
  */
 class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 {
@@ -963,19 +971,18 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	// Meta stuff
 	///////////////////////////////////////////////////////////////////
 	
-	constructor(formatStr = "[ {name} ]\n\n{title}\n\n{options}", title = "Menu", optionFormatStr = "{num}. {option}", highlightStrPre = "[ ", highlightStrPost = "  ]")
+	constructor(formatStr = "[ {name} ]\n\n{title}\n\n{options}", title = "Menu", optionFormatStr = "{num}. {option}", highlightStrPre = "[ ", highlightStrPost = "  ]", sticky = false)
 	{
 		SetFormatString(formatStr);
 		_oformat = optionFormatStr;
 		_hpre = highlightStrPre;
 		_hpost = highlightStrPost;
 		_title = title;
-		
-		
 		_options = {};
 		_numop = 0;
 		_curSel = 0;
 		_player = null;
+		_sticky = false; // #shotgunefx
 		
 		::VSLib.Timers.RemoveTimer(_optimer);
 		_optimer = -1;
@@ -985,8 +992,19 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	///////////////////////////////////////////////////////////////////
 	// Member functions
 	///////////////////////////////////////////////////////////////////
-	
-	
+	/**
+	* SetSticky()
+	*/
+	function SetSticky(sticky)
+	{
+		_sticky = sticky
+	}    /**
+	* GetSelection()
+	*/
+	function GetSelection()
+	{
+		return _options[_curSel].text
+	}
 	/**
 	 * Sets a new title
 	 */
@@ -1060,7 +1078,10 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	{
 		::VSLib.Timers.RemoveTimer(_optimer);
 		_optimer = -1;
-		_curSel = 0;
+		
+		if (!_sticky) // #shotgunefx
+			_curSel = 0;
+		
 		Hide();
 	}
 	
@@ -1076,7 +1097,7 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	/**
 	 * Displays the menu and hands over control to a particular player entity.
 	 */
-	function DisplayMenu(player, attachTo, autoDetach = false)
+	function DisplayMenu(player, attachTo, autoDetach = false,  resize = true)
 	{
 		if (typeof player != "VSLIB_PLAYER")
 			throw "Menu could not be displayed: a non-Player entity was passed; only VSLib.Player entities are supported.";
@@ -1088,8 +1109,17 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 		
 		_player = player;
 		
-		AttachTo(attachTo);
-		ChangeHUDNative(50, 40, 150, 300, 640, 480);
+		if (_width !=0 && _height !=0) // retain menu sizes when reattaching #shotgunefx
+		{
+			AttachTo(attachTo,false);
+		}
+		else
+		{
+			AttachTo(attachTo);
+			if (resize)
+				ChangeHUDNative(50, 40, 150, 300, 640, 480);
+		}
+		
 		ResizeHeightByLines();
 		SetTextPosition(TextAlign.Left);
 		CenterVertical();
@@ -1097,9 +1127,13 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 		_selectBtn = BUTTON_ATTACK;
 		_switchBtn = BUTTON_SHOVE;
 		
-		_curSel++;
+		if (!_sticky || _curSel == 0)
+			_curSel++;
+		
 		_autoDetach = autoDetach;
-		_optimer = ::VSLib.Timers.AddTimer(0.2, 1, @(hudobj) hudobj.Tick(), this);
+		
+		if (!_manual) // #shotgunefx - don't add timer if this will be driven manually, only used by subclasses
+			_optimer = ::VSLib.Timers.AddTimer(0.2, 1, @(hudobj) hudobj.Tick(), this);
 		
 		Show(); // show the menu
 	}
@@ -1119,10 +1153,15 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	 * Overrides the buttons used to detect HUD changes.
 	 * You can pass in BUTTON_ATTACK and BUTTON_SHOVE for example.
 	 */
-	function OverrideButtons(selectBtn, switchBtn)
+	function OverrideButtons(selectBtn, switchBtn, scrollBackBtn = false)
 	{
 		_selectBtn = selectBtn;
 		_switchBtn = switchBtn;
+		
+		if (scrollBackBtn) /*shotgunefx*/
+		{
+			_scrollbackbtn = scrollBackBtn
+		}
 	}
 	
 	/**
@@ -1147,6 +1186,12 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 			if (_autoDetach)
 				Detach();
 		}
+		else if (_scrollbackbtn && _player.IsPressingButton(_scrollbackbtn) ) /*#shotgunefx*/
+		{
+			Utils.PlaySoundToAll("Menu.Scroll");
+			if ((--_curSel) <= 0)
+				_curSel = _numop;
+		}
 	}
 	
 	
@@ -1166,8 +1211,238 @@ class ::VSLib.HUD.Menu extends ::VSLib.HUD.Item
 	_autoDetach = false; // Whether or not to auto-detach
 	_selectBtn = null;
 	_switchBtn = null;
+	_scrollbackbtn = null; // #shotgunefx
+	_sticky = false;
+	_manual = false; // to support manual subclasses
 }
 
+/**
+ * A scrollable menu. Will display displayNum items at a time.
+ * @authors shotgunefx
+*/
+class ::VSLib.HUD.MenuScrollable extends ::VSLib.HUD.Menu
+{
+	///////////////////////////////////////////////////////////////////
+	// Meta stuff
+	///////////////////////////////////////////////////////////////////
+	
+	constructor(formatStr = "[ {name} ]\n{title}\n{options}", title = "Menu", optionFormatStr = "{num}. {option}", highlightStrPre = "[ ", highlightStrPost = "  ]", displayNum = 4, scrollUpStr = "/\\", scrollDownStr = "\\/")
+	{
+		SetFormatString(formatStr);
+		_oformat = optionFormatStr;
+		_hpre = highlightStrPre;
+		_hpost = highlightStrPost;
+		_title = title;
+		_options = {};
+		_numop = 0;
+		_curSel = 0;
+		_player = null;
+		::VSLib.Timers.RemoveTimer(_optimer);
+		_optimer = -1;
+		_displaystart = 1       // @shotgunefx
+		_displaynum = displayNum;
+		_scrollupstr = scrollUpStr;
+		_scrolldownstr = scrollDownStr;
+	}
+	
+	
+	function GetString()
+	{
+		if (_player == null || _numop <= 0)
+			return "";
+		
+		// Build the options list,
+		local optionsList = _displaystart > 1 ? _scrollupstr+" (" : "("; // can we scroll up?
+		
+		local pos_str = ""
+		local length = _displaystart + _displaynum  -1;
+		if (length <= _options.len() ) // Can we scroll down?
+			pos_str = _scrolldownstr;
+		else
+			length = _options.len()+1;
+		
+		// add num display
+		optionsList += _displaystart+" - "+(length-1)+") of "+_options.len()+"\n";
+		
+		for(local idx = _displaystart; idx < length; idx++)
+		{
+			local row = _options[idx];
+			local disp = "";
+			if (idx == _curSel)
+				disp += _hpre;
+			
+			disp += _oformat;
+			disp = ::VSLib.Utils.StringReplace(disp, "{num}", idx.tostring());
+			disp = ::VSLib.Utils.StringReplace(disp, "{option}", row.text);
+			disp = ParseString(disp);
+			if (idx == _curSel)
+				disp += _hpost;
+			
+			optionsList += disp + "\n";
+		}
+		optionsList += pos_str;
+		
+		// Build return string
+		/* Can't call base.GetString here, as {options} will already be consumed */
+		if (_modded || _dynrefcount > 0)
+		{
+			_modded = false;
+			_cachestr = _formatstr;
+			_cachestr = ParseString(_cachestr);
+		}
+		
+		local temp =  _cachestr;
+		temp = ::VSLib.Utils.StringReplace(temp, "{name}", _player.GetName());
+		temp = ::VSLib.Utils.StringReplace(temp, "{title}", _title);
+		temp = ::VSLib.Utils.StringReplace(temp, "{options}", optionsList);
+		return temp;
+	}
+	/**
+	 * Set number of displayed items
+	 */
+	function SetDisplayCount(displaycount)
+	{
+		_displaynum = displaycount+1;
+	}
+	
+	
+	/**
+	 * Scroll menu down
+	 */
+	function Scroll()
+	{
+		Utils.PlaySoundToAll("Menu.Scroll");
+		
+		if ((++_curSel) > _numop)
+		{
+			if (_scrollbackbtn)
+			{ /*If we have a scroll back button, don't loop, otherwise loop back to 1*/
+				_curSel = _numop;
+			}
+			else
+			{
+				_curSel = 1;
+				_displaystart = 1;
+			}
+		}
+		// does window need to scroll?
+		if (_curSel >= _displaystart + _displaynum  -1)
+		{
+			_displaystart+=1;
+			if ( _displaystart + _displaynum > _options.len() + 2 )  // clamp it to end
+			{
+				_displaystart = _options.len() - _displaynum;
+			}
+		}
+	}
+	
+	/**
+	 * Scroll menu up
+	 */
+	function ScrollBack()
+	{
+		Utils.PlaySoundToAll("Menu.Scroll");
+		if ((--_curSel) <= 0)
+			_curSel = 1;
+		
+		if (_curSel < _displaystart )
+			_displaystart = _curSel;
+	}
+	
+	/**
+	 * Gathers input data and acts on it.
+	 */
+	function Tick()
+	{
+		if (_player.IsPressingButton(_switchBtn))
+		{
+			Scroll();
+		}
+		else if (_player.IsPressingButton(_selectBtn))
+		{
+			Utils.PlaySoundToAll("Menu.Select");
+			
+			local t = { p = _player, idx = _curSel, val = _options[_curSel].text, callb = _options[_curSel].callback };
+			::VSLib.Timers.AddTimer(0.1, 0, @(tbl) tbl.callb(tbl.p, tbl.idx, tbl.val), t);
+			CloseMenu();
+			
+			if (_autoDetach)
+				Detach();
+		}
+		else if (_scrollbackbtn && _player.IsPressingButton(_scrollbackbtn) ) /*#shotgunefx*/
+		{
+			ScrollBack();
+		}
+	}    
+	
+	///////////////////////////////////////////////////////////////////
+	// Member variables
+	///////////////////////////////////////////////////////////////////
+	_displaystart = 1;
+	_displaynum = 4;
+	_scrollupstr = "";
+	_scrolldownstr = "";
+}    
+
+/**
+ * A manually advanced menu system to be driven externally ie: game_ui. 
+ * @authors shotgunefx
+ */
+class ::VSLib.HUD.MenuScrollableManual extends ::VSLib.HUD.MenuScrollable
+{
+	constructor(formatStr = "[ {name} ]\n{title}\n{options}", title = "Menu", optionFormatStr = "{num}. {option}", highlightStrPre = "[ ", highlightStrPost = "  ]", displayNum = 4, scrollUpStr = "/\\", scrollDownStr = "\\/")
+	{
+		SetFormatString(formatStr);
+		_oformat = optionFormatStr;
+		_hpre = highlightStrPre;
+		_hpost = highlightStrPost;
+		_title = title;
+		_options = {};
+		_numop = 0;
+		_curSel = 0;
+		_player = null;
+		::VSLib.Timers.RemoveTimer(_optimer);
+		_optimer = -1;
+		_displaystart = 1       // @shotgunefx
+		_displaynum = displayNum;
+		_scrollupstr = scrollUpStr;
+		_scrolldownstr = scrollDownStr;
+		_manual = true
+	}
+	
+	
+	/**
+	 * Select menu item
+	 */
+	
+	function Select()
+	{
+			Utils.PlaySoundToAll("Menu.Select");
+			local t = { p = _player, idx = _curSel, val = _options[_curSel].text, callb = _options[_curSel].callback };
+			::VSLib.Timers.AddTimer(0.1, 0, @(tbl) tbl.callb(tbl.p, tbl.idx, tbl.val), t);
+			CloseMenu();
+			if (_autoDetach)
+				Detach();
+	}
+
+	/**
+	 * Scroll menu down
+	
+	function Scroll()
+	{
+		Utils.PlaySoundToAll("Menu.Scroll");
+
+
+		if ((++_curSel) > _numop)
+		{
+			_curSel = _numop; // don't autowrap in manually driven menu
+		}
+		// does window need to scroll?
+		if (_curSel >= _displaystart + _displaynum  -1)
+			_displaystart+=1
+	}
+	*/
+}
 
 /**
  * Displays a real-time clock.

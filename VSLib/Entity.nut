@@ -204,6 +204,7 @@ getconsttable()["BUTTON_WEAPON2"] <- 2097152; // weapon defines these bits
 getconsttable()["BUTTON_BULLRUSH"] <- 4194304;
 getconsttable()["BUTTON_GRENADE1"] <- 8388608; // grenade 1
 getconsttable()["BUTTON_GRENADE2"] <- 16777216; // grenade 2
+getconsttable()["BUTTON_LOOKSPIN"] <- 0x2000000; // lookspin if bound #shotgunefx
 
 // Damage types that can be used with Hurt(), etc
 getconsttable()["DMG_GENERIC"] <- 0;
@@ -573,7 +574,7 @@ function VSLib::Entity::HurtTime(value, dmgtype, interval, time, weapon = "", at
 	time = time.tofloat();
 	interval = interval.tofloat();
 	
-	Timers.AddTimer( interval, true, @(params) params.player.Hurt(params.val, params.dmgt, params.wep, params.activator, params.rad), { player = this, val = value, dmgt = dmgtype, wep = weapon, activator = attacker, rad = radius }, TIMER_FLAG_DURATION, { duration = time } );
+	::VSLib.Timers.AddTimer( interval, true, @(params) params.player.Hurt(params.val, params.dmgt, params.wep, params.activator, params.rad), { player = this, val = value, dmgt = dmgtype, wep = weapon, activator = attacker, rad = radius }, TIMER_FLAG_DURATION, { duration = time } );
 }
 
 /**
@@ -1715,6 +1716,52 @@ function VSLib::Entity::SetAngles(x, y, z)
 }
 
 /**
+ * Sets the base angles.
+ *
+ * @authors shotgunefx
+ */
+function VSLib::Entity::SetAnglesFrom(ent)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.SetAngles(ent.GetAngles());
+}
+
+/**
+ * Sets the base angles via vector.
+ * @authors shotgunefx
+ */
+function VSLib::Entity::SetAnglesVec(vec)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.SetAngles(vec);
+}
+
+/**
+ * Sets the base angles via QAngle.
+ * @authors shotgunefx
+ */
+function VSLib::Entity::SetAnglesFromQAngle(qangle)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.SetAngles(qangle);
+}
+
+/**
  * Kills/removes the entity and associated entities from the map.
  */
 function VSLib::Entity::KillHierarchy()
@@ -1798,8 +1845,10 @@ function VSLib::Entity::InputColor(red, green, blue)
  * In other words, attaches an entity to this entity. Cool for attaching bumper cars
  * or other objects to players. If teleportOther is TRUE, the other entity is teleported
  * to this entity. If it is FALSE, the entity is parented without teleporting.
+ *
+ * @authors shotgunefx - added optional delay for teleporting
  */
-function VSLib::Entity::AttachOther(otherEntity, teleportOther)
+function VSLib::Entity::AttachOther(otherEntity, teleportOther, delay = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -1812,7 +1861,7 @@ function VSLib::Entity::AttachOther(otherEntity, teleportOther)
 	if (teleportOther)
 		otherEntity.SetLocation(GetLocation());
 	
-	DoEntFire("!self", "SetParent", "!activator", 0, _ent, otherEntity.GetBaseEntity());
+	DoEntFire("!self", "SetParent", "!activator", delay, _ent, otherEntity.GetBaseEntity());
 }
 
 /**
@@ -1823,8 +1872,10 @@ function VSLib::Entity::AttachOther(otherEntity, teleportOther)
  * on Google (i.e. "L4D2 survivor attachment points" or something along those lines).
  * If ShouldMaintainOffset is true, then the initial distance between the object is maintained,
  * and the angles usually point in the direction of the parent.
+ *
+ * @authors shotgunefx - added optional delay
  */
-function VSLib::Entity::SetAttachmentPoint(otherEntity, attachment, bShouldMaintainOffset)
+function VSLib::Entity::SetAttachmentPoint(otherEntity, attachment, bShouldMaintainOffset, delay = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -1836,15 +1887,17 @@ function VSLib::Entity::SetAttachmentPoint(otherEntity, attachment, bShouldMaint
 	bShouldMaintainOffset = (bShouldMaintainOffset.tointeger() > 0) ? true : false;
 	
 	if (bShouldMaintainOffset)
-		DoEntFire("!self", "SetParentAttachmentMaintainOffset", attachment, 0, _ent, otherEntity.GetBaseEntity());
+		DoEntFire("!self", "SetParentAttachmentMaintainOffset", attachment, delay, _ent, otherEntity.GetBaseEntity());
 	else
-		DoEntFire("!self", "SetParentAttachment", attachment, 0, _ent, otherEntity.GetBaseEntity());
+		DoEntFire("!self", "SetParentAttachment", attachment, delay, _ent, otherEntity.GetBaseEntity());
 }
 
 /**
  * Remove the parenting.
+ *
+ * @authors shotgunefx - edit: added optional delay
  */
-function VSLib::Entity::RemoveAttached(otherEntity)
+function VSLib::Entity::RemoveAttached(otherEntity, delay = 0)
 {
 	if (!IsEntityValid())
 	{
@@ -1852,7 +1905,23 @@ function VSLib::Entity::RemoveAttached(otherEntity)
 		return;
 	}
 	
-	DoEntFire("!self", "ClearParent", "", 0, _ent, otherEntity.GetBaseEntity());
+	DoEntFire("!self", "ClearParent", "", delay, _ent, otherEntity.GetBaseEntity());
+}
+
+/**
+ * Get move parent
+ *
+ * @authors shotgunefx 
+ */
+function VSLib::Entity::GetParent()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return ::VSLib.Entity(GetBaseEntity().GetMoveParent());
 }
 
 /**
@@ -1878,8 +1947,10 @@ function VSLib::Entity::GetEyePosition()
 /**
  * Gets the entity that this entity is pointing at, or null if this entity is not pointing at a valid entity.
  * This is useful for things like detecting what entity a player may be looking at.
+ *
+ * @authors shotgunefx, added optional track mask
  */
-function VSLib::Entity::GetLookingEntity()
+function VSLib::Entity::GetLookingEntity(mask = TRACE_MASK_VISIBLE_AND_NPCS)
 {
 	if (!IsEntityValid())
 	{
@@ -1896,7 +1967,7 @@ function VSLib::Entity::GetLookingEntity()
 	local startPt = GetEyePosition();
 	local endPt = startPt + _ent.EyeAngles().Forward().Scale(999999);
 	
-	local m_trace = { start = startPt, end = endPt, ignore = _ent };
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = mask };
 	TraceLine(m_trace);
 	
 	if (!m_trace.hit || m_trace.enthit == null || m_trace.enthit == _ent)
@@ -1948,6 +2019,36 @@ function VSLib::Entity::KillDelayed(seconds)
 	seconds = seconds.tofloat();
 	
 	DoEntFire("!self", "Kill", "", seconds, null, _ent);
+}
+
+/**
+ * Returns whether one ent is behind another
+ * @authors shotgunefx
+ */
+function VSLib::Entity::IsBehind(otherEnt)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	local fwd = otherEnt.GetAngles().Forward()
+	local o1 = _ent.GetOrigin();
+	local o2 = otherEnt.GetLocation();
+	local product = (o1["x"] - o2["x"]) * fwd["x"] + (o1["y"] - o2["y"]) * fwd["y"] + (o1["z"] - o2["z"]) * fwd["z"];
+	if (product > 0.0)
+		return false;
+	else 
+		return true;
+}
+
+/**
+ * Returns whether one ent is in front of another
+ * @authors shotgunefx
+ */
+function VSLib::Entity::IsInFront(otherEnt)
+{
+    return !IsBehind(otherEnt);
 }
 
 /**
@@ -2335,6 +2436,30 @@ function VSLib::Entity::GetDistanceToGround()
 }
 
 /**
+ * Returns the position on ground below from the entity's origin.
+ * @authors shotgunefx
+ */
+function VSLib::Entity::GetLocationBelow()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local startPt = GetLocation();
+	local endPt = startPt + Vector(0, 0, -9999999);
+	
+	local m_trace = { start = startPt, end = endPt, ignore = _ent, mask = TRACE_MASK_SHOT };
+	TraceLine(m_trace);
+	
+	if (!m_trace.hit)
+		return;
+	
+	return m_trace.pos;
+}
+
+/**
  * Returns true if the entity is in the air.
  */
 function VSLib::Entity::IsEntityInAir()
@@ -2374,6 +2499,21 @@ function VSLib::Entity::IsPressingButton(btn)
 	}
 	
 	return (_ent.GetButtonMask() & btn) > 0;
+}
+
+/**
+ * Returns true if this player is currently pressing +lookspin (if bound)
+ * @authors shotgunefx
+ */
+function VSLib::Entity::IsPressingLookspin()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return _ent.GetButtonMask() & 0x2000000;
 }
 
 /**
