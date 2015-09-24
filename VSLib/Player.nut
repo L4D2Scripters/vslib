@@ -95,8 +95,14 @@ function VSLib::Player::GetCharacterName()
 		return "";
 	}
 	
-	if ( GetTeam() == L4D1_SURVIVORS )
-		return GetName();
+	if ( GetTargetname() == "!bill" )
+		return "Bill";
+	else if ( GetTargetname() == "!francis" )
+		return "Francis";
+	else if ( GetTargetname() == "!louis" )
+		return "Louis";
+	else if ( GetTargetname() == "!zoey" )
+		return "Zoey";
 	
 	return g_MapScript.GetCharacterDisplayName(_ent);
 }
