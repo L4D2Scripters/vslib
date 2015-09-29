@@ -1393,7 +1393,7 @@ function VSLib::Entity::GetTeam()
 			return UNKNOWN;
 		else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
 		{
-			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && (GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey") )
+			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && GetTargetname() == ( "!bill" || "!francis" || "!louis" || "!zoey" ) )
 				return L4D1_SURVIVORS;
 			else
 				return SURVIVORS;
@@ -2230,6 +2230,40 @@ function VSLib::Entity::GetTargetname()
 					return name;
 			}
 		}
+		
+		if ( IsBot() )
+		{
+			if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
+			{
+				if ( GetName().find("Bill") != null || GetName().find("Nick") != null )
+					return "!nick";
+				else if ( GetName().find("Francis") != null || GetName().find("Ellis") != null )
+					return "!ellis";
+				else if ( GetName().find("Louis") != null || GetName().find("Coach") != null )
+					return "!coach";
+				else if ( GetName().find("Zoey") != null || GetName().find("Rochelle") != null )
+					return "!rochelle";
+			}
+			else
+			{
+				if ( GetName().find("Coach") != null )
+					return "!coach";
+				else if ( GetName().find("Ellis") != null )
+					return "!ellis";
+				else if ( GetName().find("Nick") != null )
+					return "!nick";
+				else if ( GetName().find("Rochelle") != null )
+					return "!rochelle";
+				else if ( GetName().find("Bill") != null )
+					return "!bill";
+				else if ( GetName().find("Francis") != null )
+					return "!francis";
+				else if ( GetName().find("Louis") != null )
+					return "!louis";
+				else if ( GetName().find("Zoey") != null )
+					return "!zoey";
+			}
+		}
 	}
 	
 	return _ent.GetName();
@@ -2274,22 +2308,36 @@ function VSLib::Entity::GetActorName()
 	{
 		if ( GetType() == Z_SURVIVOR )
 		{
-			if ( GetTargetname() == "!coach" )
-				return "Coach";
-			else if ( GetTargetname() == "!ellis" )
-				return "Mechanic";
-			else if ( GetTargetname() == "!nick" )
-				return "Gambler";
-			else if ( GetTargetname() == "!rochelle" )
-				return "Producer";
-			else if ( GetTargetname() == "!bill" )
-				return "NamVet";
-			else if ( GetTargetname() == "!francis" )
-				return "Biker";
-			else if ( GetTargetname() == "!louis" )
-				return "Manager";
-			else if ( GetTargetname() == "!zoey" )
-				return "TeenGirl";
+			if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
+			{
+				if ( GetTargetname() == "!coach" )
+					return "Manager";
+				else if ( GetTargetname() == "!ellis" )
+					return "Biker";
+				else if ( GetTargetname() == "!nick" )
+					return "NamVet";
+				else if ( GetTargetname() == "!rochelle" )
+					return "TeenGirl";
+			}
+			else
+			{
+				if ( GetTargetname() == "!coach" )
+					return "Coach";
+				else if ( GetTargetname() == "!ellis" )
+					return "Mechanic";
+				else if ( GetTargetname() == "!nick" )
+					return "Gambler";
+				else if ( GetTargetname() == "!rochelle" )
+					return "Producer";
+				else if ( GetTargetname() == "!bill" )
+					return "NamVet";
+				else if ( GetTargetname() == "!francis" )
+					return "Biker";
+				else if ( GetTargetname() == "!louis" )
+					return "Manager";
+				else if ( GetTargetname() == "!zoey" )
+					return "TeenGirl";
+			}
 		}
 		else
 		{

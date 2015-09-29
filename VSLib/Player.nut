@@ -1016,10 +1016,7 @@ function VSLib::Player::DropWeaponSlot(slot)
 	local t = GetHeldItems();
 	
 	if (t && slot in t)
-	{
-		local wep = Entity(t[slot]);
-		wep.Kill();
-	}
+		t[slot].Kill();
 }
 
 /**
@@ -1038,7 +1035,7 @@ function VSLib::Player::DropAllWeapons()
 	
 	if (t)
 		foreach (ent in t)
-			Entity(ent).Kill();
+			ent.Kill();
 }
 
 /**
@@ -1067,7 +1064,11 @@ function VSLib::Player::GetHeldItems()
 	}
 	
 	local t = {};
-	GetInvTable(_ent, t);
+	local table = {};
+	GetInvTable(_ent, table);
+	
+	foreach( slot, item in table )
+		t[slot] <- ::VSLib.Entity(item);
 	
 	return t;
 }
@@ -1767,9 +1768,9 @@ function VSLib::Player::GiveRandomMelee( )
 		return;
 	}
 	
-	local melee = g_ModeScript.SpawnMeleeWeapon( "any", Vector(0,0,0), QAngle(0,0,0) );
-	Use(Entity(melee));
-	Entity(melee).Input("Kill", "", 1);
+	local melee = ::VSLib.Entity(g_ModeScript.SpawnMeleeWeapon( "any", Vector(0,0,0), QAngle(0,0,0) ));
+	Use(melee);
+	melee.Input("Kill", "", 1);
 }
 
 /**
@@ -1806,7 +1807,7 @@ function VSLib::Player::Remove(str)
 		foreach (item in t)
 		{
 			if ( item.GetClassname() == str || item.GetClassname() == "weapon_" + str )
-				Entity(item).Kill();
+				item.Kill();
 		}
 	}
 }
@@ -1890,6 +1891,31 @@ function VSLib::Player::Drop(str = "")
 			}
 		}
 	}
+}
+
+/**
+ * Returns true if the player has the item.
+ */
+function VSLib::Player::HasItem(str)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t)
+	{
+		foreach (item in t)
+		{
+			if ( item.GetClassname() == str || item.GetClassname() == "weapon_" + str )
+				return true;
+		}
+	}
+	
+	return false;
 }
 
 
@@ -2148,6 +2174,703 @@ function VSLib::Player::GetInventoryTable( )
 
 
 
+//
+//  END OF REGULAR FUNCTIONS.
+//
+//	Below are functions related to query context data from ResponseRules.
+//
+
+/**
+ * Returns true if survivor is in safe spot
+ */
+function VSLib::Player::IsInSafeSpot()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InSafeSpot )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is in start area
+ */
+function VSLib::Player::IsInStartArea()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InStartArea )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is in checkpoint
+ */
+function VSLib::Player::IsInCheckpoint()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InCheckpoint )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is in battlefield
+ */
+function VSLib::Player::IsInBattlefield()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InBattlefield )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is in combat
+ */
+function VSLib::Player::IsInCombat()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InCombat )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is in combat music
+ */
+function VSLib::Player::IsInCombatMusic()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].InCombatMusic )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is coughing
+ */
+function VSLib::Player::IsCoughing()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].Coughing )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is speaking
+ */
+function VSLib::Player::IsSpeaking()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].Speaking )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is sneaking
+ */
+function VSLib::Player::IsSneaking()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].Sneaking )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is black & white
+ */
+function VSLib::Player::IsFinalStrike()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].OnThirdStrike )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is being healed
+ */
+function VSLib::Player::IsBeingHealed()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].BeingHealed )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is being jockeyed
+ */
+function VSLib::Player::IsBeingJockeyed()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].BeingJockeyed )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is victim of a Hunter pounce
+ */
+function VSLib::Player::IsPounceVictim()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].PounceVictim )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor is being held by a Smoker tongue
+ */
+function VSLib::Player::IsHangingFromTongue()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].HangingFromTongue )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor has low violence enabled (-lv)
+ */
+function VSLib::Player::IsLowViolence()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].LowViolence )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Get the survivor current intensity value
+ */
+function VSLib::Player::GetIntensity()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].Intensity;
+}
+
+/**
+ * Get the survivor average intensity time
+ */
+function VSLib::Player::GetTimeAveragedIntensity()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].TimeAveragedIntensity;
+}
+
+/**
+ * Get the time since the survivor was last in combat
+ */
+function VSLib::Player::GetTimeSinceCombat()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].TimeSinceCombat;
+}
+
+/**
+ * Get the time since the group was last in combat
+ */
+function VSLib::Player::GetTimeSinceGroupInCombat()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].TimeSinceGroupInCombat;
+}
+
+/**
+ * Get the amount of times the survivor has been incapacitated
+ */
+function VSLib::Player::GetIncapacitatedCount()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].IncapacitatedCount;
+}
+
+/**
+ * Get the distance to the closest survivor
+ */
+function VSLib::Player::GetDistanceToClosestSurvivor()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].DistToClosestSurvivor;
+}
+
+/**
+ * Gets the closest survivor
+ */
+function VSLib::Player::GetClosestSurvivor()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	local survs = 0;
+	
+	if ( GetTeam() == L4D1_SURVIVORS )
+	{
+		foreach( survivor in Players.L4D1Survivors() )
+			survs++;
+	}
+	else
+	{
+		foreach( survivor in Players.Survivors() )
+			survs++;
+	}
+	
+	if ( survs < 2 )
+		return;
+	
+	local survivor = ::VSLib.EasyLogic.QueryContextData[GetActorName()].ClosestSurvivor;
+	
+	return ::VSLib.Player(::VSLib.ResponseRules.ExpTargetName[survivor]);
+}
+
+/**
+ * Gets the closest human from the survivor bot
+ */
+function VSLib::Player::BotGetClosestHumanFriend()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	local survs = 0;
+	
+	foreach( survivor in Players.Survivors() )
+		if ( survivor.IsHuman() )
+			survs++;
+	
+	if ( survs < 1 )
+		return;
+	
+	local survivor = ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotClosestHumanFriend;
+	
+	return ::VSLib.Player(::VSLib.ResponseRules.ExpTargetName[survivor]);
+}
+
+/**
+ * Gets the survivor bot's closest visible friend
+ */
+function VSLib::Player::BotGetClosestVisibleFriend()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	local survivor = ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotClosestVisibleFriend;
+	
+	return ::VSLib.Player(::VSLib.ResponseRules.ExpTargetName[survivor]);
+}
+
+/**
+ * Gets the survivor bot's closest friend who's in combat
+ */
+function VSLib::Player::BotGetClosestInCombatFriend()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	local survivor = ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotClosestInCombatFriend;
+	
+	if ( !survivor )
+		return;
+	
+	return ::VSLib.Player(::VSLib.ResponseRules.ExpTargetName[survivor]);
+}
+
+/**
+ * Gets the survivor bot's team leader
+ */
+function VSLib::Player::BotGetTeamLeader()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	local survivor = ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotTeamLeader;
+	
+	return ::VSLib.Player(::VSLib.ResponseRules.ExpTargetName[survivor]);
+}
+
+/**
+ * Returns true if survivor bot is in a narrow corridor
+ */
+function VSLib::Player::BotIsInNarrowCorridor()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotIsInNarrowCorridor )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Returns true if survivor bot is near a checkpoint
+ */
+function VSLib::Player::BotIsNearCheckpoint()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	if ( ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotIsNearCheckpoint )
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Get the amount of visible friends the survivor bot sees
+ */
+function VSLib::Player::BotGetNearbyVisibleFriendCount()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotNearbyVisibleFriendCount;
+}
+
+/**
+ * Get the amount of time since any friend was last seen by the survivor bot
+ */
+function VSLib::Player::BotGetTimeSinceAnyFriendVisible()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR || IsHuman())
+		return;
+	
+	if ( !(GetActorName() in ::VSLib.EasyLogic.QueryContextData) )
+		return;
+	
+	return ::VSLib.EasyLogic.QueryContextData[GetActorName()].BotTimeSinceAnyFriendVisible;
+}
+
+
+
 
 
 // Allows pickups
@@ -2164,7 +2887,11 @@ function CanPickupObject(object)
 		if (obj == object)
 			return true;
 	
-	return false;
+	local canPickup = false;
+	if ( "PickupObject" in g_MapScript )
+		canPickup = g_MapScript.PickupObject( object );
+	
+	return canPickup;
 }
 
 

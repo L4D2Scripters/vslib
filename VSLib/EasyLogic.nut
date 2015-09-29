@@ -46,11 +46,6 @@
 	OnDamage = {}
 	OnTakeDamage = {}
 	
-	// Script hooks
-	OnGameplayStart = {}
-	OnActivate = {}
-	OnShutdown = {}
-	
 	// User defined data storage
 	UserDefinedVars = {}
 	
@@ -97,6 +92,9 @@
 	
 	// This is used to store the current difficulty
 	Difficulty = ""
+	
+	// Stores query context data from ResponseRules
+	QueryContextData = {}
 }
 
 // Game event wrapper.
@@ -104,11 +102,15 @@
 ::VSLib.EasyLogic.Notifications <-
 {
 	// General events
+	OnAchievementEarned = {}
+	OnAchievementEvent = {}
 	OnAwarded = {}
 	OnInstructorDraw = {}
 	OnInstructorNoDraw = {}
 	OnServerHintCreated = {}
 	OnServerHintStopped = {}
+	OnBulletImpact = {}
+	OnDoorMoving = {}
 	OnDoorClosed = {}
 	OnDoorOpened = {}
 	OnDoorUnlocked = {}
@@ -117,9 +119,13 @@
 	OnRescueVehicleLeaving = {}
 	OnGauntletFinaleStart = {}
 	OnFinaleStart = {}
+	OnFinaleRadioStart = {}
 	OnFinaleWin = {}
 	OnEscapeStarted = {}
 	OnPreRadioStart = {}
+	OnGeneratorStart = {}
+	OnBeginSacrificeRun = {}
+	OnCompleteSacrifice = {}
 	OnReloadedScriptedHud = {}
 	OnRoundStartPreEntity = {}
 	OnRoundStart = {}
@@ -128,6 +134,7 @@
 	OnRoundEnd = {}
 	OnMapEnd = {}
 	OnNavBlocked = {}
+	OnSurvivalAt30Min = {}
 	OnSurvivalStart = {}
 	OnVersusStart = {}
 	OnScavengeStart = {}
@@ -136,12 +143,16 @@
 	OnScavengeRoundFinished = {}
 	OnScavengeTied = {}
 	OnScavengeMatchFinished = {}
+	OnScavengeGascanDestroyed = {}
 	OnVersusMarkerReached = {}
 	OnVersusMatchFinished = {}
+	OnGhostSpawnTime = {}
 	OnServerCvarChanged = {}
 	OnServerPreShutdown = {}
 	OnServerShutdown = {}
 	OnTriggeredCarAlarm = {}
+	OnPanicEventFinished = {}
+	OnHostNameChanged = {}
 	
 	// General player events (both infected and survivors)
 	OnPlayerJoined = {}
@@ -156,11 +167,13 @@
 	OnLeaveSaferoom = {}
 	OnHurt = {}
 	OnHurtConcise = {}
+	OnFallDamage = {}
 	OnPlayerActivate = {}
 	OnPreSpawn = {}
 	OnSpawn = {}
 	OnPostSpawn = {}
 	OnFirstSpawn = {}
+	OnTransitioned = {}
 	OnEntityShoved = {}
 	OnPlayerShoved = {}
 	OnEntityVisible = {}
@@ -172,6 +185,7 @@
 	OnCheckpointDoorWaitingVersus = {}
 	OnHitSafeRoom = {}
 	OnRescueDoorOpened = {}
+	OnFootLockerOpened = {}
 	OnMountedGunUsed = {}
 	OnMountedGunOverheated = {}
 	OnUse = {}
@@ -182,14 +196,18 @@
 	OnPourCompleted = {}
 	OnPourBlocked = {}
 	OnPourInterrupted = {}
+	OnAFK = {}
 	OnPlayerReplacedBot = {}
 	OnBotReplacedPlayer = {}
 	OnSay = {}
 	OnVoteCastYes = {}
 	OnVoteCastNo = {}
+	OnRelocated = {}
+	OnRespawning = {}
 	
 	// General infected events
 	OnAbilityUsed = {}
+	OnAbilityOutOfRange = {}
 	OnPanicEvent = {}
 	OnInfectedHurt = {}
 	OnWitchStartled = {}
@@ -197,12 +215,17 @@
 	OnZombieIgnited = {}
 	
 	// Survivor events
+	OnDefibBegin = {}
+	OnDefibInterrupted = {}
 	OnDefibSuccess = {}
+	OnDefibFailed = {}
 	OnAdrenalineUsed = {}
 	OnHealStart = {}
 	OnHealEnd = {}
+	OnHealInterrupted = {}
 	OnHealSuccess = {}
 	OnPillsUsed = {}
+	OnPillsFailed = {}
 	OnIncapacitated = {}
 	OnIncapacitatedStart = {}
 	OnJump = {}
@@ -223,6 +246,11 @@
 	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
 	OnAmmoPickup = {}
 	OnAmmoCantUse = {}
+	OnPipeBombBounced = {}
+	OnPipeBombDetonated = {}
+	OnNonPistolFired = {}
+	OnTotalAmmoBelow40 = {}
+	OnExplosiveBarrelKill = {}
 	OnSpawnerGaveItem = {}
 	OnSurvivorCallForHelp = {}
 	OnSurvivorRescueAbandoned = {}
@@ -230,6 +258,8 @@
 	OnUpgradeDeploying = {}
 	OnUpgradeDeployed = {}
 	OnUpgradeReceived = {}
+	OnUpgradeAlreadyUsed = {}
+	OnUpgradeFailed = {}
 	
 	// Charger events
 	OnChargerCharged = {}
@@ -246,6 +276,7 @@
 	OnSmokerPullStopped = {}
 	OnSmokerTongueReleased = {}
 	OnSmokerTongueGrab = {}
+	OnSmokerTongueBent = {}
 	
 	// Spitter events
 	OnSpitLanded = {}
@@ -256,13 +287,18 @@
 	OnJockeyRideEnd = {}
 	
 	// Hunter
+	OnHunterHeadshot = {}
+	OnHunterPounceFailed = {}
+	OnHunterPounceShoved = {}
 	OnHunterPouncedVictim = {}
 	OnHunterPounceStopped = {}
+	OnHunterPunched = {}
 	OnHunterReleasedVictim = {}
 	
 	// Boomer
 	OnPlayerVomited = {}
 	OnPlayerVomitEnd = {}
+	OnFatalVomit = {}
 	OnBoomerExploded = {}
 	OnBoomerNear = {}
 	
@@ -284,11 +320,19 @@
 	OnSpitterKilled = {}
 	OnJockeyKilled = {}
 	OnVomitBombTank = {}
+	OnUpgradePackAdded = {}
+	OnChargerChargeEnd = {}
+	OnChairCharged = {}
+	OnM60StreakEnded = {}
+	OnSongPlayed = {}
+	OnChristmasGiftGrab = {}
 	
 	// Misc
 	OnDifficulty = {}
 	OnSurvivorsDead = {}
 	OnBrokeProp = {}
+	OnBrokeBreakable = {}
+	OnPlayerKilled = {}
 	OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
 	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
 	OnModeStart = {}
@@ -354,24 +398,6 @@ function VSLib_SpawnInfoGamemode()
 if ( !Entities.FindByName( null, "vslib_gamemode" ) )
 	VSLib_SpawnInfoGamemode();
 
-function OnGameplayStart()
-{
-	foreach (func in ::VSLib.EasyLogic.OnGameplayStart)
-		func();
-}
-
-function OnActivate()
-{
-	foreach (func in ::VSLib.EasyLogic.OnActivate)
-		func();
-}
-
-function OnShutdown()
-{
-	foreach (func in ::VSLib.EasyLogic.OnShutdown)
-		func();
-}
-
 /*
  * All the game events are below. Note how we wrap the events to make the
  * interface easy to use and much more organized. For example, "OnEnterSafeRoom"
@@ -401,6 +427,16 @@ function OnGameEvent_player_hurt_concise(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHurtConcise)
 		func(ents.entity, ents.attacker, params);
+}
+
+function OnGameEvent_player_falldamage(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local damage = ::VSLib.EasyLogic.GetEventFloat(params, "damage");
+	local causer = ::VSLib.EasyLogic.GetEventPlayer(params, "causer");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnFallDamage)
+		func(ents.entity, damage, causer, params);
 }
 
 function OnGameEvent_award_earned(params)
@@ -450,6 +486,27 @@ function OnGameEvent_instructor_server_hint_stop(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnServerHintStopped)
 		func(entity, params);
+}
+
+function OnGameEvent_bullet_impact(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local x = ::VSLib.EasyLogic.GetEventFloat(params, "x");
+	local y = ::VSLib.EasyLogic.GetEventFloat(params, "y");
+	local z = ::VSLib.EasyLogic.GetEventFloat(params, "z");
+	local origin = Vector( x, y, z );
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnBulletImpact)
+		func(ents.entity, origin, params);
+}
+
+function OnGameEvent_door_moving(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local door = ::VSLib.EasyLogic.GetEventEntity(params, "entindex");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDoorMoving)
+		func(ents.entity, door, params);
 }
 
 function OnGameEvent_door_close(params)
@@ -517,6 +574,12 @@ function OnGameEvent_finale_start(params)
 		func(campaign, params);
 }
 
+function OnGameEvent_finale_radio_start(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnFinaleRadioStart)
+		func(params);
+}
+
 function OnGameEvent_finale_win(params)
 {
 	local map_name = ::VSLib.EasyLogic.GetEventString(params, "map_name");
@@ -538,24 +601,66 @@ function OnGameEvent_started_pre_radio(params)
 		func(params);
 }
 
+function OnGameEvent_generator_started(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnGeneratorStart)
+		func();
+}
+
+function OnGameEvent_player_begin_sacrifice_run(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnBeginSacrificeRun)
+		func(player, params);
+}
+
+function OnGameEvent_player_complete_sacrifice(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnCompleteSacrifice)
+		func(player, params);
+}
+
+function OnGameEvent_achievement_earned(params)
+{
+	local playerIndex = ::VSLib.EasyLogic.GetEventInt(params, "player");
+	local achievementID = ::VSLib.EasyLogic.GetEventInt(params, "achievement");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnAchievementEarned)
+		func(playerIndex, achievementID, params);
+}
+
+function OnGameEvent_achievement_event(params)
+{
+	local achievement = ::VSLib.EasyLogic.GetEventString(params, "achievement_name");
+	local cur_val = ::VSLib.EasyLogic.GetEventInt(params, "cur_val");
+	local max_val = ::VSLib.EasyLogic.GetEventInt(params, "max_val");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnAchievementEvent)
+		func(achievement, cur_val, max_val, params);
+}
+
 function OnGameEvent_difficulty_changed(params)
 {
-	local newDiff = params["newDifficulty"].tointeger();
-	local diff = "";
+	local diff = ::VSLib.EasyLogic.GetEventString(params, "strDifficulty").tolower();
+	local oldDiff = ::VSLib.EasyLogic.GetEventInt(params, "oldDifficulty");
+	local olddiff = "";
 	
-	if (newDiff == 0)
-		diff = "easy";
-	else if (newDiff == 1)
-		diff = "normal";
-	else if (newDiff == 2)
-		diff = "hard";
-	else if (newDiff == 3)
-		diff = "impossible";
+	if (oldDiff == 0)
+		olddiff = "easy";
+	else if (oldDiff == 1)
+		olddiff = "normal";
+	else if (oldDiff == 2)
+		olddiff = "hard";
+	else if (oldDiff == 3)
+		olddiff = "impossible";
 	
 	::VSLib.EasyLogic.Difficulty <- diff;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
-		func(diff);
+		func(diff, olddiff);
 }
 
 
@@ -601,6 +706,65 @@ function OnGameEvent_round_start_pre_entity(params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStartPreEntity)
 		func();
+}
+
+function VSLib_QueryData(query)
+{
+	if ( !(query.Who in ::VSLib.EasyLogic.QueryContextData) )
+		::VSLib.EasyLogic.QueryContextData[query.Who] <- {};
+	
+	::VSLib.EasyLogic.QueryContextData[query.Who].InSafeSpot <- query.insafespot;
+	::VSLib.EasyLogic.QueryContextData[query.Who].InStartArea <- query.instartarea;
+	::VSLib.EasyLogic.QueryContextData[query.Who].InCheckpoint <- query.incheckpoint;
+	::VSLib.EasyLogic.QueryContextData[query.Who].InBattlefield <- query.inbattlefield;
+	::VSLib.EasyLogic.QueryContextData[query.Who].InCombat <- query.incombat;
+	::VSLib.EasyLogic.QueryContextData[query.Who].InCombatMusic <- query.InCombatMusic;
+	::VSLib.EasyLogic.QueryContextData[query.Who].TimeSinceCombat <- query.timesincecombat;
+	::VSLib.EasyLogic.QueryContextData[query.Who].TimeSinceGroupInCombat <- query.timesincegroupincombat;
+	::VSLib.EasyLogic.QueryContextData[query.Who].Coughing <- query.Coughing;
+	::VSLib.EasyLogic.QueryContextData[query.Who].Speaking <- query.speaking;
+	::VSLib.EasyLogic.QueryContextData[query.Who].Sneaking <- query.Sneaking;
+	::VSLib.EasyLogic.QueryContextData[query.Who].LowViolence <- query.LowViolence;
+	::VSLib.EasyLogic.QueryContextData[query.Who].Intensity <- query.intensity;
+	::VSLib.EasyLogic.QueryContextData[query.Who].TimeAveragedIntensity <- query.TimeAveragedIntensity;
+	::VSLib.EasyLogic.QueryContextData[query.Who].OnThirdStrike <- query.onthirdstrike;
+	::VSLib.EasyLogic.QueryContextData[query.Who].BeingHealed <- query.beinghealed;
+	::VSLib.EasyLogic.QueryContextData[query.Who].BeingJockeyed <- query.beingjockeyed;
+	::VSLib.EasyLogic.QueryContextData[query.Who].PounceVictim <- query.pouncevictim;
+	::VSLib.EasyLogic.QueryContextData[query.Who].HangingFromTongue <- query.hangingfromtongue;
+	::VSLib.EasyLogic.QueryContextData[query.Who].IncapacitatedCount <- query.IncapacitatedCount;
+	if ( "disttoclosestsurvivor" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].DistToClosestSurvivor <- query.disttoclosestsurvivor;
+	else
+		::VSLib.EasyLogic.QueryContextData[query.Who].DistToClosestSurvivor <- 1e+009;
+	if ( "ClosestSurvivor" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].ClosestSurvivor <- query.ClosestSurvivor;
+	else if ( "BotClosestFriend" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].ClosestSurvivor <- query.BotClosestFriend;
+	if ( "BotClosestHumanFriend" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotClosestHumanFriend <- query.BotClosestHumanFriend;
+	if ( "BotIsInNarrowCorridor" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotIsInNarrowCorridor <- query.BotIsInNarrowCorridor;
+	if ( "BotIsNearCheckpoint" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotIsNearCheckpoint <- query.BotIsNearCheckpoint;
+	if ( "BotTeamLeader" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotTeamLeader <- query.BotTeamLeader;
+	if ( "BotTimeSinceAnyFriendVisible" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotTimeSinceAnyFriendVisible <- query.BotTimeSinceAnyFriendVisible;
+	if ( "BotNearbyVisibleFriendCount" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotNearbyVisibleFriendCount <- query.BotNearbyVisibleFriendCount;
+	if ( "BotClosestVisibleFriend" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotClosestVisibleFriend <- query.BotClosestVisibleFriend;
+	if ( "BotClosestInCombatFriend" in query )
+		::VSLib.EasyLogic.QueryContextData[query.Who].BotClosestInCombatFriend <- query.BotClosestInCombatFriend;
+	
+	return false;
+}
+
+function VSLib_QueryCheck(params)
+{
+	foreach( player in Players.AllSurvivors() )
+		player.Input("SpeakResponseConcept", "VSLibQueryData");
 }
 
 function VSLib_SurvivorsSpawnedCheck(params)
@@ -684,17 +848,39 @@ function OnGameEvent_round_start_post_nav(params)
 			::VSLib.EasyLogic.BaseModeName <- SessionState.ModeName;
 	}
 	
+	local vsl_query_data =
+	[
+		{
+			name = "VSLibQueryData",
+			criteria =
+			[
+				[ "Concept", "VSLibQueryData" ],
+				[ g_ModeScript.VSLib_QueryData ],
+			],
+			responses =
+			[
+				{
+					scenename = "",
+				}
+			],
+			group_params = ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
+		},
+	]
+	ResponseRules.ProcessRules( vsl_query_data );
+	
 	::VSLib.Timers.AddTimerByName("VSLib_SurvivorsSpawnedCheck", 0.1, true, VSLib_SurvivorsSpawnedCheck);
 	::VSLib.Timers.AddTimerByName("VSLib_LeftSafeAreaCheck", 0.1, true, VSLib_LeftSafeAreaCheck);
+	::VSLib.Timers.AddTimerByName("VSLib_QueryCheck", 0.1, true, VSLib_QueryCheck);
 	
 	local diff = Convars.GetStr( "z_difficulty" ).tolower();
+	local olddiff = diff;
 	::VSLib.EasyLogic.Difficulty <- diff;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnRoundStart)
 		func();
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDifficulty)
-		func(diff);
+		func(diff, olddiff);
 }
 
 function OnGameEvent_round_start(params)
@@ -720,6 +906,12 @@ function OnGameEvent_map_transition(params)
 function OnGameEvent_scriptedmode_reloadhud(params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnReloadedScriptedHud)
+		func();
+}
+
+function OnGameEvent_survival_at_30min(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivalAt30Min)
 		func();
 }
 
@@ -776,6 +968,14 @@ function OnGameEvent_scavenge_match_finished(params)
 		func(winners, params);
 }
 
+function OnGameEvent_scavenge_gas_can_destroyed(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnScavengeGascanDestroyed)
+		func(player, params);
+}
+
 function OnGameEvent_versus_marker_reached(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -791,6 +991,15 @@ function OnGameEvent_versus_match_finished(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnVersusMatchFinished)
 		func(winners, params);
+}
+
+function OnGameEvent_ghost_spawn_time(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local spawntime = ::VSLib.EasyLogic.GetEventInt(params, "spawntime");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnGhostSpawnTime)
+		func(player, spawntime, params);
 }
 
 function OnGameEvent_mission_lost(params)
@@ -969,6 +1178,26 @@ function OnGameEvent_ammo_pile_weapon_cant_use_ammo(params)
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnAmmoCantUse)
 		func(ents.entity, params);
 }
+
+function OnGameEvent_defibrillator_begin(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local reviver = ents.entity;
+	local subject = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibBegin)
+		func(subject, reviver, params);
+}
+
+function OnGameEvent_defibrillator_interrupted(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local reviver = ents.entity;
+	local subject = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibInterrupted)
+		func(subject, reviver, params);
+}
 	
 function OnGameEvent_defibrillator_used(params)
 {
@@ -982,6 +1211,16 @@ function OnGameEvent_defibrillator_used(params)
 	::VSLib.EasyLogic.Cache[idx]._reviveCount <- 0;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibSuccess)
+		func(subject, reviver, params);
+}
+
+function OnGameEvent_defibrillator_used_fail(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local reviver = ents.entity;
+	local subject = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibFailed)
 		func(subject, reviver, params);
 }
 
@@ -1164,6 +1403,14 @@ function OnGameEvent_player_first_spawn(params)
 		func(ents.entity, params);
 }
 
+function OnGameEvent_player_transitioned(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnTransitioned)
+		func(ents.entity, params);
+}
+
 function OnGameEvent_player_shoved(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1235,6 +1482,14 @@ function OnGameEvent_rescue_door_open(params)
 		func(ents.entity, door, params);
 }
 
+function OnGameEvent_foot_locker_opened(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnFootLockerOpened)
+		func(player, params);
+}
+
 function OnGameEvent_player_use(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1262,13 +1517,26 @@ function OnGameEvent_player_team(params)
 		func(ents.entity, oldteam, newteam, params);
 }
 
-function OnGameEvent_player_bot_replace(params)
+function OnGameEvent_player_afk(params)
 {
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "player");
-	local bot = ::VSLib.EasyLogic.GetEventPlayer(params, "bot");
 	
-	foreach (func in ::VSLib.EasyLogic.Notifications.OnBotReplacedPlayer)
-		func(player, bot, params);
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnAFK)
+		func(player, params);
+}
+
+function OnGameEvent_player_bot_replace(params)
+{
+	local function BotReplacedPlayer(params)
+	{
+		local player = ::VSLib.EasyLogic.GetEventPlayer(params, "player");
+		local bot = ::VSLib.EasyLogic.GetEventPlayer(params, "bot");
+		
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnBotReplacedPlayer)
+			func(player, bot, params);
+	}
+	
+	::VSLib.Timers.AddTimer(0.1, false, BotReplacedPlayer, params);
 }
 
 function OnGameEvent_bot_player_replace(params)
@@ -1290,6 +1558,15 @@ function OnGameEvent_ability_use(params)
 		::VSLib.EasyLogic.Cache[_id]._lastAbility <- ability;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnAbilityUsed)
+		func(ents.entity, ability, params);
+}
+
+function OnGameEvent_ability_out_of_range(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local ability = ::VSLib.EasyLogic.GetEventString(params, "ability");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnAbilityOutOfRange)
 		func(ents.entity, ability, params);
 }
 
@@ -1442,6 +1719,15 @@ function OnGameEvent_heal_end(params)
 		func(healee, healer, params);
 }
 
+function OnGameEvent_heal_interrupted(params)
+{
+	local healer = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local healee = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHealInterrupted)
+		func(healee, healer, params);
+}
+
 function OnGameEvent_heal_success(params)
 {
 	local healer = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
@@ -1462,6 +1748,14 @@ function OnGameEvent_pills_used(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPillsUsed)
 		func(healee, params);
+}
+
+function OnGameEvent_pills_used_fail(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPillsFailed)
+		func(player, params);
 }
 
 function OnGameEvent_player_incapacitated(params)
@@ -1758,6 +2052,14 @@ function OnGameEvent_tongue_grab(params)
 		func(ents.entity, victim, params);
 }
 
+function OnGameEvent_tongue_broke_bent(params)
+{
+	local smoker = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSmokerTongueBent)
+		func(smoker, params);
+}
+
 function OnGameEvent_spit_burst(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1802,6 +2104,16 @@ function OnGameEvent_jockey_ride_end(params)
 		func(ents.entity, victim, params);
 }
 
+function OnGameEvent_lunge_shove(params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
+	if (!victim) return; if (!victim.IsPlayerEntityValid()) return;
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHunterPounceShoved)
+		func(ents.entity, victim, params);
+}
+
 function OnGameEvent_lunge_pounce(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1838,6 +2150,34 @@ function OnGameEvent_pounce_end(params)
 		func(ents.entity, victim, params);
 }
 
+function OnGameEvent_hunter_punched(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local hunter = ::VSLib.EasyLogic.GetEventPlayer(params, "hunteruserid");
+	local islunging = ::VSLib.EasyLogic.GetEventInt(params, "islunging");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHunterPunched)
+		func(player, hunter, (islunging > 0) ? true : false, params);
+}
+
+function OnGameEvent_hunter_headshot(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local hunter = ::VSLib.EasyLogic.GetEventPlayer(params, "hunteruserid");
+	local islunging = ::VSLib.EasyLogic.GetEventInt(params, "islunging");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHunterHeadshot)
+		func(player, hunter, (islunging > 0) ? true : false, params);
+}
+
+function OnGameEvent_pounce_fail(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHunterPounceFailed)
+		func(player, params);
+}
+
 function OnGameEvent_player_now_it(params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1856,6 +2196,15 @@ function OnGameEvent_player_no_longer_it(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerVomitEnd)
 		func(ents.entity, params);
+}
+
+function OnGameEvent_fatal_vomit(params)
+{
+	local victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
+	local boomer = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnFatalVomit)
+		func(victim, boomer, params);
 }
 
 function OnGameEvent_boomer_exploded(params)
@@ -1961,6 +2310,24 @@ function OnGameEvent_receive_upgrade(params)
 		func(receiver, upgrade, params);
 }
 
+function OnGameEvent_upgrade_item_already_used(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local upgrade = ::VSLib.EasyLogic.GetEventString(params, "upgradeclass");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradeAlreadyUsed)
+		func(player, upgrade, params);
+}
+
+function OnGameEvent_upgrade_failed_no_primary(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local upgrade = ::VSLib.EasyLogic.GetEventString(params, "upgrade");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradeFailed)
+		func(player, upgrade, params);
+}
+
 function OnGameEvent_player_ledge_grab(params)
 {
 	local causer = ::VSLib.EasyLogic.GetEventPlayer(params, "causer");
@@ -2007,6 +2374,14 @@ function OnGameEvent_player_say(params)
 		func(player, text, params);
 }
 
+function OnGameEvent_infected_explosive_barrel_kill(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplosiveBarrelKill)
+		func(player, params);
+}
+
 function OnGameEvent_vote_cast_yes(params)
 {
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "entityid");
@@ -2023,6 +2398,30 @@ function OnGameEvent_vote_cast_no(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnVoteCastNo)
 		func(player, team, params);
+}
+
+function OnGameEvent_relocated(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnRelocated)
+		func(player, params);
+}
+
+function OnGameEvent_respawning(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnRespawning)
+		func(player, params);
+}
+
+function OnGameEvent_hostname_changed(params)
+{
+	local hostname = ::VSLib.EasyLogic.GetEventString(params, "hostname");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnHostNameChanged)
+		func(hostname, params);
 }
 
 function OnGameEvent_server_cvar(params)
@@ -2056,6 +2455,12 @@ function OnGameEvent_triggered_car_alarm(params)
 		func();
 }
 
+function OnGameEvent_panic_event_finished(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPanicEventFinished)
+		func();
+}
+
 function OnGameEvent_break_prop(params)
 {
 	local userid = ::VSLib.EasyLogic.GetEventInt(params, "userid");
@@ -2066,6 +2471,43 @@ function OnGameEvent_break_prop(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnBrokeProp)
 		func(attacker, prop, params);
+}
+
+function OnGameEvent_break_breakable(params)
+{
+	local userid = ::VSLib.EasyLogic.GetEventInt(params, "userid");
+	local attacker = null;
+	if ( userid != 0 )
+		attacker = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local breakable = ::VSLib.EasyLogic.GetEventEntity(params, "entindex");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnBrokeBreakable)
+		func(attacker, breakable, params);
+}
+
+function OnGameEvent_entity_killed(params)
+{
+	local attackerid = ::VSLib.EasyLogic.GetEventInt(params, "entindex_attacker");
+	local attacker = null;
+	if ( attackerid != 0 )
+	{
+		attacker = ::VSLib.EasyLogic.GetEventEntity(params, "entindex_attacker");
+		if ( attacker.IsPlayer() )
+			attacker = ::VSLib.EasyLogic.GetEventPlayer(params, "entindex_attacker");
+	}
+	local inflictorid = ::VSLib.EasyLogic.GetEventInt(params, "entindex_inflictor");
+	local inflictor = null;
+	if ( inflictorid != 0 )
+	{
+		inflictor = ::VSLib.EasyLogic.GetEventEntity(params, "entindex_inflictor");
+		if ( inflictor.IsPlayer() )
+			inflictor = ::VSLib.EasyLogic.GetEventPlayer(params, "entindex_inflictor");
+	}
+	local entity = ::VSLib.EasyLogic.GetEventEntity(params, "entindex_killed");
+	local damagetype = ::VSLib.EasyLogic.GetEventInt(params, "damagebits");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerKilled)
+		func(entity, attacker, inflictor, damagetype, params);
 }
 
 function OnGameEvent_entity_visible(params)
@@ -2119,6 +2561,38 @@ function OnGameEvent_mounted_gun_overheated(params)
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnMountedGunOverheated)
 		func(ents.entity, params);
+}
+
+function OnGameEvent_grenade_bounce(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPipeBombBounced)
+		func(player, params);
+}
+
+function OnGameEvent_hegrenade_detonate(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnPipeBombDetonated)
+		func(player, params);
+}
+
+function OnGameEvent_non_pistol_fired(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnNonPistolFired)
+		func(player, params);
+}
+
+function OnGameEvent_total_ammo_below_40(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnTotalAmmoBelow40)
+		func(player, params);
 }
 
 
@@ -2187,9 +2661,11 @@ function OnGameEvent_charger_killed(params)
 	local attacker = null;
 	if (attackerid != 0)
 		attacker = ::VSLib.EasyLogic.GetEventPlayer(params, "attacker");
+	local melee = ::VSLib.EasyLogic.GetEventInt(params, "melee");
+	local charging = ::VSLib.EasyLogic.GetEventInt(params, "charging");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnChargerKilled)
-		func(charger, attacker, params);
+		func(charger, attacker, (melee > 0) ? true : false, (charging > 0) ? true : false, params);
 }
 
 function OnGameEvent_spitter_killed(params)
@@ -2199,9 +2675,10 @@ function OnGameEvent_spitter_killed(params)
 	local attacker = null;
 	if (attackerid != 0)
 		attacker = ::VSLib.EasyLogic.GetEventPlayer(params, "attacker");
+	local has_spit = ::VSLib.EasyLogic.GetEventInt(params, "has_spit");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpitterKilled)
-		func(spitter, attacker, params);
+		func(spitter, attacker, (has_spit > 0) ? true : false, params);
 }
 
 function OnGameEvent_jockey_killed(params)
@@ -2221,6 +2698,51 @@ function OnGameEvent_vomit_bomb_tank(params)
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnVomitBombTank)
+		func(player, params);
+}
+
+function OnGameEvent_upgrade_pack_added(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local upgrade = ::VSLib.EasyLogic.GetEventEntity(params, "upgradeid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnUpgradePackAdded)
+		func(player, upgrade, params);
+}
+
+function OnGameEvent_charger_charge_end(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnChargerChargeEnd)
+		func(player, params);
+}
+
+function OnGameEvent_chair_charged(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnChairCharged)
+		func(player, params);
+}
+
+function OnGameEvent_m60_streak_ended(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnM60StreakEnded)
+		func();
+}
+
+function OnGameEvent_song_played(params)
+{
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSongPlayed)
+		func();
+}
+
+function OnGameEvent_christmas_gift_grab(params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnChristmasGiftGrab)
 		func(player, params);
 }
 
@@ -2779,7 +3301,7 @@ function VSLib::EasyLogic::Players::Witches()
 }
 
 /**
- * Returns a table of all survivors.
+ * Returns a table of all playable survivors.
  */
 function VSLib::EasyLogic::Players::Survivors()
 {
@@ -2985,6 +3507,27 @@ function VSLib::EasyLogic::Players::OfType(playerType)
 	return t;
 }
 
+
+/**
+ * Returns a table of all L4D1 and L4D2 survivors.
+ */
+function VSLib::EasyLogic::Players::AllSurvivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsSurvivor())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
 
 /**
  * Returns a table of L4D1 survivors.
