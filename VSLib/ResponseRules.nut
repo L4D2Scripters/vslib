@@ -73,6 +73,8 @@
 	IsNotSpeaking = [ "Speaking", 0 ]
 	IsCoughing = [ "Coughing", 1 ]
 	IsNotCoughing = [ "Coughing", 0 ]
+	IsSmartLookAuto = [ "SmartLookType", "auto" ]
+	IsNotSmartLookAuto = [ "SmartLookType", "manual" ]
 	
 	// Misc
 	IsIncapacitated = [ "Incapacitated", 1 ]
@@ -160,6 +162,57 @@
 	FromIsNamVet = [ "From", "NamVet" ]
 	FromIsTeenGirl = [ "From", "TeenGirl" ]
 	
+	SubjectIsCoach = [ "Subject", "Coach" ]
+	SubjectIsGambler = [ "Subject", "Gambler" ]
+	SubjectIsMechanic = [ "Subject", "Mechanic" ]
+	SubjectIsProducer = [ "Subject", "Producer" ]
+	SubjectIsBiker = [ "Subject", "Biker" ]
+	SubjectIsManager = [ "Subject", "Manager" ]
+	SubjectIsNamVet = [ "Subject", "NamVet" ]
+	SubjectIsTeenGirl = [ "Subject", "TeenGirl" ]
+	
+	IsGamblerNear200 = [ "DistToGambler", 0, 199 ]
+	IsGamblerNear400 = [ "DistToGambler", 0, 399 ]
+	IsGamblerNear800 = [ "DistToGambler", 0, 799 ]
+	IsGamblerFar400 = [ "DistToGambler", 400, 999999 ]
+	IsGamblerFar1000 = [ "DistToGambler", 601, 999999 ]
+	IsCoachNear200 = [ "DistToCoach", 0, 199 ]
+	IsCoachNear400 = [ "DistToCoach", 0, 399 ]
+	IsCoachNear800 = [ "DistToCoach", 0, 799 ]
+	IsCoachFar400 = [ "DistToCoach", 400, 999999 ]
+	IsCoachFar1000 = [ "DistToCoach", 601, 999999 ]
+	IsProducerNear200 = [ "DistToProducer", 0, 199 ]
+	IsProducerNear400 = [ "DistToProducer", 0, 399 ]
+	IsProducerNear800 = [ "DistToProducer", 0, 799 ]
+	IsProducerFar400 = [ "DistToProducer", 400, 999999 ]
+	IsProducerFar1000 = [ "DistToProducer", 601, 999999 ]
+	IsMechanicNear200 = [ "DistToMechanic", 0, 199 ]
+	IsMechanicNear400 = [ "DistToMechanic", 0, 399 ]
+	IsMechanicNear800 = [ "DistToMechanic", 0, 799 ]
+	IsMechanicFar400 = [ "DistToMechanic", 400, 999999 ]
+	IsMechanicFar1000 = [ "DistToMechanic", 601, 999999 ]
+	
+	IsNamVetNear200 = [ "DistToNamVet", 0, 199 ]
+	IsNamVetNear400 = [ "DistToNamVet", 0, 399 ]
+	IsNamVetNear800 = [ "DistToNamVet", 0, 799 ]
+	IsNamVetFar400 = [ "DistToNamVet", 400, 999999 ]
+	IsNamVetFar1000 = [ "DistToNamVet", 601, 999999 ]
+	IsBikerNear200 = [ "DistToBiker", 0, 199 ]
+	IsBikerNear400 = [ "DistToBiker", 0, 399 ]
+	IsBikerNear800 = [ "DistToBiker", 0, 799 ]
+	IsBikerFar400 = [ "DistToBiker", 400, 999999 ]
+	IsBikerFar1000 = [ "DistToBiker", 601, 999999 ]
+	IsTeenGirlNear200 = [ "DistToTeenGirl", 0, 199 ]
+	IsTeenGirlNear400 = [ "DistToTeenGirl", 0, 399 ]
+	IsTeenGirlNear800 = [ "DistToTeenGirl", 0, 799 ]
+	IsTeenGirlFar400 = [ "DistToTeenGirl", 400, 999999 ]
+	IsTeenGirlFar1000 = [ "DistToTeenGirl", 601, 999999 ]
+	IsManagerNear200 = [ "DistToManager", 0, 199 ]
+	IsManagerNear400 = [ "DistToManager", 0, 399 ]
+	IsManagerNear800 = [ "DistToManager", 0, 799 ]
+	IsManagerFar400 = [ "DistToManager", 400, 999999 ]
+	IsManagerFar1000 = [ "DistToManager", 601, 999999 ]
+	
 	PanicEventCoach = [ "WhoDidIt", "Coach" ]
 	PanicEventGambler = [ "WhoDidIt", "Gambler" ]
 	PanicEventMechanic = [ "WhoDidIt", "Mechanic" ]
@@ -189,6 +242,7 @@
 	
 	// Teams
 	IsSurvivor = [ "Team", "Survivor" ]
+	IsL4D1Survivor = [ "Team", "L4D1_Survivor" ]
 	IsInfected = [ "Team", "Infected" ]
 	
 	// Infected types
@@ -229,6 +283,86 @@
 	IsHunterClass = [ "ZombieClass", "Hunter" ]
 	IsTankClass = [ "ZombieClass", "Tank" ]
 	IsChargerClass = [ "ZombieClass", "Charger" ]
+	
+	// dist_from_subject nears (use these for everything that isn't an info_remarkable
+	IsSubjectDistNear50 = [ "dist_from_subject", 0, 49 ]
+	IsSubjectDistNear100 = [ "dist_from_subject", 0, 99 ]
+	IsSubjectDistNear150 = [ "dist_from_subject", 0, 149 ]
+	IsSubjectDistNear200 = [ "dist_from_subject", 0, 199 ]
+	IsSubjectDistNear250 = [ "dist_from_subject", 0, 249 ]
+	IsSubjectDistNear300 = [ "dist_from_subject", 0, 299 ]
+	IsSubjectDistNear350 = [ "dist_from_subject", 0, 349 ]
+	IsSubjectDistNear400 = [ "dist_from_subject", 0, 399 ]
+	IsSubjectDistNear500 = [ "dist_from_subject", 0, 499 ]
+	IsSubjectDistNear600 = [ "dist_from_subject", 0, 599 ]
+	IsSubjectDistNear700 = [ "dist_from_subject", 0, 699 ]
+	IsSubjectDistNear800 = [ "dist_from_subject", 0, 799 ]
+	IsSubjectDistNear900 = [ "dist_from_subject", 0, 899 ]
+	IsSubjectDistNear1000 = [ "dist_from_subject", 0, 999 ]
+	IsSubjectDistNear1500 = [ "dist_from_subject", 0, 1499 ]
+	
+	IsSubjectDistFar100 = [ "dist_from_subject", 101, 999999 ]
+	IsSubjectDistFar200 = [ "dist_from_subject", 201, 999999 ]
+	IsSubjectDistFar300 = [ "dist_from_subject", 301, 999999 ]
+	IsSubjectDistFar400 = [ "dist_from_subject", 401, 999999 ]
+	IsSubjectDistFar500 = [ "dist_from_subject", 501, 999999 ]
+	IsSubjectDistFar600 = [ "dist_from_subject", 601, 999999 ]
+	IsSubjectDistFar700 = [ "dist_from_subject", 701, 999999 ]
+	IsSubjectDistFar800 = [ "dist_from_subject", 801, 999999 ]
+	IsSubjectDistFar900 = [ "dist_from_subject", 901, 999999 ]
+	IsSubjectDistFar1000 = [ "dist_from_subject", 1001, 999999 ]
+	
+	IssuerCloseEnough = [ "dist_from_issuer", 0, 799 ]
+	IssuerClose = [ "dist_from_issuer", 0, 399 ]
+	IssuerReallyClose = [ "dist_from_issuer", 0, 199 ]
+	IssuerMediumClose = [ "dist_from_issuer", 0, 299 ]
+	
+	// Used for new nears
+	IsSubjectNear50 = [ "distance", 0, 49 ]
+	IsSubjectNear75 = [ "distance", 0, 74 ]
+	IsSubjectNear100 = [ "distance", 0, 99 ]
+	IsSubjectNear150 = [ "distance", 0, 149 ]
+	IsSubjectNear200 = [ "distance", 0, 199 ]
+	IsSubjectNear250 = [ "distance", 0, 249 ]
+	IsSubjectNear300 = [ "distance", 0, 299 ]
+	IsSubjectNear350 = [ "distance", 0, 349 ]
+	IsSubjectNear400 = [ "distance", 0, 399 ]
+	IsSubjectNear500 = [ "distance", 0, 499 ]
+	IsSubjectNear550 = [ "distance", 0, 549 ]
+	IsSubjectNear600 = [ "distance", 0, 599 ]
+	IsSubjectNear700 = [ "distance", 0, 699 ]
+	IsSubjectNear800 = [ "distance", 0, 799 ]
+	IsSubjectNear900 = [ "distance", 0, 899 ]
+	IsSubjectNear1000 = [ "distance", 0, 999 ]
+	IsSubjectNear1500 = [ "distance", 0, 1499 ]
+	
+	IsSubjectFar100 = [ "distance", 101, 999999 ]
+	IsSubjectFar200 = [ "distance", 201, 999999 ]
+	IsSubjectFar300 = [ "distance", 301, 999999 ]
+	IsSubjectFar400 = [ "distance", 401, 999999 ]
+	IsSubjectFar500 = [ "distance", 501, 999999 ]
+	IsSubjectFar600 = [ "distance", 601, 999999 ]
+	IsSubjectFar700 = [ "distance", 701, 999999 ]
+	IsSubjectFar800 = [ "distance", 801, 999999 ]
+	IsSubjectFar900 = [ "distance", 901, 999999 ]
+	IsSubjectFar1000 = [ "distance", 1001, 999999 ]
+	
+	// Used for random weighting for rules
+	ChanceToFire1Percent = [ "randomnum", 1 ]
+	ChanceToFire2Percent = [ "randomnum", 0, 2 ]
+	ChanceToFire3Percent = [ "randomnum", 0, 3 ]
+	ChanceToFire5Percent = [ "randomnum", 0, 5 ]
+	ChanceToFire10Percent = [ "randomnum", 0, 10 ]
+	ChanceToFire15Percent = [ "randomnum", 0, 15 ]
+	ChanceToFire20Percent = [ "randomnum", 0, 20 ]
+	ChanceToFire30Percent = [ "randomnum", 0, 30 ]
+	ChanceToFire40Percent = [ "randomnum", 0, 40 ]
+	ChanceToFire50Percent = [ "randomnum", 0, 50 ]
+	ChanceToFire60Percent = [ "randomnum", 0, 60 ]
+	ChanceToFire70Percent = [ "randomnum", 0, 70 ]
+	ChanceToFire80Percent = [ "randomnum", 0, 80 ]
+	ChanceToFire90Percent = [ "randomnum", 0, 90 ]
+	ChanceToFire100Percent = [ "randomnum", 0, 100 ]
 	
 	// Map criteria
 	Isc1m1_hotel = [ "Map", "c1m1_hotel" ]
@@ -754,6 +888,14 @@ function VSLib::ResponseRules::ProcessCriterion( crit )
 				break
 			case 3:
 				assert( typeof(crit[0]) == "string" )
+				if (crit[1] == null)
+				{
+					crit[1] = 0
+				}
+				if (crit[2] == null)
+				{
+					crit[2] = 999999
+				}
 				return ::VSLib.ResponseRules.Criterion( crit[0], crit[1], crit[2] )
 				break
 			default:

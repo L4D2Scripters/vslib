@@ -49,8 +49,11 @@ class ::VSLib.Entity
 			_ent = Entities.FindByName(null, index);
 			
 			if (_ent == null)
+				_ent = Entities.FindByClassname(null, index);
+			
+			if (_ent == null)
 			{
-				printf("VSLib Warning: Invalid targetname (target not found)");
+				printf("VSLib Warning: Invalid targetname or classname (target not found)");
 				_idx = -1;
 			}
 			else
@@ -408,7 +411,7 @@ function VSLib::Entity::__HurtInt__(value, dmgtype, weapon, attacker, radius, _h
 		return;
 	}
 	
-	local vsHurt = Entity(point_hurt);
+	local vsHurt = ::VSLib.Entity(point_hurt);
 	
 	if(weapon != "")
 		vsHurt.SetKeyValue("classname", weapon);
@@ -464,6 +467,38 @@ function VSLib::Entity::HurtAround(value, dmgtype = 0, weapon = "", attacker = n
 	
 	ignoreEntities.push(this);
 	__HurtInt__(value, dmgtype, weapon, attacker, radius, null, ignoreEntities);
+}
+
+/**
+ * Damages the entity.
+ */
+function VSLib::Entity::Damage(value, dmgtype = 0)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	value = value.tointeger();
+	dmgtype = dmgtype.tointeger();
+	
+	local removeName = false;
+	
+	if ( _ent.GetName() == "" )
+	{
+		SetName("vslib_damage_tmp_" + GetBaseIndex());
+		removeName = true;
+	}
+	
+	local spawn = { targetname = "vslib_tmp_" + UniqueString(), Damage = value, DamageType = dmgtype, DamageRadius = "64.0", DamageTarget = _ent.GetName() };
+	local vsDamage = ::VSLib.Utils.CreateEntity("point_hurt", GetLocation(), QAngle(0,0,0), spawn);
+	
+	vsDamage.Input("Hurt");
+	vsDamage.Input("Kill");
+	
+	if ( removeName )
+		Input("Addoutput", "targetname ");
 }
 
 /**
@@ -578,6 +613,26 @@ function VSLib::Entity::HurtTime(value, dmgtype, interval, time, weapon = "", at
 }
 
 /**
+ * Same as Damage(), except it keeps damaging for the specified time.
+ * It damages at the specified interval for the specified time.
+ */
+function VSLib::Entity::DamageTime(value, dmgtype, interval, time)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	value = value.tointeger();
+	dmgtype = dmgtype.tointeger();
+	time = time.tofloat();
+	interval = interval.tofloat();
+	
+	::VSLib.Timers.AddTimer( interval, true, @(params) params.player.Damage(params.val, params.dmgt), { player = this, val = value, dmgt = dmgtype }, TIMER_FLAG_DURATION, { duration = time } );
+}
+
+/**
  * Sets the entity's raw health.
  * If the entity is valid, the entity's health is set.
  * Setting raw health removes any existing temp health.
@@ -641,6 +696,34 @@ function VSLib::Entity::SetMaxHealth(value)
 	value = value.tointeger();
 	
 	_ent.__KeyValueFromInt("max_health", value);
+}
+
+/**
+ * Increases the entity's health by the value entered.
+ */
+function VSLib::Entity::IncreaseHealth(value)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetHealth(_ent.GetHealth() + value.tointeger());
+}
+
+/**
+ * Decreases the entity's health by the value entered.
+ */
+function VSLib::Entity::DecreaseHealth(value)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetHealth(_ent.GetHealth() - value.tointeger());
 }
 
 /**
@@ -1393,7 +1476,7 @@ function VSLib::Entity::GetTeam()
 			return UNKNOWN;
 		else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
 		{
-			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && GetTargetname() == ( "!bill" || "!francis" || "!louis" || "!zoey" ) )
+			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && ( GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey" ) )
 				return L4D1_SURVIVORS;
 			else
 				return SURVIVORS;
@@ -1656,7 +1739,7 @@ function VSLib::Entity::GetZombieName()
 /**
  * Kills common infected and witches, and removes other entities from the map.
  */
-function VSLib::Entity::Kill(dmgtype = 0)
+function VSLib::Entity::Kill()
 {
 	if (!IsEntityValid())
 	{
@@ -1666,8 +1749,7 @@ function VSLib::Entity::Kill(dmgtype = 0)
 	
 	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
 	{
-		SetRawHealth(1);
-		Hurt(999, dmgtype);
+		Damage(GetHealth());
 	}
 	else
 		Input("Kill");
@@ -2349,7 +2431,7 @@ function VSLib::Entity::GetActorName()
 }
 
 /**
- * Unknown.
+ * Returns entity's first move child if exists
  */
 function VSLib::Entity::FirstMoveChild()
 {
@@ -2359,7 +2441,10 @@ function VSLib::Entity::FirstMoveChild()
 		return;
 	}
 	
-	return _ent.FirstMoveChild();
+	local firstMoveChild = _ent.FirstMoveChild();
+	if (!firstMoveChild)
+		return null;
+	return ::VSLib.Entity(firstMoveChild);
 }
 
 /**
@@ -2373,11 +2458,14 @@ function VSLib::Entity::GetMoveParent()
 		return;
 	}
 	
-	return _ent.GetMoveParent();
+	local moveParent = _ent.GetMoveParent();
+	if (!moveParent)
+		return null;
+	return ::VSLib.Entity(moveParent);
 }
 
 /**
- * Unknown.
+ * Returns next child entity
  */
 function VSLib::Entity::NextMovePeer()
 {
@@ -2387,7 +2475,10 @@ function VSLib::Entity::NextMovePeer()
 		return;
 	}
 	
-	return _ent.NextMovePeer();
+	local nextMovePeer = _ent.NextMovePeer();
+	if (!nextMovePeer)
+		return null;
+	return ::VSLib.Entity(nextMovePeer);
 }
 
 /**
@@ -2401,7 +2492,10 @@ function VSLib::Entity::GetRootMoveParent()
 		return;
 	}
 	
-	return _ent.GetRootMoveParent();
+	local rootMoveParent = _ent.GetRootMoveParent();
+	if (!rootMoveParent)
+		return null;
+	return ::VSLib.Entity(rootMoveParent);
 }
 
 /**
@@ -3068,7 +3162,7 @@ function VSLib::Entity::GetScriptScope( )
 /**
  * Returns the entity's unique identifier used to refer to the entity within the scripting system.
  */
-function VSLib::Entity::GetScriptId( )
+function VSLib::Entity::GetScriptID( )
 {
 	if (!IsEntityValid())
 	{
@@ -3121,6 +3215,331 @@ function VSLib::Entity::DisconnectOutput( output, name )
 	
 	local oname = "_vslib_out" + name;
 	_ent.DisconnectOutput( output, oname );
+}
+
+/**
+ * Gets the closest entity from a passed in table
+ */
+function VSLib::Entity::GetClosestEntityFromTable( table )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local dist = null;
+	local ent = null;
+	
+	foreach( entity in table )
+	{
+		if ( entity.GetEntityHandle() != GetEntityHandle() )
+		{
+			if ( !dist || ::VSLib.Utils.CalculateDistance(GetLocation(), entity.GetLocation()) < dist )
+			{
+				dist = ::VSLib.Utils.CalculateDistance(GetLocation(), entity.GetLocation());
+				ent = entity;
+			}
+		}
+	}
+	
+	return ent;
+}
+
+/**
+ * Gets the closest survivor
+ */
+function VSLib::Entity::GetClosestSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.Survivors() );
+}
+
+/**
+ * Gets the closest L4D1 survivor
+ */
+function VSLib::Entity::GetClosestL4D1Survivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.L4D1Survivors() );
+}
+
+/**
+ * Gets the closest L4D1 or L4D2 survivor
+ */
+function VSLib::Entity::GetAnyClosestSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.AllSurvivors() );
+}
+
+/**
+ * Gets the closest human survivor
+ */
+function VSLib::Entity::GetClosestHumanSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local dist = null;
+	local surv = null;
+	
+	foreach( survivor in Players.AllSurvivors() )
+	{
+		if ( survivor.IsHuman() && survivor.GetEntityHandle() != GetEntityHandle() )
+		{
+			if ( !dist || ::VSLib.Utils.CalculateDistance(GetLocation(), survivor.GetLocation()) < dist )
+			{
+				dist = ::VSLib.Utils.CalculateDistance(GetLocation(), survivor.GetLocation());
+				surv = survivor;
+			}
+		}
+	}
+	
+	return surv;
+}
+
+/**
+ * Get the distance to the closest survivor
+ */
+function VSLib::Entity::GetDistanceToClosestSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local survivor = GetClosestSurvivor();
+	
+	if ( !survivor )
+		return;
+	
+	return ::VSLib.Utils.CalculateDistance(GetLocation(), survivor.GetLocation());
+}
+
+/**
+ * Get the distance to the closest L4D1 survivor
+ */
+function VSLib::Entity::GetDistanceToClosestL4D1Survivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local survivor = GetClosestL4D1Survivor();
+	
+	if ( !survivor )
+		return;
+	
+	return ::VSLib.Utils.CalculateDistance(GetLocation(), survivor.GetLocation());
+}
+
+/**
+ * Get the distance to the closest L4D1 or L4D2 survivor
+ */
+function VSLib::Entity::GetDistanceToAnyClosestSurvivor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local survivor = GetAnyClosestSurvivor();
+	
+	if ( !survivor )
+		return;
+	
+	return ::VSLib.Utils.CalculateDistance(GetLocation(), survivor.GetLocation());
+}
+
+/**
+ * Gets the closest infected
+ */
+function VSLib::Entity::GetClosestInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.AllInfected() );
+}
+
+/**
+ * Gets the closest special infected
+ */
+function VSLib::Entity::GetClosestSpecialInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.Infected() );
+}
+
+/**
+ * Gets the closest smoker
+ */
+function VSLib::Entity::GetClosestSmoker()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_SMOKER) );
+}
+
+/**
+ * Gets the closest boomer
+ */
+function VSLib::Entity::GetClosestBoomer()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_BOOMER) );
+}
+
+/**
+ * Gets the closest hunter
+ */
+function VSLib::Entity::GetClosestHunter()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_HUNTER) );
+}
+
+/**
+ * Gets the closest spitter
+ */
+function VSLib::Entity::GetClosestSpitter()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_SPITTER) );
+}
+
+/**
+ * Gets the closest jockey
+ */
+function VSLib::Entity::GetClosestJockey()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_JOCKEY) );
+}
+
+/**
+ * Gets the closest charger
+ */
+function VSLib::Entity::GetClosestCharger()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_CHARGER) );
+}
+
+/**
+ * Gets the closest tank
+ */
+function VSLib::Entity::GetClosestTank()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.OfType(Z_TANK) );
+}
+
+/**
+ * Gets the closest witch
+ */
+function VSLib::Entity::GetClosestWitch()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.Witches() );
+}
+
+/**
+ * Gets the closest common infected
+ */
+function VSLib::Entity::GetClosestCommonInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.CommonInfected() );
+}
+
+/**
+ * Gets the closest uncommon infected
+ */
+function VSLib::Entity::GetClosestUncommonInfected()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetClosestEntityFromTable( Players.UncommonInfected() );
 }
 
 
@@ -3180,7 +3599,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 /**
  * Processes damage data associated with ::VSLib.
  */
-function AllowTakeDamage(damageTable)
+::AllowTakeDamage <- function (damageTable)
 {
 	// Process triggered hurts
 	if (damageTable.Attacker == ::VSLib.EntData._lastHurt)
@@ -3228,7 +3647,27 @@ function AllowTakeDamage(damageTable)
 		}
 	}
 	
+	if ( "ModeAllowTakeDamage" in g_ModeScript )
+		return ModeAllowTakeDamage(damageTable);
+	if ( "MapAllowTakeDamage" in g_ModeScript )
+		return MapAllowTakeDamage(damageTable);
+	
 	return true;
+}
+
+if ( ("AllowTakeDamage" in g_ModeScript) && (g_ModeScript.AllowTakeDamage != getroottable().AllowTakeDamage) )
+{
+	g_ModeScript.ModeAllowTakeDamage <- g_ModeScript.AllowTakeDamage;
+	g_ModeScript.AllowTakeDamage <- getroottable().AllowTakeDamage;
+}
+if ( ("AllowTakeDamage" in g_MapScript) && (g_MapScript.AllowTakeDamage != getroottable().AllowTakeDamage) )
+{
+	g_ModeScript.MapAllowTakeDamage <- g_MapScript.AllowTakeDamage;
+	g_ModeScript.AllowTakeDamage <- getroottable().AllowTakeDamage;
+}
+else
+{
+	g_ModeScript.AllowTakeDamage <- getroottable().AllowTakeDamage;
 }
 
 
@@ -3236,7 +3675,7 @@ function AllowTakeDamage(damageTable)
 /**
  * Associates the AllowBash() function with ::VSLib.
  */
-function AllowBash( basher, bashee )
+::AllowBash <- function (basher, bashee)
 {
 	local attacker = ::VSLib.Utils.GetEntityOrPlayer(basher);
 	local victim = ::VSLib.Utils.GetEntityOrPlayer(bashee);
@@ -3258,7 +3697,60 @@ function AllowBash( basher, bashee )
 		}
 	}
 	
+	if ( "ModeAllowBash" in g_ModeScript )
+		return ModeAllowBash(damageTable);
+	if ( "MapAllowBash" in g_ModeScript )
+		return MapAllowBash(damageTable);
+	
 	return ALLOW_BASH_ALL;
+}
+
+if ( ("AllowBash" in g_ModeScript) && (g_ModeScript.AllowBash != getroottable().AllowBash) )
+{
+	g_ModeScript.ModeAllowBash <- g_ModeScript.AllowBash;
+	g_ModeScript.AllowBash <- getroottable().AllowBash;
+}
+else if ( ("AllowBash" in g_MapScript) && (g_MapScript.AllowBash != getroottable().AllowBash) )
+{
+	g_ModeScript.MapAllowBash <- g_MapScript.AllowBash;
+	g_ModeScript.AllowBash <- getroottable().AllowBash;
+}
+else
+{
+	g_ModeScript.AllowBash <- getroottable().AllowBash;
+}
+
+
+
+/**
+ * Processes BotQuery() with ::VSLib.
+ */
+::BotQuery <- function (queryflag, entity, defaultvalue)
+{
+	foreach (func in ::VSLib.EasyLogic.OnBotQuery)
+		func(queryflag, entity, defaultvalue);
+	
+	if ( "ModeBotQuery" in g_ModeScript )
+		return ModeBotQuery(queryflag, entity, defaultvalue);
+	if ( "MapBotQuery" in g_ModeScript )
+		return MapBotQuery(queryflag, entity, defaultvalue);
+	
+	return defaultvalue;
+}
+
+if ( ("BotQuery" in g_ModeScript) && (g_ModeScript.BotQuery != getroottable().BotQuery) )
+{
+	g_ModeScript.ModeBotQuery <- g_ModeScript.BotQuery;
+	g_ModeScript.BotQuery <- getroottable().BotQuery;
+}
+else if ( ("BotQuery" in g_MapScript) && (g_MapScript.BotQuery != getroottable().BotQuery) )
+{
+	g_ModeScript.MapBotQuery <- g_MapScript.BotQuery;
+	g_ModeScript.BotQuery <- getroottable().BotQuery;
+}
+else
+{
+	g_ModeScript.BotQuery <- getroottable().BotQuery;
 }
 
 

@@ -120,6 +120,44 @@ function VSLib::Utils::CombineArray(args, delimiter = " ")
 }
 
 /**
+ * Converts an array to a table
+ */
+function VSLib::Utils::ArrayToTable(arr)
+{
+	local t = {};
+	foreach ( val in arr )
+		t[val] <- 0;
+	return t;
+}
+
+/**
+ * Returns the ID of a value from an array
+ */
+function VSLib::Utils::GetIDFromArray(arr, value)
+{
+	foreach ( id, val in arr )
+	{
+		if ( val == value )
+		{
+			return id;
+			break;
+		}
+	}
+	return -1;
+}
+
+/**
+ * Removes a value from an array
+ */
+function VSLib::Utils::RemoveValueFromArray(arr, value)
+{
+	local id = ::VSLib.Utils.GetIDFromArray(arr, value);
+	
+	if ( id != -1 )
+		arr.remove(id);
+}
+
+/**
  * Deserializes and returns a table of integer string indexes converted to integer indexes
  */
 function VSLib::Utils::DeserializeIdxTable(t)
@@ -180,6 +218,39 @@ function VSLib::Utils::PrintTable(debugTable, prefix = "")
 		else if ( typeof(debugTable) == "array" )
 			printl("]")
 	}
+}
+
+/**
+ * Prints a table or array
+ */
+function VSLib::Utils::PrintArray(debugArray, prefix = "")
+{
+	::VSLib.Utils.PrintTable(debugArray, prefix);
+}
+
+/**
+ * Compares tables to see if they match
+ */
+function VSLib::Utils::CompareTables(table1, table2)
+{
+	if ( !table1 || !table2 )
+		return false;
+	
+	if ( table1.len() != table2.len() )
+		return false;
+	
+	foreach( key1, val1 in table1 )
+	{
+		if ( !( key1 in table2 ) )
+			return false;
+		
+		local val2 = table2[key1];
+		
+		if ( val1 != val2 )
+			return false;
+	}
+	
+	return true;
 }
 
 /**
@@ -536,6 +607,19 @@ function VSLib::Utils::SpawnEntity(_classname, _targetname = "", pos = Vector(0,
 	ent.ValidateScriptScope();
 	
 	return ::VSLib.Entity(ent);
+}
+
+/**
+ * Converts one entity into another.
+ */
+function VSLib::Utils::ConvertEntity(entity, classname, kvs = {})
+{
+	local origin = entity.GetLocation();
+	local angles = entity.GetAngles();
+	entity.Kill();
+	local ent = ::VSLib.Utils.CreateEntity( classname, origin, angles, kvs );
+	
+	return ent;
 }
 
 /**
@@ -917,6 +1001,20 @@ function VSLib::Utils::GetVSLibPlayerFromUserID( id )
 }
 
 /**
+ * Returns the survivor's actor name as a VSLib.Player
+ */
+function VSLib::Utils::GetSurvivorFromActor( actor )
+{
+	foreach (name, target in rr_GetResponseTargets())
+	{
+		if ( actor == name )
+			return ::VSLib.Player(target);
+	}
+	
+	return null;
+}
+
+/**
  * Returns a pseudorandom number from min to max
  */
 function VSLib::Utils::GetRandNumber( min, max )
@@ -935,7 +1033,7 @@ function VSLib::Utils::ForcePanicEvent( )
 	local ent = null;
 	if (ent = Entities.FindByClassname(ent, "info_director"))
 	{
-		local vsent = Entity(ent);
+		local vsent = ::VSLib.Entity(ent);
 		vsent.Input("ForcePanicEvent");
 	}
 	else
@@ -951,14 +1049,14 @@ function VSLib::Utils::ForcePanicEvent( )
  */
 function VSLib::Utils::TriggerStage( stage, value = 1 )
 {
-	SessionOptions.A_CustomFinale_StageCount <- 1;
-	SessionOptions.A_CustomFinale1 <- stage.tointeger();
-	SessionOptions.A_CustomFinaleValue1 <- value.tofloat();
+	DirectorScript.GetDirectorOptions().A_CustomFinale_StageCount <- 1;
+	DirectorScript.GetDirectorOptions().A_CustomFinale1 <- stage.tointeger();
+	DirectorScript.GetDirectorOptions().A_CustomFinaleValue1 <- value.tofloat();
 	
 	local ent = null;
 	if (ent = Entities.FindByClassname(ent, "info_director"))
 	{
-		local vsent = Entity(ent);
+		local vsent = ::VSLib.Entity(ent);
 		vsent.Input("ScriptedPanicEvent");
 	}
 	else
@@ -977,7 +1075,7 @@ function VSLib::Utils::StartFinale( )
 	local ent = null;
 	if (ent = Entities.FindByClassname(ent, "trigger_finale"))
 	{
-		local vsent = Entity(ent);
+		local vsent = ::VSLib.Entity(ent);
 		
 		local finale_nav = ::VSLib.Utils.CreateEntity("point_nav_attribute_region", Players.AnyAliveSurvivor().GetLocation(), QAngle(0,0,0), { maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64" });
 		
@@ -997,7 +1095,7 @@ function VSLib::Utils::TriggerRescue( )
 	local ent = null;
 	if (ent = Entities.FindByClassname(ent, "trigger_finale"))
 	{
-		local vsent = Entity(ent);
+		local vsent = ::VSLib.Entity(ent);
 		
 		::VSLib.Utils.StartFinale();
 		
@@ -1020,10 +1118,50 @@ function VSLib::Utils::GenerateGameEvent( str )
 		targetname = "vslib_tmp_" + UniqueString(),
 	};
 	
-	local hint = ::Utils.CreateEntity("info_game_event_proxy", Vector(0, 0, 0), QAngle(0, 0, 0), eventtbl);
+	local event_proxy = ::VSLib.Utils.CreateEntity("info_game_event_proxy", Vector(0, 0, 0), QAngle(0, 0, 0), eventtbl);
 	
-	hint.Input("GenerateGameEvent");
-	hint.Input("Kill");
+	event_proxy.Input("GenerateGameEvent");
+	event_proxy.Input("Kill");
+}
+
+/**
+ * Triggers the outro stats crawl
+ */
+function VSLib::Utils::RollStatsCrawl()
+{
+	local finaletbl =
+	{
+		disableshadows = "1",
+		model = "models/props/terror/hamradio.mdl",
+		skin = "0",
+		VersusTravelCompletion = "0.2",
+	};
+	
+	local fadetbl =
+	{
+		duration = "0",
+		holdtime = "0",
+		renderamt = "255",
+		rendercolor = "0 0 0",
+		spawnflags = "8",
+	};
+	
+	local trigger_finale = ::VSLib.Utils.CreateEntity("trigger_finale", Vector(0, 0, 0), QAngle(0, 0, 0), finaletbl);
+	local env_fade = ::VSLib.Utils.CreateEntity("env_fade", Vector(0, 0, 0), QAngle(0, 0, 0), fadetbl);
+	local outtro_stats = ::VSLib.Utils.CreateEntity("env_outtro_stats");
+	
+	::VSLib.Utils.GenerateGameEvent("gameinstructor_nodraw");
+	::VSLib.Utils.StopDirector();
+	foreach( infected in Players.AllInfected() )
+	{
+		if ( infected.IsBot() )
+			infected.Input("Kill");
+	}
+	env_fade.Input("Alpha", "255");
+	env_fade.Input("Fade");
+	trigger_finale.Input("FinaleEscapeFinished");
+	trigger_finale.Input("FinaleEscapeForceSurvivorPositions");
+	outtro_stats.Input("RollStatsCrawl", "", 0.1);
 }
 
 
@@ -1404,6 +1542,33 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
 }
 
 /**
+ * Shows all survivors a hint.
+ */
+function VSLib::Utils::ShowHintSurvivors( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
+{
+	foreach( survivor in Players.Survivors() )
+		survivor.ShowHint( text, duration, icon, color, binding pulsating, alphapulse, shaking );
+}
+
+/**
+ * Shows all infected a hint.
+ */
+function VSLib::Utils::ShowHintInfected( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
+{
+	foreach( infected in Players.Infected() )
+		infected.ShowHint( text, duration, icon, color, binding pulsating, alphapulse, shaking );
+}
+
+/**
+ * Shows all players a hint.
+ */
+function VSLib::Utils::ShowHintAll( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
+{
+	foreach( player in Players.All() )
+		player.ShowHint( text, duration, icon, color, binding pulsating, alphapulse, shaking );
+}
+
+/**
  * Creates a hint on the specified entity, optionally "parenting" the hint.
  *
  * \todo @TODO See why normal SetParent doesn't work, needed to "parent" manually
@@ -1433,7 +1598,7 @@ function VSLib::Utils::SetEntityHint( entity, hinttext, icon = "icon_info", rang
 	g_MapScript.CreateHintTarget( hintTargetName, entity.GetLocation(), null, g_MapScript.TrainingHintTargetCB );
 	g_MapScript.CreateHintOn( SessionState.TrainingHintTargetNextName, entity.GetLocation(), hinttext, HintSpawnInfo, g_MapScript.TrainingHintCB );
 	
-	local hintObject = Entity(SessionState.TrainingHintTargetNextName);
+	local hintObject = ::VSLib.Entity(SessionState.TrainingHintTargetNextName);
 	local baseEnt = hintObject.GetBaseEntity();
 	
 	if (baseEnt != null)
@@ -1481,7 +1646,8 @@ function VSLib::Utils::AreVectorsEqual(vec1, vec2)
  */
 function VSLib::Utils::ShakeScreen(pos = null, _amplitude = 2, _duration = 5.0, _frequency = 35, _radius = 500)
 {
-	local spawn = {
+	local spawn =
+	{
 		classname = "env_shake",
 		amplitude = _amplitude,
 		duration = _duration,
@@ -1525,7 +1691,8 @@ function VSLib::Utils::FadeScreen(player, red = 0, green = 0, blue = 0, alpha = 
 	if (fadeFrom)
 		flags = flags | 1;
 	
-	local spawn = {
+	local spawn =
+	{
 		classname = "env_fade",
 		duration = _duration,
 		holdtime = _holdtime,
@@ -1535,13 +1702,6 @@ function VSLib::Utils::FadeScreen(player, red = 0, green = 0, blue = 0, alpha = 
 		targetname = "vslib_fade_script" + UniqueString(),
 		origin = Vector(0, 0, 0),
 		angles = Vector(0, 0, 0),
-		connections =
-		{
-			OnBeginFade =
-			{
-				cmd1 = ""
-			}
-		}
 	};
 	
 	local env_fade = ::VSLib.Entity(g_ModeScript.CreateSingleSimpleEntityFromTable(spawn));
@@ -1579,6 +1739,17 @@ function VSLib::Utils::IsValidWeapon(classname)
 }
 
 /**
+ * Returns true if the current map has an intro.
+ */
+function VSLib::Utils::IsIntro()
+{
+	if ( Entities.FindByName( null, "lcs_intro" ) || Entities.FindByName( null, "fade_intro" ) )
+		return true;
+	
+	return false;
+}
+
+/**
  * Returns true if the current map has a finale.
  */
 function VSLib::Utils::IsFinale()
@@ -1594,7 +1765,10 @@ function VSLib::Utils::IsFinale()
  */
 function VSLib::Utils::IsScavengeFinale()
 {
-	if ( Entities.FindByClassname( null, "trigger_finale" ) && Entities.FindByClassname( null, "game_scavenge_progress_display" ) )
+	if ( !::VSLib.Utils.IsFinale() )
+		return false;
+	
+	if ( Entities.FindByClassname( null, "game_scavenge_progress_display" ) || Entities.FindByClassname( null, "weapon_scavenge_item_spawn" ) )
 		return true;
 	
 	return false;
@@ -1664,7 +1838,7 @@ function VSLib::Utils::GetBaseMode()
  */
 function VSLib::Utils::GetDifficulty()
 {
-	return ::VSLib.EasyLogic.Difficulty;
+	return Convars.GetStr( "z_difficulty" ).tolower();
 }
 
 /**
@@ -1702,6 +1876,22 @@ function VSLib::Utils::GetCampaign()
 		return COLD_STREAM;
 	else
 		return CUSTOM;
+}
+
+/**
+ * Gets the previous map name
+ */
+function VSLib::Utils::GetPreviousMap()
+{
+	return ::VSLib.EasyLogic.MiscData.previousmap;
+}
+
+/**
+ * Returns true if the map has restarted at least once
+ */
+function VSLib::Utils::HasMapRestarted()
+{
+	return (::VSLib.EasyLogic.MiscData.maprestarted > 0) ? true : false;
 }
 
 /**
@@ -1774,21 +1964,24 @@ function VSLib::Utils::StartDirector()
 	if ( !::VSLib_DirectorDisabled )
 		return;
 	
-	SessionOptions.cm_DominatorLimit = VSLib_Restore_cm_DominatorLimit;
-	SessionOptions.DominatorLimit = VSLib_Restore_DominatorLimit;
-	SessionOptions.cm_MaxSpecials = VSLib_Restore_cm_MaxSpecials;
-	SessionOptions.cm_CommonLimit = VSLib_Restore_cm_CommonLimit;
-	SessionOptions.CommonLimit = VSLib_Restore_CommonLimit;
-	SessionOptions.SmokerLimit = VSLib_Restore_SmokerLimit;
-	SessionOptions.BoomerLimit = VSLib_Restore_BoomerLimit;
-	SessionOptions.HunterLimit = VSLib_Restore_HunterLimit;
-	SessionOptions.SpitterLimit = VSLib_Restore_SpitterLimit;
-	SessionOptions.JockeyLimit = VSLib_Restore_JockeyLimit;
-	SessionOptions.ChargerLimit = VSLib_Restore_ChargerLimit;
-	SessionOptions.WitchLimit = VSLib_Restore_WitchLimit;
-	SessionOptions.cm_WitchLimit = VSLib_Restore_cm_WitchLimit;
-	SessionOptions.TankLimit = VSLib_Restore_TankLimit;
-	SessionOptions.cm_TankLimit = VSLib_Restore_cm_TankLimit;
+	DirectorScript.GetDirectorOptions().cm_DominatorLimit = VSLib_Restore_cm_DominatorLimit;
+	DirectorScript.GetDirectorOptions().DominatorLimit = VSLib_Restore_DominatorLimit;
+	DirectorScript.GetDirectorOptions().cm_MaxSpecials = VSLib_Restore_cm_MaxSpecials;
+	DirectorScript.GetDirectorOptions().MaxSpecials = VSLib_Restore_MaxSpecials;
+	DirectorScript.GetDirectorOptions().cm_CommonLimit = VSLib_Restore_cm_CommonLimit;
+	DirectorScript.GetDirectorOptions().CommonLimit = VSLib_Restore_CommonLimit;
+	DirectorScript.GetDirectorOptions().SmokerLimit = VSLib_Restore_SmokerLimit;
+	DirectorScript.GetDirectorOptions().BoomerLimit = VSLib_Restore_BoomerLimit;
+	DirectorScript.GetDirectorOptions().HunterLimit = VSLib_Restore_HunterLimit;
+	DirectorScript.GetDirectorOptions().SpitterLimit = VSLib_Restore_SpitterLimit;
+	DirectorScript.GetDirectorOptions().JockeyLimit = VSLib_Restore_JockeyLimit;
+	DirectorScript.GetDirectorOptions().ChargerLimit = VSLib_Restore_ChargerLimit;
+	DirectorScript.GetDirectorOptions().WitchLimit = VSLib_Restore_WitchLimit;
+	DirectorScript.GetDirectorOptions().cm_WitchLimit = VSLib_Restore_cm_WitchLimit;
+	DirectorScript.GetDirectorOptions().TankLimit = VSLib_Restore_TankLimit;
+	DirectorScript.GetDirectorOptions().cm_TankLimit = VSLib_Restore_cm_TankLimit;
+	
+	::VSLib_DirectorDisabled <- false;
 }
 
 /**
@@ -1799,16 +1992,16 @@ function VSLib::Utils::StopDirector()
 	if ( ::VSLib_DirectorDisabled )
 		return;
 	
-	if ( "cm_DominatorLimit" in SessionOptions )
-		VSLib_Restore_cm_DominatorLimit = SessionOptions.cm_DominatorLimit;
+	if ( "cm_DominatorLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_cm_DominatorLimit = DirectorScript.GetDirectorOptions().cm_DominatorLimit;
 	else
 		VSLib_Restore_cm_DominatorLimit = 2;
-	if ( "DominatorLimit" in SessionOptions )
-		VSLib_Restore_DominatorLimit = SessionOptions.DominatorLimit;
+	if ( "DominatorLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_DominatorLimit = DirectorScript.GetDirectorOptions().DominatorLimit;
 	else
 		VSLib_Restore_DominatorLimit = 2;
-	if ( "cm_MaxSpecials" in SessionOptions )
-		VSLib_Restore_cm_MaxSpecials = SessionOptions.cm_MaxSpecials;
+	if ( "cm_MaxSpecials" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_cm_MaxSpecials = DirectorScript.GetDirectorOptions().cm_MaxSpecials;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1816,8 +2009,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_cm_MaxSpecials = 2;
 	}
-	if ( "MaxSpecials" in SessionOptions )
-		VSLib_Restore_MaxSpecials = SessionOptions.MaxSpecials;
+	if ( "MaxSpecials" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_MaxSpecials = DirectorScript.GetDirectorOptions().MaxSpecials;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1825,16 +2018,16 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_MaxSpecials = 2;
 	}
-	if ( "cm_CommonLimit" in SessionOptions )
-		VSLib_Restore_cm_CommonLimit = SessionOptions.cm_CommonLimit;
+	if ( "cm_CommonLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_cm_CommonLimit = DirectorScript.GetDirectorOptions().cm_CommonLimit;
 	else
 		VSLib_Restore_cm_CommonLimit = Convars.GetFloat("z_common_limit");
-	if ( "CommonLimit" in SessionOptions )
-		VSLib_Restore_CommonLimit = SessionOptions.CommonLimit;
+	if ( "CommonLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_CommonLimit = DirectorScript.GetDirectorOptions().CommonLimit;
 	else
 		VSLib_Restore_CommonLimit = Convars.GetFloat("z_common_limit");
-	if ( "SmokerLimit" in SessionOptions )
-		VSLib_Restore_SmokerLimit = SessionOptions.SmokerLimit;
+	if ( "SmokerLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_SmokerLimit = DirectorScript.GetDirectorOptions().SmokerLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1844,8 +2037,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_SmokerLimit = Convars.GetFloat("z_smoker_limit");
 	}
-	if ( "BoomerLimit" in SessionOptions )
-		VSLib_Restore_BoomerLimit = SessionOptions.BoomerLimit;
+	if ( "BoomerLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_BoomerLimit = DirectorScript.GetDirectorOptions().BoomerLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1855,8 +2048,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_BoomerLimit = Convars.GetFloat("z_boomer_limit");
 	}
-	if ( "HunterLimit" in SessionOptions )
-		VSLib_Restore_HunterLimit = SessionOptions.HunterLimit;
+	if ( "HunterLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_HunterLimit = DirectorScript.GetDirectorOptions().HunterLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1866,8 +2059,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_HunterLimit = Convars.GetFloat("z_hunter_limit");
 	}
-	if ( "SpitterLimit" in SessionOptions )
-		VSLib_Restore_SpitterLimit = SessionOptions.SpitterLimit;
+	if ( "SpitterLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_SpitterLimit = DirectorScript.GetDirectorOptions().SpitterLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1877,8 +2070,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_SpitterLimit = Convars.GetFloat("z_spitter_limit");
 	}
-	if ( "JockeyLimit" in SessionOptions )
-		VSLib_Restore_JockeyLimit = SessionOptions.JockeyLimit;
+	if ( "JockeyLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_JockeyLimit = DirectorScript.GetDirectorOptions().JockeyLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1888,8 +2081,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_JockeyLimit = Convars.GetFloat("z_jockey_limit");
 	}
-	if ( "ChargerLimit" in SessionOptions )
-		VSLib_Restore_ChargerLimit = SessionOptions.ChargerLimit;
+	if ( "ChargerLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_ChargerLimit = DirectorScript.GetDirectorOptions().ChargerLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1899,8 +2092,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_ChargerLimit = Convars.GetFloat("z_charger_limit");
 	}
-	if ( "WitchLimit" in SessionOptions )
-		VSLib_Restore_WitchLimit = SessionOptions.WitchLimit;
+	if ( "WitchLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_WitchLimit = DirectorScript.GetDirectorOptions().WitchLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1908,8 +2101,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_WitchLimit = 1;
 	}
-	if ( "cm_WitchLimit" in SessionOptions )
-		VSLib_Restore_cm_WitchLimit = SessionOptions.cm_WitchLimit;
+	if ( "cm_WitchLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_cm_WitchLimit = DirectorScript.GetDirectorOptions().cm_WitchLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1917,8 +2110,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_cm_WitchLimit = 1;
 	}
-	if ( "TankLimit" in SessionOptions )
-		VSLib_Restore_TankLimit = SessionOptions.TankLimit;
+	if ( "TankLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_TankLimit = DirectorScript.GetDirectorOptions().TankLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1926,8 +2119,8 @@ function VSLib::Utils::StopDirector()
 		else
 			VSLib_Restore_TankLimit = 1;
 	}
-	if ( "cm_TankLimit" in SessionOptions )
-		VSLib_Restore_cm_TankLimit = SessionOptions.cm_TankLimit;
+	if ( "cm_TankLimit" in DirectorScript.GetDirectorOptions() )
+		VSLib_Restore_cm_TankLimit = DirectorScript.GetDirectorOptions().cm_TankLimit;
 	else
 	{
 		if ( ::VSLib.Utils.GetBaseMode() == "survival" )
@@ -1936,24 +2129,24 @@ function VSLib::Utils::StopDirector()
 			VSLib_Restore_cm_TankLimit = 1;
 	}
 	
-	SessionOptions.cm_DominatorLimit <- 0;
-	SessionOptions.DominatorLimit <- 0;
-	SessionOptions.cm_MaxSpecials <- 0;
-	SessionOptions.MaxSpecials <- 0;
-	SessionOptions.cm_CommonLimit <- 0;
-	SessionOptions.CommonLimit <- 0;
-	SessionOptions.SmokerLimit <- 0;
-	SessionOptions.BoomerLimit <- 0;
-	SessionOptions.HunterLimit <- 0;
-	SessionOptions.SpitterLimit <- 0;
-	SessionOptions.JockeyLimit <- 0;
-	SessionOptions.ChargerLimit <- 0;
-	SessionOptions.WitchLimit <- 0;
-	SessionOptions.cm_WitchLimit <- 0;
-	SessionOptions.TankLimit <- 0;
-	SessionOptions.cm_TankLimit <- 0;
+	DirectorScript.GetDirectorOptions().cm_DominatorLimit <- 0;
+	DirectorScript.GetDirectorOptions().DominatorLimit <- 0;
+	DirectorScript.GetDirectorOptions().cm_MaxSpecials <- 0;
+	DirectorScript.GetDirectorOptions().MaxSpecials <- 0;
+	DirectorScript.GetDirectorOptions().cm_CommonLimit <- 0;
+	DirectorScript.GetDirectorOptions().CommonLimit <- 0;
+	DirectorScript.GetDirectorOptions().SmokerLimit <- 0;
+	DirectorScript.GetDirectorOptions().BoomerLimit <- 0;
+	DirectorScript.GetDirectorOptions().HunterLimit <- 0;
+	DirectorScript.GetDirectorOptions().SpitterLimit <- 0;
+	DirectorScript.GetDirectorOptions().JockeyLimit <- 0;
+	DirectorScript.GetDirectorOptions().ChargerLimit <- 0;
+	DirectorScript.GetDirectorOptions().WitchLimit <- 0;
+	DirectorScript.GetDirectorOptions().cm_WitchLimit <- 0;
+	DirectorScript.GetDirectorOptions().TankLimit <- 0;
+	DirectorScript.GetDirectorOptions().cm_TankLimit <- 0;
 	
-	::VSLib_DirectorDisabled = true;
+	::VSLib_DirectorDisabled <- true;
 }
 
 /**
@@ -2343,8 +2536,193 @@ function VSLib::Utils::DisableCarAlarms()
     EntFire( "alarma9-remark_caralarm", "Kill" );
 }
 
- 
- 
+
+
+
+//
+//  END OF REGULAR FUNCTIONS.
+//
+//	Below are functions related to query context data retrieved from ResponseRules.
+//
+
+/**
+ * Gets the number of survivors currently inside a safe spot.
+ */
+function VSLib::Utils::GetNumberInSafeSpot()
+{
+	if ("NumberInSafeSpot" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.NumberInSafeSpot;
+	
+	return;
+}
+
+/**
+ * Gets the number of survivors currently outside a safe spot.
+ */
+function VSLib::Utils::GetNumberOutsideSafeSpot()
+{
+	if ("NumberOutsideSafeSpot" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.NumberOutsideSafeSpot;
+	
+	return;
+}
+
+/**
+ * Gets the number of survivors that are currently alive.
+ */
+function VSLib::Utils::GetNumberOfTeamAlive()
+{
+	if ("NumberOfTeamAlive" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamAlive;
+	
+	return;
+}
+
+/**
+ * Gets the number of survivors that are currently incapacitated.
+ */
+function VSLib::Utils::GetNumberOfTeamIncapacitated()
+{
+	if ("NumberOfTeamIncapacitated" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamIncapacitated;
+	
+	return;
+}
+
+/**
+ * Gets the number of survivors that are currently dead.
+ */
+function VSLib::Utils::GetNumberOfTeamDead()
+{
+	if ("NumberOfTeamDead" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamDead;
+	
+	return;
+}
+
+/**
+ * Get the time since the group was last in combat
+ */
+function VSLib::Utils::GetTimeSinceGroupInCombat()
+{
+	if ("TimeSinceGroupInCombat" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.TimeSinceGroupInCombat;
+	
+	return;
+}
+
+/**
+ * Get the intro actor for The Passing
+ */
+function VSLib::Utils::GetIntroActor()
+{
+	if ("IntroActor" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.IntroActor;
+	
+	return;
+}
+
+/**
+ * Get the random number for this campaign
+ */
+function VSLib::Utils::GetCampaignRandomNum()
+{
+	if ("CampaignRandomNum" in ::VSLib.EasyLogic.QueryContextData)
+		return ::VSLib.EasyLogic.QueryContextData.CampaignRandomNum;
+	
+	return;
+}
+
+/**
+ * Returns true if low violence is enabled (-lv)
+ */
+function VSLib::Utils::IsLowViolence()
+{
+	if ("LowViolence" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.LowViolence > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a common infected is near survivors
+ */
+function VSLib::Utils::IsCommonInfectedPresent()
+{
+	if ("ZombiePresentNormal" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentNormal > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a smoker is near survivors
+ */
+function VSLib::Utils::IsSmokerPresent()
+{
+	if ("ZombiePresentSmoker" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentSmoker > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a hunter is near survivors
+ */
+function VSLib::Utils::IsHunterPresent()
+{
+	if ("ZombiePresentHunter" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentHunter > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a boomer is near survivors
+ */
+function VSLib::Utils::IsBoomerPresent()
+{
+	if ("ZombiePresentBoomer" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentBoomer > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a charger is near survivors
+ */
+function VSLib::Utils::IsChargerPresent()
+{
+	if ("ZombiePresentCharger" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentCharger > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a witch is near survivors
+ */
+function VSLib::Utils::IsWitchPresent()
+{
+	if ("ZombiePresentWitch" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentWitch > 0) ? true : false;
+	
+	return false;
+}
+
+/**
+ * Returns true if a tank is near survivors
+ */
+function VSLib::Utils::IsTankPresent()
+{
+	if ("ZombiePresentTank" in ::VSLib.EasyLogic.QueryContextData)
+		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentTank > 0) ? true : false;
+	
+	return false;
+}
+
+
+
 
 // Add a weak reference to the global table.
 ::Utils <- ::VSLib.Utils.weakref();
