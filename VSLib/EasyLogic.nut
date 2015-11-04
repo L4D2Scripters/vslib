@@ -507,6 +507,57 @@ getconsttable()["MAT_ROCKS"] <- 64;
 // Used with OnBotQuery()
 getconsttable()["BOT_QUERY_NOTARGET"] <- 1;
 
+// Miscellaneous Director constants
+getconsttable()["FINALE_GAUNTLET_1"] <- 0;
+getconsttable()["FINALE_HORDE_ATTACK_1"] <- 1;
+getconsttable()["FINALE_HALFTIME_BOSS"] <- 2;
+getconsttable()["FINALE_GAUNTLET_2"] <- 3;
+getconsttable()["FINALE_HORDE_ATTACK_2"] <- 4;
+getconsttable()["FINALE_FINAL_BOSS"] <- 5;
+getconsttable()["FINALE_HORDE_ESCAPE"] <- 6;
+getconsttable()["FINALE_CUSTOM_PANIC"] <- 7;
+getconsttable()["FINALE_CUSTOM_TANK"] <- 8;
+getconsttable()["FINALE_CUSTOM_SCRIPTED"] <- 9;
+getconsttable()["FINALE_CUSTOM_DELAY"] <- 10;
+getconsttable()["FINALE_CUSTOM_CLEAROUT"] <- 11;
+getconsttable()["FINALE_GAUNTLET_START"] <- 12;
+getconsttable()["FINALE_GAUNTLET_HORDE"] <- 13;
+getconsttable()["FINALE_GAUNTLET_HORDE_BONUSTIME"] <- 14;
+getconsttable()["FINALE_GAUNTLET_BOSS_INCOMING"] <- 15;
+getconsttable()["FINALE_GAUNTLET_BOSS"] <- 16;
+getconsttable()["FINALE_GAUNTLET_ESCAPE"] <- 17;
+
+getconsttable()["SCRIPTED_SPAWN_FINALE"] <- 0;
+getconsttable()["SCRIPTED_SPAWN_SURVIVORS"] <- 1;
+getconsttable()["SCRIPTED_SPAWN_BATTLEFIELD"] <- 2;
+getconsttable()["SCRIPTED_SPAWN_POSITIONAL"] <- 3;
+
+getconsttable()["SPAWNDIR_N"] <- (1 << 0);
+getconsttable()["SPAWNDIR_NE"] <- (1 << 1);
+getconsttable()["SPAWNDIR_E"] <- (1 << 2);
+getconsttable()["SPAWNDIR_SE"] <- (1 << 3);
+getconsttable()["SPAWNDIR_S"] <- (1 << 4);
+getconsttable()["SPAWNDIR_SW"] <- (1 << 5);
+getconsttable()["SPAWNDIR_W"] <- (1 << 6);
+getconsttable()["SPAWNDIR_NW"] <- (1 << 7);
+
+getconsttable()["SPAWN_NO_PREFERENCE"] <- -1;
+getconsttable()["SPAWN_ANYWHERE"] <- 0;
+getconsttable()["SPAWN_FINALE"] <- 0;
+getconsttable()["SPAWN_BEHIND_SURVIVORS"] <- 1;
+getconsttable()["SPAWN_SURVIVORS"] <- 1;
+getconsttable()["SPAWN_BATTLEFIELD"] <- 2;
+getconsttable()["SPAWN_NEAR_IT_VICTIM"] <- 2;
+getconsttable()["SPAWN_POSITIONAL"] <- 3;
+getconsttable()["SPAWN_SPECIALS_IN_FRONT_OF_SURVIVORS"] <- 3;
+getconsttable()["SPAWN_SPECIALS_ANYWHERE"] <- 4;
+getconsttable()["SPAWN_FAR_AWAY_FROM_SURVIVORS"] <- 5;
+getconsttable()["SPAWN_ABOVE_SURVIVORS"] <- 6;
+getconsttable()["SPAWN_IN_FRONT_OF_SURVIVORS"] <- 7;
+getconsttable()["SPAWN_VERSUS_FINALE_DISTANCE"] <- 8;
+getconsttable()["SPAWN_LARGE_VOLUME"] <- 9;
+getconsttable()["SPAWN_NEAR_POSITION"] <- 10;
+
 // Reasons to be used with OnShutdown()
 getconsttable()["SCRIPT_SHUTDOWN_MANUAL"] <- 0;
 getconsttable()["SCRIPT_SHUTDOWN_ROUND_RESTART"] <- 1;
