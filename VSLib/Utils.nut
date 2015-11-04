@@ -1754,7 +1754,7 @@ function VSLib::Utils::IsIntro()
  */
 function VSLib::Utils::IsFinale()
 {
-	if ( Entities.FindByClassname( null, "trigger_finale" ) )
+	if ( Entities.FindByClassname( null, "trigger_finale" ) || Entities.FindByClassname( null, "env_outtro_stats" ) )
 		return true;
 	
 	return false;
