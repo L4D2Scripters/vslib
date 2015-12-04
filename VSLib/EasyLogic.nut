@@ -252,6 +252,7 @@
 	OnAbilityOutOfRange = {}
 	OnPanicEvent = {}
 	OnInfectedHurt = {}
+	OnWitchSpawned = {}
 	OnWitchStartled = {}
 	OnWitchKilled = {}
 	OnZombieIgnited = {}
@@ -2242,6 +2243,14 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnZombieDeath)
 		func(victim, attacker, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_witch_spawn <- function (params)
+{
+	local witchid = ::VSLib.EasyLogic.GetEventEntity(params, "witchid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnWitchSpawned)
+		func(witchid, params);
 }
 
 ::VSLib.EasyLogic.Events.OnGameEvent_witch_harasser_set <- function (params)
