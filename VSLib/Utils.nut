@@ -645,8 +645,9 @@ function VSLib::Utils::SpawnL4D1Survivor(survivor, pos = Vector(0,0,0), ang = QA
 
 /**
  * Spawns the requested zombie via the Director at the specified location.
+ * If the location is null it will attempt to auto-spawn the zombie out in the world.
  */
-function VSLib::Utils::SpawnZombie(zombieType, pos = Vector(0,0,0), ang = QAngle(0,0,0), offerTank = false, victim = null)
+function VSLib::Utils::SpawnZombie(zombieType, pos = null, ang = QAngle(0,0,0), offerTank = false, victim = null)
 {
 	if ( zombieType == 7 || zombieType == "witch" )
 		::VSLib.Utils.PrecacheModel( "models/infected/witch.mdl" );

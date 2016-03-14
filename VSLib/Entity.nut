@@ -584,12 +584,14 @@ function VSLib::Entity::SetKeyValue(key, value)
 		return;
 	}
 	
-	if (typeof value == "instance")
-		_ent.__KeyValueFromVector(key.tostring(), value);
+	if (typeof value == "string")
+		_ent.__KeyValueFromString(key.tostring(), value.tostring());
 	else if (typeof value == "integer")
 		_ent.__KeyValueFromInt(key.tostring(), value.tointeger());
+	else if (typeof value == "float")
+		_ent.__KeyValueFromFloat(key.tostring(), value.tofloat());
 	else
-		_ent.__KeyValueFromString(key.tostring(), value.tostring());
+		_ent.__KeyValueFromVector(key.tostring(), value);
 }
 
 /**
@@ -2032,7 +2034,7 @@ function VSLib::Entity::GetEyePosition()
  *
  * @authors shotgunefx, added optional track mask
  */
-function VSLib::Entity::GetLookingEntity(mask = TRACE_MASK_VISIBLE_AND_NPCS)
+function VSLib::Entity::GetLookingEntity(mask = 33579137)
 {
 	if (!IsEntityValid())
 	{
