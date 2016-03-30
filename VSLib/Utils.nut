@@ -1896,6 +1896,19 @@ function VSLib::Utils::HasMapRestarted()
 }
 
 /**
+ * Gets the max incapacitated count
+ */
+function VSLib::Utils::GetMaxIncapCount()
+{
+	local maxIncap = Convars.GetFloat("survivor_max_incapacitated_count");
+	
+	if ( "SurvivorMaxIncapacitatedCount" in DirectorScript.GetDirectorOptions() )
+		maxIncap = DirectorScript.GetDirectorOptions().SurvivorMaxIncapacitatedCount;
+	
+	return maxIncap;
+}
+
+/**
  * Gets the origin vector for the ending saferoom
  */
 function VSLib::Utils::GetSaferoomLocation()

@@ -47,7 +47,7 @@ getconsttable()["SLOT_PILLS"] <- 4;
 getconsttable()["SLOT_CARRIED"] <- 5;
 getconsttable()["SLOT_HELD"] <- "Held";
 
-// Survivor IDs to be used with GetCharacterID() and Utils.SpawnL4D1Survivor()
+// Survivor IDs to be used with GetSurvivorCharacter() and Utils.SpawnL4D1Survivor()
 getconsttable()["NICK"] <- 0;
 getconsttable()["ROCHELLE"] <- 1;
 getconsttable()["COACH"] <- 2;
@@ -363,9 +363,9 @@ function VSLib::Player::IsGhost()
 }
 
 /**
- * Returns true if the player is on fire.
+ * Returns true if the survivor is speaking.
  */
-function VSLib::Player::IsOnFire()
+function VSLib::Player::IsSpeaking()
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -373,7 +373,16 @@ function VSLib::Player::IsOnFire()
 		return false;
 	}
 	
-	return _ent.IsOnFire();
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	foreach( scene in Objects.OfClassname("instanced_scripted_scene") )
+	{
+		if ( scene.GetNetPropEntity("m_hOwner").GetEntityHandle() == _ent.GetEntityHandle() )
+			return true;
+	}
+	
+	return false;
 }
 
 /**
@@ -565,24 +574,6 @@ function VSLib::Player::GetLastUsed()
 		return ::VSLib.Entity(::VSLib.EasyLogic.Cache[_idx]._lastUse._ent);
 	
 	return null;
-}
-
-/**
- * Returns the team that this player is currently on.
- */
-function VSLib::Player::GetTeam()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if(_idx in ::VSLib.EasyLogic.Cache)
-		if ("_team" in ::VSLib.EasyLogic.Cache[_idx])
-			return ::VSLib.EasyLogic.Cache[_idx]._team;
-	
-	return base.GetTeam();
 }
 
 /**
@@ -1108,15 +1099,11 @@ function VSLib::Player::SetReviveCount(count)
 		return;
 	}
 	
-	if(_idx in ::VSLib.EasyLogic.Cache)
-		if ("_reviveCount" in ::VSLib.EasyLogic.Cache[_idx])
-			::VSLib.EasyLogic.Cache[_idx]._reviveCount <- count;
-	
 	_ent.SetReviveCount(count);
 }
 
 /**
- * Gets the player's revive count, or null if the player does not have revive information yet
+ * Gets the player's revive count
  */
 function VSLib::Player::GetReviveCount()
 {
@@ -1126,9 +1113,38 @@ function VSLib::Player::GetReviveCount()
 		return;
 	}
 	
-	if(_idx in ::VSLib.EasyLogic.Cache)
-		if ("_reviveCount" in ::VSLib.EasyLogic.Cache[_idx])
-			return ::VSLib.EasyLogic.Cache[_idx]._reviveCount;
+	return GetNetPropInt( "m_currentReviveCount" );
+}
+
+/**
+ * Get the amount of times the survivor has been incapacitated
+ */
+function VSLib::Player::GetIncapacitatedCount()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetReviveCount();
+}
+
+/**
+ * Returns true if the survivor is black & white
+ */
+function VSLib::Player::IsLastStrike()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	return GetReviveCount() == ::VSLib.Utils.GetMaxIncapCount();
 }
 
 /**
@@ -1145,17 +1161,7 @@ function VSLib::Player::SetLastStrike()
 	if (GetPlayerType() != Z_SURVIVOR)
 		return;
 	
-	local max_incap = Convars.GetFloat("survivor_max_incapacitated_count");
-	
-	if ( "SurvivorMaxIncapacitatedCount" in DirectorScript.GetDirectorOptions() )
-	{
-		local MaxIncap = DirectorScript.GetDirectorOptions().SurvivorMaxIncapacitatedCount;
-		
-		if ( MaxIncap > max_incap )
-			max_incap = MaxIncap;
-	}
-	
-	SetReviveCount(max_incap);
+	SetReviveCount(::VSLib.Utils.GetMaxIncapCount());
 }
 
 /**
@@ -1340,11 +1346,30 @@ function VSLib::Player::IsBoomette()
 	if (GetPlayerType() != Z_BOOMER)
 		return false;
 	
-	foreach( boomette in Objects.OfModel("models/infected/boomette.mdl") )
+	if ( GetGender() == 2 )
+		return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if the boomer is a leaker
+ */
+function VSLib::Player::IsLeaker()
+{
+	if (!IsPlayerEntityValid())
 	{
-		if ( boomette.GetEntityHandle() == _ent.GetEntityHandle() )
-			return true;
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
 	}
+	
+	local ability = GetNetPropEntity( "m_customAbility" );
+	
+	if (GetPlayerType() != Z_BOOMER || !ability)
+		return false;
+	
+	if ( ability.GetClassname() == "ability_selfdestruct" )
+		return true;
 	
 	return false;
 }
@@ -1392,9 +1417,9 @@ function VSLib::Player::GetSurvivorSlot()
 }
 
 /**
- * Gets the survivor ID
+ * Gets the survivor character ID
  */
-function VSLib::Player::GetCharacterID()
+function VSLib::Player::GetSurvivorCharacter()
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1402,24 +1427,65 @@ function VSLib::Player::GetCharacterID()
 		return;
 	}
 	
-	if ( GetTargetname() == "!nick" )
-		return 0;
-	else if ( GetTargetname() == "!rochelle" )
-		return 1;
-	else if ( GetTargetname() == "!coach" )
-		return 2;
-	else if ( GetTargetname() == "!ellis" )
-		return 3;
-	else if ( GetTargetname() == "!bill" )
-		return 4;
-	else if ( GetTargetname() == "!zoey" )
-		return 5;
-	else if ( GetTargetname() == "!francis" )
-		return 6;
-	else if ( GetTargetname() == "!louis" )
-		return 7;
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
 	
-	return;
+	return GetNetPropInt( "m_survivorCharacter" );
+}
+
+/**
+ * Gets the survivor_death_model associated with the survivor
+ */
+function VSLib::Player::GetSurvivorDeathModel()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return null;
+	
+	foreach( death_model in Objects.OfClassname("survivor_death_model") )
+	{
+		if ( death_model.GetNetPropInt("m_nCharacterType") == GetNetPropInt("m_survivorCharacter") )
+			return death_model;
+	}
+	
+	return null;
+}
+
+/**
+ * Get the survivor's current intensity value
+ */
+function VSLib::Player::GetIntensity()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	return GetNetPropInt( "m_clientIntensity" );
+}
+
+/**
+ * Vomits on the player
+ */
+function VSLib::Player::Vomit()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ("HitWithVomit" in _ent)
+		_ent.HitWithVomit();
 }
 
 /**
@@ -1512,6 +1578,82 @@ function VSLib::Player::GetClientConvarValue( name )
 	}
 	
 	return Convars.GetClientConvarValue(name, _ent.GetEntityIndex());
+}
+
+/**
+ * Gets the player's current stats.
+ */
+function VSLib::Player::GetStats()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = {};
+	
+	t["m_checkpointAwardCounts"] <- GetNetPropInt("m_checkpointAwardCounts");
+	t["m_missionAwardCounts"] <- GetNetPropInt("m_missionAwardCounts");
+	t["m_checkpointZombieKills"] <- GetNetPropInt("m_checkpointZombieKills");
+	t["m_missionZombieKills"] <- GetNetPropInt("m_missionZombieKills");
+	t["m_checkpointSurvivorDamage"] <- GetNetPropInt("m_checkpointSurvivorDamage");
+	t["m_missionSurvivorDamage"] <- GetNetPropInt("m_missionSurvivorDamage");
+	t["m_checkpointMedkitsUsed"] <- GetNetPropInt("m_checkpointMedkitsUsed");
+	t["m_missionMedkitsUsed"] <- GetNetPropInt("m_missionMedkitsUsed");
+	t["m_checkpointPillsUsed"] <- GetNetPropInt("m_checkpointPillsUsed");
+	t["m_missionPillsUsed"] <- GetNetPropInt("m_missionPillsUsed");
+	t["m_checkpointMolotovsUsed"] <- GetNetPropInt("m_checkpointMolotovsUsed");
+	t["m_missionMolotovsUsed"] <- GetNetPropInt("m_missionMolotovsUsed");
+	t["m_checkpointPipebombsUsed"] <- GetNetPropInt("m_checkpointPipebombsUsed");
+	t["m_missionPipebombsUsed"] <- GetNetPropInt("m_missionPipebombsUsed");
+	t["m_checkpointBoomerBilesUsed"] <- GetNetPropInt("m_checkpointBoomerBilesUsed");
+	t["m_missionBoomerBilesUsed"] <- GetNetPropInt("m_missionBoomerBilesUsed");
+	t["m_checkpointAdrenalinesUsed"] <- GetNetPropInt("m_checkpointAdrenalinesUsed");
+	t["m_missionAdrenalinesUsed"] <- GetNetPropInt("m_missionAdrenalinesUsed");
+	t["m_checkpointDefibrillatorsUsed"] <- GetNetPropInt("m_checkpointDefibrillatorsUsed");
+	t["m_missionDefibrillatorsUsed"] <- GetNetPropInt("m_missionDefibrillatorsUsed");
+	t["m_checkpointDamageTaken"] <- GetNetPropInt("m_checkpointDamageTaken");
+	t["m_missionDamageTaken"] <- GetNetPropInt("m_missionDamageTaken");
+	t["m_checkpointReviveOtherCount"] <- GetNetPropInt("m_checkpointReviveOtherCount");
+	t["m_missionReviveOtherCount"] <- GetNetPropInt("m_missionReviveOtherCount");
+	t["m_checkpointFirstAidShared"] <- GetNetPropInt("m_checkpointFirstAidShared");
+	t["m_missionFirstAidShared"] <- GetNetPropInt("m_missionFirstAidShared");
+	t["m_checkpointIncaps"] <- GetNetPropInt("m_checkpointIncaps");
+	t["m_missionIncaps"] <- GetNetPropInt("m_missionIncaps");
+	t["m_checkpointDamageToTank"] <- GetNetPropInt("m_checkpointDamageToTank");
+	t["m_checkpointDamageToWitch"] <- GetNetPropInt("m_checkpointDamageToWitch");
+	t["m_missionAccuracy"] <- GetNetPropInt("m_missionAccuracy");
+	t["m_checkpointHeadshots"] <- GetNetPropInt("m_checkpointHeadshots");
+	t["m_checkpointHeadshotAccuracy"] <- GetNetPropInt("m_checkpointHeadshotAccuracy");
+	t["m_missionHeadshotAccuracy"] <- GetNetPropInt("m_missionHeadshotAccuracy");
+	t["m_checkpointDeaths"] <- GetNetPropInt("m_checkpointDeaths");
+	t["m_missionDeaths"] <- GetNetPropInt("m_missionDeaths");
+	t["m_checkpointMeleeKills"] <- GetNetPropInt("m_checkpointMeleeKills");
+	t["m_missionMeleeKills"] <- GetNetPropInt("m_missionMeleeKills");
+	t["m_checkpointPZIncaps"] <- GetNetPropInt("m_checkpointPZIncaps");
+	t["m_checkpointPZTankDamage"] <- GetNetPropInt("m_checkpointPZTankDamage");
+	t["m_checkpointPZHunterDamage"] <- GetNetPropInt("m_checkpointPZHunterDamage");
+	t["m_checkpointPZSmokerDamage"] <- GetNetPropInt("m_checkpointPZSmokerDamage");
+	t["m_checkpointPZBoomerDamage"] <- GetNetPropInt("m_checkpointPZBoomerDamage");
+	t["m_checkpointPZJockeyDamage"] <- GetNetPropInt("m_checkpointPZJockeyDamage");
+	t["m_checkpointPZSpitterDamage"] <- GetNetPropInt("m_checkpointPZSpitterDamage");
+	t["m_checkpointPZChargerDamage"] <- GetNetPropInt("m_checkpointPZChargerDamage");
+	t["m_checkpointPZKills"] <- GetNetPropInt("m_checkpointPZKills");
+	t["m_checkpointPZPounces"] <- GetNetPropInt("m_checkpointPZPounces");
+	t["m_checkpointPZPushes"] <- GetNetPropInt("m_checkpointPZPushes");
+	t["m_checkpointPZTankPunches"] <- GetNetPropInt("m_checkpointPZTankPunches");
+	t["m_checkpointPZTankThrows"] <- GetNetPropInt("m_checkpointPZTankThrows");
+	t["m_checkpointPZHung"] <- GetNetPropInt("m_checkpointPZHung");
+	t["m_checkpointPZPulled"] <- GetNetPropInt("m_checkpointPZPulled");
+	t["m_checkpointPZBombed"] <- GetNetPropInt("m_checkpointPZBombed");
+	t["m_checkpointPZVomited"] <- GetNetPropInt("m_checkpointPZVomited");
+	t["m_checkpointPZHighestDmgPounce"] <- GetNetPropInt("m_checkpointPZHighestDmgPounce");
+	t["m_checkpointPZLongestSmokerGrab"] <- GetNetPropInt("m_checkpointPZLongestSmokerGrab");
+	t["m_checkpointPZLongestJockeyRide"] <- GetNetPropInt("m_checkpointPZLongestJockeyRide");
+	t["m_checkpointPZNumChargeVictims"] <- GetNetPropInt("m_checkpointPZNumChargeVictims");
+	
+	return t;
 }
 
 /**
@@ -1976,6 +2118,42 @@ function VSLib::Player::HasItem(str)
 	return false;
 }
 
+/**
+ * Returns true if the player has dual pistols.
+ */
+function VSLib::Player::HasDualPistols()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( HasItem( "weapon_pistol" ) )
+		return GetHeldItems()["slot1"].GetNetPropBool( "m_hasDualWeapons" );
+	
+	return false;
+}
+
+/**
+ * Returns true if the player's primary weapon has a laser sight.
+ */
+function VSLib::Player::HasLaserSight()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+		return t["slot0"].GetNetPropInt( "m_upgradeBitVec" ) >= 4;
+	
+	return false;
+}
+
 
 
 
@@ -2376,26 +2554,6 @@ function VSLib::Player::IsCoughing()
 }
 
 /**
- * Returns true if survivor is speaking
- */
-function VSLib::Player::IsSpeaking()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_speaking" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._speaking > 0) ? true : false;
-	
-	return false;
-}
-
-/**
  * Returns true if survivor is sneaking
  */
 function VSLib::Player::IsSneaking()
@@ -2411,26 +2569,6 @@ function VSLib::Player::IsSneaking()
 	
 	if ("_sneaking" in ::VSLib.EasyLogic.Cache[_idx])
 		return (::VSLib.EasyLogic.Cache[_idx]._sneaking > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if survivor is black & white
- */
-function VSLib::Player::IsLastStrike()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_onThirdStrike" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._onThirdStrike > 0) ? true : false;
 	
 	return false;
 }
@@ -2516,43 +2654,6 @@ function VSLib::Player::IsHangingFromTongue()
 }
 
 /**
- * Get the fraction of the player's health
- */
-function VSLib::Player::GetHealthFraction()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if ( !("_healthFrac" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return;
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._healthFrac;
-}
-
-/**
- * Get the survivor current intensity value
- */
-function VSLib::Player::GetIntensity()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ( !("_intensity" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return;
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._intensity;
-}
-
-/**
  * Get the survivor average intensity time
  */
 function VSLib::Player::GetTimeAveragedIntensity()
@@ -2587,26 +2688,6 @@ function VSLib::Player::GetTimeSinceCombat()
 		return;
 	
 	return ::VSLib.EasyLogic.Cache[_idx]._timeSinceCombat;
-}
-
-/**
- * Get the amount of times the survivor has been incapacitated
- */
-function VSLib::Player::GetIncapacitatedCount()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ( !("_incapacitatedCount" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return;
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._incapacitatedCount;
 }
 
 /**

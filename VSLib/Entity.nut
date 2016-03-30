@@ -182,6 +182,27 @@ getconsttable()["Z_RIOT"] <- 15;
 getconsttable()["Z_CLOWN"] <- 16;
 getconsttable()["Z_JIMMY"] <- 17;
 
+// "Ammo" types, to be used with network properties
+getconsttable()["AMMOTYPE_PISTOL"] <- 1;
+getconsttable()["AMMOTYPE_MAGNUM"] <- 2;
+getconsttable()["AMMOTYPE_ASSAULTRIFLE"] <- 3;
+getconsttable()["AMMOTYPE_MINIGUN"] <- 4;
+getconsttable()["AMMOTYPE_SMG"] <- 5;
+getconsttable()["AMMOTYPE_M60"] <- 6;
+getconsttable()["AMMOTYPE_SHOTGUN"] <- 7;
+getconsttable()["AMMOTYPE_AUTOSHOTGUN"] <- 8;
+getconsttable()["AMMOTYPE_HUNTINGRIFLE"] <- 9;
+getconsttable()["AMMOTYPE_SNIPERRIFLE"] <- 10;
+getconsttable()["AMMOTYPE_TURRET"] <- 11;
+getconsttable()["AMMOTYPE_PIPEBOMB"] <- 12;
+getconsttable()["AMMOTYPE_MOLOTOV"] <- 13;
+getconsttable()["AMMOTYPE_VOMITJAR"] <- 14;
+getconsttable()["AMMOTYPE_PAINPILLS"] <- 15;
+getconsttable()["AMMOTYPE_FIRSTAID"] <- 16;
+getconsttable()["AMMOTYPE_GRENADELAUNCHER"] <- 17;
+getconsttable()["AMMOTYPE_ADRENALINE"] <- 18;
+getconsttable()["AMMOTYPE_CHAINSAW"] <- 19;
+
 // More button values to be used with IsPressingButton()
 getconsttable()["BUTTON_ATTACK"] <- 1;
 getconsttable()["BUTTON_JUMP"] <- 2;
@@ -246,6 +267,96 @@ getconsttable()["DMG_DIRECT"] <- (1 << 28);
 getconsttable()["DMG_BUCKSHOT"] <- (1 << 29);
 getconsttable()["DMG_HEADSHOT"] <- (1 << 30);
 getconsttable()["DMG_DISMEMBER"] <- (1 << 31);
+
+// Move types to be used with network properties
+getconsttable()["MOVETYPE_NONE"] <- 0;		/**< never moves */
+getconsttable()["MOVETYPE_ISOMETRIC"] <- 1;		/**< For players */
+getconsttable()["MOVETYPE_WALK"] <- 2;		/**< Player only - moving on the ground */
+getconsttable()["MOVETYPE_STEP"] <- 3;		/**< gravity, special edge handling -- monsters use this */
+getconsttable()["MOVETYPE_FLY"] <- 4;		/**< No gravity, but still collides with stuff */
+getconsttable()["MOVETYPE_FLYGRAVITY"] <- 5;		/**< flies through the air + is affected by gravity */
+getconsttable()["MOVETYPE_VPHYSICS"] <- 6;		/**< uses VPHYSICS for simulation */
+getconsttable()["MOVETYPE_PUSH"] <- 7;		/**< no clip to world, push and crush */
+getconsttable()["MOVETYPE_NOCLIP"] <- 8;		/**< No gravity, no collisions, still do velocity/avelocity */
+getconsttable()["MOVETYPE_LADDER"] <- 9;		/**< Used by players only when going onto a ladder */
+getconsttable()["MOVETYPE_OBSERVER"] <- 9;		/**< Observer movement, depends on player's observer mode */
+getconsttable()["MOVETYPE_CUSTOM"] <- 10;		/**< Allows the entity to describe its own physics */
+
+// Flags to be used with the m_fFlags network property values
+getconsttable()["FL_ONGROUND"] <- (1 << 0);		/**< At rest / on the ground */
+getconsttable()["FL_DUCKING"] <- (1 << 1);		/**< Player flag -- Player is fully crouched */
+getconsttable()["FL_WATERJUMP"] <- (1 << 2);		/**< player jumping out of water */
+getconsttable()["FL_ONTRAIN"] <- (1 << 3);		/**< Player is _controlling_ a train, so movement commands should be ignored on client during prediction. */
+getconsttable()["FL_INRAIN"] <- (1 << 4);		/**< Indicates the entity is standing in rain */
+getconsttable()["FL_FROZEN"] <- (1 << 5);		/**< Player is frozen for 3rd person camera */
+getconsttable()["FL_ATCONTROLS"] <- (1 << 6);		/**< Player can't move, but keeps key inputs for controlling another entity */
+getconsttable()["FL_CLIENT"] <- (1 << 7);		/**< Is a player */
+getconsttable()["FL_FAKECLIENT"] <- (1 << 8);		/**< Fake client, simulated server side; don't send network messages to them */
+getconsttable()["FL_INWATER"] <- (1 << 9);		/**< In water */
+getconsttable()["FL_FLY"] <- (1 << 10);		/**< Changes the SV_Movestep() behavior to not need to be on ground */
+getconsttable()["FL_SWIM"] <- (1 << 11);		/**< Changes the SV_Movestep() behavior to not need to be on ground (but stay in water) */
+getconsttable()["FL_CONVEYOR"] <- (1 << 12);
+getconsttable()["FL_NPC"] <- (1 << 13);
+getconsttable()["FL_GODMODE"] <- (1 << 14);
+getconsttable()["FL_NOTARGET"] <- (1 << 15);
+getconsttable()["FL_AIMTARGET"] <- (1 << 16);		/**< set if the crosshair needs to aim onto the entity */
+getconsttable()["FL_PARTIALGROUND"] <- (1 << 17);		/**< not all corners are valid */
+getconsttable()["FL_STATICPROP"] <- (1 << 18);		/**< Eetsa static prop!		 */
+getconsttable()["FL_GRAPHED"] <- (1 << 19);		/**< worldgraph has this ent listed as something that blocks a connection */
+getconsttable()["FL_GRENADE"] <- (1 << 20);
+getconsttable()["FL_STEPMOVEMENT"] <- (1 << 21);		/**< Changes the SV_Movestep() behavior to not do any processing */
+getconsttable()["FL_DONTTOUCH"] <- (1 << 22);		/**< Doesn't generate touch functions, generates Untouch() for anything it was touching when this flag was set */
+getconsttable()["FL_BASEVELOCITY"] <- (1 << 23);		/**< Base velocity has been applied this frame (used to convert base velocity into momentum) */
+getconsttable()["FL_WORLDBRUSH"] <- (1 << 24);		/**< Not moveable/removeable brush entity (really part of the world, but represented as an entity for transparency or something) */
+getconsttable()["FL_OBJECT"] <- (1 << 25);		/**< Terrible name. This is an object that NPCs should see. Missiles, for example. */
+getconsttable()["FL_KILLME"] <- (1 << 26);		/**< This entity is marked for death -- will be freed by game DLL */
+getconsttable()["FL_ONFIRE"] <- (1 << 27);		/**< You know... */
+getconsttable()["FL_DISSOLVING"] <- (1 << 28);		/**< We're dissolving! */
+getconsttable()["FL_TRANSRAGDOLL"] <- (1 << 29);		/**< In the process of turning into a client side ragdoll. */
+getconsttable()["FL_UNBLOCKABLE_BY_PLAYER"] <- (1 << 30);		/**< pusher that can't be blocked by the player */
+getconsttable()["FL_FREEZING"] <- (1 << 31);		/**< We're becoming frozen! */
+getconsttable()["FL_EP2V_UNKNOWN1"] <- (1 << 31);		/**< Unknown */
+
+// RenderModes
+getconsttable()["RENDER_NORMAL"] <- 0;		/**< src */
+getconsttable()["RENDER_TRANSCOLOR"] <- 1;		/**< c*a+dest*(1-a) */
+getconsttable()["RENDER_TRANSTEXTURE"] <- 2;		/**< src*a+dest*(1-a) */
+getconsttable()["RENDER_GLOW"] <- 3;		/**< src*a+dest -- No Z buffer checks -- Fixed size in screen space */
+getconsttable()["RENDER_TRANSALPHA"] <- 4;		/**< src*srca+dest*(1-srca) */
+getconsttable()["RENDER_TRANSADD"] <- 5;		/**< src*a+dest */
+getconsttable()["RENDER_ENVIRONMENTAL"] <- 6;		/**< not drawn, used for environmental effects */
+getconsttable()["RENDER_TRANSADDFRAMEBLEND"] <- 7;		/**< use a fractional frame value to blend between animation frames */
+getconsttable()["RENDER_TRANSALPHAADD"] <- 8;		/**< src + dest*(1-a) */
+getconsttable()["RENDER_WORLDGLOW"] <- 9;		/**< Same as kRenderGlow but not fixed size in screen space */
+getconsttable()["RENDER_NONE"] <- 10;		/**< Don't render. */
+
+// RenderFx
+getconsttable()["RENDERFX_NONE"] <- 0;
+getconsttable()["RENDERFX_PULSE_SLOW"] <- 1;
+getconsttable()["RENDERFX_PULSE_FAST"] <- 2;
+getconsttable()["RENDERFX_PULSE_SLOW_WIDE"] <- 3;
+getconsttable()["RENDERFX_PULSE_FAST_WIDE"] <- 4;
+getconsttable()["RENDERFX_FADE_SLOW"] <- 5;
+getconsttable()["RENDERFX_FADE_FAST"] <- 6;
+getconsttable()["RENDERFX_SOLID_SLOW"] <- 7;
+getconsttable()["RENDERFX_SOLID_FAST"] <- 8;
+getconsttable()["RENDERFX_STROBE_SLOW"] <- 9;
+getconsttable()["RENDERFX_STROBE_FAST"] <- 10;
+getconsttable()["RENDERFX_STROBE_FASTER"] <- 11;
+getconsttable()["RENDERFX_FLICKER_SLOW"] <- 12;
+getconsttable()["RENDERFX_FLICKER_FAST"] <- 13;
+getconsttable()["RENDERFX_NO_DISSIPATION"] <- 14;
+getconsttable()["RENDERFX_DISTORT"] <- 15;		/**< Distort/scale/translate flicker */
+getconsttable()["RENDERFX_HOLOGRAM"] <- 16;		/**< kRenderFxDistort + distance fade */
+getconsttable()["RENDERFX_EXPLODE"] <- 17;		/**< Scale up really big! */
+getconsttable()["RENDERFX_GLOWSHELL"] <- 18;		/**< Glowing Shell */
+getconsttable()["RENDERFX_CLAMP_MIN_SCALE"] <- 19;		/**< Keep this sprite from getting very small (SPRITES only!) */
+getconsttable()["RENDERFX_ENV_RAIN"] <- 20;		/**< for environmental rendermode, make rain */
+getconsttable()["RENDERFX_ENV_SNOW"] <- 21;		/**<  "        "            "    , make snow */
+getconsttable()["RENDERFX_SPOTLIGHT"] <- 22;		/**< TEST CODE for experimental spotlight */
+getconsttable()["RENDERFX_RAGDOLL"] <- 23;		/**< HACKHACK: TEST CODE for signalling death of a ragdoll character */
+getconsttable()["RENDERFX_PULSE_FAST_WIDER"] <- 24;
+getconsttable()["RENDERFX_MAX"] <- 25;
 
 
 // Upgrades that can be used with GiveUpgrade(), etc
@@ -349,6 +460,102 @@ function VSLib::Entity::IsEntityValid()
 }
 
 /**
+ * Gets an integer from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropInt( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropInt( _ent, prop );
+}
+
+/**
+ * Gets a float from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropFloat( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropFloat( _ent, prop );
+}
+
+/**
+ * Gets a Vector from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropVector( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropVector( _ent, prop );
+}
+
+/**
+ * Gets an entity from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropEntity( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local entity = NetProps.GetPropEntity( _ent, prop );
+	if (!entity)
+		return null;
+	return ::VSLib.Utils.GetEntityOrPlayer( entity );
+}
+
+/**
+ * Gets a boolean from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropBool( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return (NetProps.GetPropInt( _ent, prop ) > 0) ? true : false;
+}
+
+/**
+ * Sets an entity's network property field.
+ */
+function VSLib::Entity::SetNetProp( prop, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	//if (typeof value == "string")
+		//NetProps.SetPropString( _ent, prop.tostring(), value.tostring() );
+	if (typeof value == "integer" || typeof value == "bool")
+		NetProps.SetPropInt( _ent, prop.tostring(), value.tointeger() );
+	else if (typeof value == "float")
+		NetProps.SetPropFloat( _ent, prop.tostring(), value.tofloat() );
+	else if (typeof value == "Vector")
+		NetProps.SetPropVector( _ent, prop.tostring(), value );
+	else
+		NetProps.SetPropEntity( _ent, prop.tostring(), value.GetBaseEntity() );
+}
+
+/**
  * Gets the entity's real health.
  * If the entity is valid, the entity's health is returned; otherwise, null is returned.
  * The health includes any adrenaline or pill health.
@@ -382,6 +589,34 @@ function VSLib::Entity::GetRawHealth()
 	}
 	
 	return _ent.GetHealth();
+}
+
+/**
+ * Gets the entity's max health.
+ */
+function VSLib::Entity::GetMaxHealth()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_iMaxHealth" );
+}
+
+/**
+ * Gets the entity's health as a fraction.
+ */
+function VSLib::Entity::GetHealthFraction()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetRawHealth() / GetMaxHealth().tofloat();
 }
 
 /**
@@ -586,10 +821,10 @@ function VSLib::Entity::SetKeyValue(key, value)
 	
 	if (typeof value == "string")
 		_ent.__KeyValueFromString(key.tostring(), value.tostring());
-	else if (typeof value == "integer")
+	else if (typeof value == "integer" || typeof value == "float")
+		_ent.__KeyValueFromInt(key.tostring(), value);
+	else if (typeof value == "bool")
 		_ent.__KeyValueFromInt(key.tostring(), value.tointeger());
-	else if (typeof value == "float")
-		_ent.__KeyValueFromFloat(key.tostring(), value.tofloat());
 	else
 		_ent.__KeyValueFromVector(key.tostring(), value);
 }
@@ -726,21 +961,6 @@ function VSLib::Entity::DecreaseHealth(value)
 	}
 	
 	_ent.SetHealth(_ent.GetHealth() - value.tointeger());
-}
-
-/**
- * Vomits on the Entity
- */
-function VSLib::Entity::Vomit()
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	if ("HitWithVomit" in _ent)
-		_ent.HitWithVomit();
 }
 
 /**
@@ -998,10 +1218,29 @@ function VSLib::Entity::SetModelIndex(value)
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return;
 	}
-		
+	
 	value = value.tointeger();
 	
 	_ent.__KeyValueFromInt("modelindex", value);
+}
+
+/**
+ * Sets the entity's model.
+ */
+function VSLib::Entity::SetModel(mdl)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	::VSLib.Utils.PrecacheModel( mdl );
+	local dummyEnt = ::VSLib.Utils.CreateEntity("prop_dynamic_override", Vector(0, 0, 0), QAngle(0, 0, 0), { model = mdl, renderfx = 15, solid = 1 });
+	if ( _ent.GetClassname().find("weapon_") != null )
+		SetNetProp("m_iWorldModelIndex", dummyEnt.GetNetPropInt("m_nModelIndex"));
+	SetNetProp("m_nModelIndex", dummyEnt.GetNetPropInt("m_nModelIndex"));
+	dummyEnt.Kill();
 }
 
 /**
@@ -1459,8 +1698,8 @@ function VSLib::Entity::TeleportTo(otherEntity)
 }
 
 /**
- * Tries to guess what team the player might be on.
- * Returns either INFECTED, SURVIVORS or L4D1_SURVIVORS.
+ * Gets what team the player or entity is on.
+ * Returns either UNKNOWN, INFECTED, SURVIVORS or L4D1_SURVIVORS.
  */
 function VSLib::Entity::GetTeam()
 {
@@ -1470,24 +1709,7 @@ function VSLib::Entity::GetTeam()
 		return;
 	}
 	
-	if ( _ent.GetClassname() == "infected" )
-		return INFECTED;
-	else if ( _ent.GetClassname() == "player" )
-	{
-		if (!("GetZombieType" in _ent))
-			return UNKNOWN;
-		else if (_ent.IsSurvivor() || _ent.GetZombieType() == Z_SURVIVOR)
-		{
-			if ( ::VSLib.Utils.GetSurvivorSet() == 2 && ( GetTargetname() == "!bill" || GetTargetname() == "!francis" || GetTargetname() == "!louis" || GetTargetname() == "!zoey" ) )
-				return L4D1_SURVIVORS;
-			else
-				return SURVIVORS;
-		}
-		else if ((_ent.GetZombieType() > 0 && _ent.GetZombieType() < 9) || _ent.IsGhost())
-			return INFECTED;
-	}
-	
-	return UNKNOWN;
+	return GetNetPropInt( "m_iTeamNum" );
 }
 
 /**
@@ -1584,7 +1806,61 @@ function VSLib::Entity::GetWeaponSlot()
 }
 
 /**
- * Returns the gender of the infected.
+ * Returns the default ammo type the weapon uses.
+ */
+function VSLib::Entity::GetDefaultAmmoType()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") != null )
+	{
+		if ( _ent.GetClassname() == "weapon_pistol" )
+			return 1;
+		else if ( _ent.GetClassname() == "weapon_pistol_magnum" )
+			return 2;
+		else if ( _ent.GetClassname() == "weapon_rifle" || _ent.GetClassname() == "weapon_rifle_ak47" || _ent.GetClassname() == "weapon_rifle_desert" || _ent.GetClassname() == "weapon_rifle_sg552" )
+			return 3;
+		else if ( _ent.GetClassname() == "weapon_smg" || _ent.GetClassname() == "weapon_smg_silenced" || _ent.GetClassname() == "weapon_smg_mp5" )
+			return 5;
+		else if ( _ent.GetClassname() == "weapon_rifle_m60" )
+			return 6;
+		else if ( _ent.GetClassname() == "weapon_pumpshotgun" || _ent.GetClassname() == "weapon_shotgun_chrome" )
+			return 7;
+		else if ( _ent.GetClassname() == "weapon_autoshotgun" || _ent.GetClassname() == "weapon_shotgun_spas" )
+			return 8;
+		else if ( _ent.GetClassname() == "weapon_hunting_rifle" )
+			return 9;
+		else if ( _ent.GetClassname() == "weapon_sniper_military" || _ent.GetClassname() == "weapon_sniper_awp" || _ent.GetClassname() == "weapon_sniper_scout" )
+			return 10;
+		else if ( _ent.GetClassname() == "weapon_pipe_bomb" )
+			return 12;
+		else if ( _ent.GetClassname() == "weapon_molotov" )
+			return 13;
+		else if ( _ent.GetClassname() == "weapon_vomitjar" )
+			return 14;
+		else if ( _ent.GetClassname() == "weapon_pain_pills" )
+			return 15;
+		else if ( _ent.GetClassname() == "weapon_first_aid_kit" || _ent.GetClassname() == "weapon_defibrillator" || _ent.GetClassname() == "weapon_upgradepack_incendiary" || _ent.GetClassname() == "weapon_upgradepack_explosive" )
+			return 16;
+		else if ( _ent.GetClassname() == "weapon_grenade_launcher" )
+			return 17;
+		else if ( _ent.GetClassname() == "weapon_adrenaline" )
+			return 18;
+		else if ( _ent.GetClassname() == "weapon_chainsaw" )
+			return 19;
+		else
+			return;
+	}
+	
+	return;
+}
+
+/**
+ * Returns the gender of the entity.
  */
 function VSLib::Entity::GetGender()
 {
@@ -1594,63 +1870,7 @@ function VSLib::Entity::GetGender()
 		return;
 	}
 	
-	local InfectedModels =
-	{
-		common_male_ceda = MALE,
-		common_male_mud = MALE,
-		common_male_roadcrew = MALE,
-		common_male_roadcrew_rain = MALE,
-		common_male_fallen_survivor = MALE,
-		common_male_riot = MALE,
-		common_male_clown = MALE,
-		common_male_jimmy = MALE,
-		common_male_tshirt_cargos = MALE,
-		common_male_tankTop_jeans = MALE,
-		common_male_dressShirt_jeans = MALE,
-		common_female_tankTop_jeans = FEMALE,
-		common_female_tshirt_skirt = FEMALE,
-		common_male_tankTop_overalls = MALE,
-		common_male_tankTop_jeans_rain = MALE,
-		common_female_tankTop_jeans_rain = FEMALE,
-		common_male_tankTop_overalls_rain = MALE,
-		common_male_tshirt_cargos_swamp = MALE,
-		common_male_tankTop_overalls_swamp = MALE,
-		common_female_tshirt_skirt_swamp = FEMALE,
-		common_male_polo_jeans = MALE,
-		common_male_formal = MALE,
-		common_female_formal = FEMALE,
-		common_male_biker = MALE,
-		common_patient_male01_l4d2 = MALE,
-		common_male01 = MALE,
-		common_female01 = FEMALE,
-		common_police_male01 = MALE,
-		common_military_male01 = MALE,
-		common_worker_male01 = MALE,
-		common_male_suit = MALE,
-		common_patient_male01 = MALE,
-		common_female_nurse01 = FEMALE,
-		common_surgeon_male01 = MALE,
-		common_male_baggagehandler_01 = MALE,
-		common_tsaagent_male01 = MALE,
-		common_male_pilot = MALE,
-		common_male_rural01 = MALE,
-		common_female_rural01 = FEMALE,
-	}
-	
-	if ( _ent.GetClassname() == "infected" )
-	{
-		foreach( model, gender in InfectedModels )
-		{
-			foreach( infected in Objects.OfModel("models/infected/" + model + ".mdl") )
-			{
-				if ( infected.GetEntityHandle() == _ent.GetEntityHandle() )
-					return gender;
-			}
-		}
-		return UNKNOWN;
-	}
-	
-	return;
+	return GetNetPropInt( "m_Gender" );
 }
 
 /**
@@ -1664,29 +1884,12 @@ function VSLib::Entity::GetUncommonInfected()
 		return;
 	}
 	
-	local UncommonModels =
-	{
-		common_male_ceda = Z_CEDA,
-		common_male_mud = Z_MUD,
-		common_male_roadcrew = Z_ROADCREW,
-		common_male_roadcrew_rain = Z_ROADCREW,
-		common_male_fallen_survivor = Z_FALLEN,
-		common_male_riot = Z_RIOT,
-		common_male_clown = Z_CLOWN,
-		common_male_jimmy = Z_JIMMY,
-	}
-	
 	if ( _ent.GetClassname() == "infected" )
 	{
-		foreach( model, zombie in UncommonModels )
-		{
-			foreach( uncommon in Objects.OfModel("models/infected/" + model + ".mdl") )
-			{
-				if ( uncommon.GetEntityHandle() == _ent.GetEntityHandle() )
-					return zombie;
-			}
-		}
-		return Z_COMMON;
+		if ( IsUncommonInfected() )
+			return GetGender();
+		else
+			return Z_COMMON;
 	}
 	
 	return;
@@ -1750,9 +1953,7 @@ function VSLib::Entity::Kill()
 	}
 	
 	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
-	{
 		Damage(GetHealth());
-	}
 	else
 		Input("Kill");
 }
@@ -2268,6 +2469,25 @@ function VSLib::Entity::IsAlive()
 }
 
 /**
+ * Returns true if the infected, witch or player is on fire.
+ */
+function VSLib::Entity::IsOnFire()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
+		return GetNetPropBool( "m_bIsBurning" );
+	else if ( _ent.GetClassname() == "player" )
+		return _ent.IsOnFire();
+	else
+		return false;
+}
+
+/**
  * Returns the name of the entity.
  */
 function VSLib::Entity::GetName()
@@ -2304,7 +2524,7 @@ function VSLib::Entity::GetTargetname()
 		"!zoey"
 	]
 	
-	if ( IsPlayer() && GetType() == Z_SURVIVOR )
+	if ( IsPlayer() && GetType() == Z_SURVIVOR && _ent.GetName() == "" )
 	{
 		foreach( name in SurvivorNames )
 		{
@@ -3076,14 +3296,8 @@ function VSLib::Entity::IsWitchBride()
 		return false;
 	}
 	
-	if ( _ent.GetClassname() == "witch" )
-	{
-		foreach( witch_bride in Objects.OfModel("models/infected/witch_bride.mdl") )
-		{
-			if ( witch_bride.GetEntityHandle() == _ent.GetEntityHandle() )
-				return true;
-		}
-	}
+	if ( _ent.GetClassname() == "witch" && GetGender() == 19 )
+		return true;
 	
 	return false;
 }
@@ -3099,7 +3313,7 @@ function VSLib::Entity::IsUncommonInfected()
 		return false;
 	}
 	
-	if ( GetUncommonInfected() > 0 )
+	if ( GetGender() >= 11 && GetGender() <= 17 )
 		return true;
 	
 	return false;

@@ -942,16 +942,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if ( !::VSLib.Entity(activator).IsSurvivor() )
 		return;
 	
-	local triggers = 0;
-	foreach( trigger in Objects.OfClassname("trigger_multiple") )
-		triggers++;
-	
-	if ( triggers == 1 )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfClassname("trigger_multiple");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
-	
 	if ( !::VSLib.EasyLogic.RescueTrigger )
 		::VSLib.Timers.AddTimer(0.1, false, VSLib_RescueCheck, { player = ::VSLib.Player(activator), entity = ::VSLib.Entity(self), tries = 0 });
 	else
@@ -971,7 +961,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::VSLib_ConnectRescueVehicleOutputs <- function ()
 {
-	if ( SessionState.MapName == "c1m4_atrium" || SessionState.MapName == "c6m3_port" )
+	if ( SessionState.MapName == "c1m4_atrium" )
 	{
 		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("trigger_escape");
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
@@ -986,40 +976,38 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
 	}
-	else if ( SessionState.MapName == "c4m5_milltown_escape" || SessionState.MapName == "c10m5_houseboat" || SessionState.MapName == "c13m4_cutthroatcreek" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("trigger_boat");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
-	else if ( SessionState.MapName == "c5m5_bridge" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("trigger_heli");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
 	else if ( SessionState.MapName == "c7m3_port" )
 	{
 		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("bridge_rescue");
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
 	}
-	else if ( SessionState.MapName == "c8m5_rooftop" )
+	else if ( SessionState.MapName == "c10m5_houseboat" )
 	{
-		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("chopper_trigger_continue");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
-	else if ( SessionState.MapName == "c9m2_lots" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("escape_vehicle_trigger");
+		::VSLib.EasyLogic.RescueTrigger <- Objects.AnyOfName("trigger_boat");
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
 	}
 	else
 	{
+		local triggers = [];
 		foreach( trigger in Objects.OfClassname("trigger_multiple") )
-			trigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue, "VSLib_RescueVehicleCheck" );
+		{
+			if ( trigger.GetNetPropInt("m_iEntireTeam") == 2 && trigger.GetNetPropInt("m_bAllowIncapTouch") == 0 )
+				triggers.append( trigger );
+		}
+		
+		if ( triggers.len() == 1 )
+		{
+			::VSLib.EasyLogic.RescueTrigger <- triggers[0];
+			::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
+			::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
+		}
+		else
+		{
+			foreach( trigger in Objects.OfClassname("trigger_multiple") )
+				trigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue, "VSLib_RescueVehicleCheck" );
+		}
 	}
 }
 
@@ -1278,19 +1266,8 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.Cache[_id]._inCombat <- query.incombat;
 		if ( "timesincecombat" in query )
 			::VSLib.EasyLogic.Cache[_id]._timeSinceCombat <- query.timesincecombat;
-		if ( "healthfrac" in query )
-			::VSLib.EasyLogic.Cache[_id]._healthFrac <- query.healthfrac;
 		if ( "movementspeed" in query )
 			::VSLib.EasyLogic.Cache[_id]._movementSpeed <- query.movementspeed;
-		if ( !("_team" in ::VSLib.EasyLogic.Cache[_id]) && ("team" in query) )
-		{
-			if ( query.team == "Survivor" )
-				::VSLib.EasyLogic.Cache[_id]._team <- 2;
-			else if ( query.team == "Infected" )
-				::VSLib.EasyLogic.Cache[_id]._team <- 3;
-			else if ( query.team == "L4D1_Survivor" )
-				::VSLib.EasyLogic.Cache[_id]._team <- 4;
-		}
 		
 		if ( query.team == "Survivor" || query.team == "L4D1_Survivor" )
 		{
@@ -1306,16 +1283,12 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 				::VSLib.EasyLogic.Cache[_id]._inCombatMusic <- query.incombatmusic;
 			if ( "coughing" in query )
 				::VSLib.EasyLogic.Cache[_id]._coughing <- query.coughing;
-			if ( "speaking" in query )
-				::VSLib.EasyLogic.Cache[_id]._speaking <- query.speaking;
 			if ( "sneaking" in query )
 				::VSLib.EasyLogic.Cache[_id]._sneaking <- query.sneaking;
 			if ( "intensity" in query )
 				::VSLib.EasyLogic.Cache[_id]._intensity <- query.intensity;
 			if ( "timeaveragedintensity" in query )
 				::VSLib.EasyLogic.Cache[_id]._timeAveragedIntensity <- query.timeaveragedintensity;
-			if ( "onthirdstrike" in query )
-				::VSLib.EasyLogic.Cache[_id]._onThirdStrike <- query.onthirdstrike;
 			if ( "beinghealed" in query )
 				::VSLib.EasyLogic.Cache[_id]._beingHealed <- query.beinghealed;
 			if ( "beingjockeyed" in query )
@@ -1324,8 +1297,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 				::VSLib.EasyLogic.Cache[_id]._pounceVictim <- query.pouncevictim;
 			if ( "hangingfromtongue" in query )
 				::VSLib.EasyLogic.Cache[_id]._hangingFromTongue <- query.hangingfromtongue;
-			if ( "incapacitatedcount" in query )
-				::VSLib.EasyLogic.Cache[_id]._incapacitatedCount <- query.incapacitatedcount;
 			if ( "zombieskilledwhileincapacitated" in query )
 				::VSLib.EasyLogic.Cache[_id]._zombiesKilledWhileIncapacitated <- query.zombieskilledwhileincapacitated;
 			if ( "botisinnarrowcorridor" in query )
@@ -1870,7 +1841,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local idx = subject.GetIndex();
 	::VSLib.EasyLogic.Cache[idx]._isAlive <- true;
 	::VSLib.EasyLogic.Cache[idx]._lastDefibBy <- reviver;
-	::VSLib.EasyLogic.Cache[idx]._reviveCount <- 0;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibSuccess)
 		func(subject, reviver, params);
@@ -1966,7 +1936,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		::VSLib.EasyLogic.Cache[_id] <- {};
 	
 	::VSLib.EasyLogic.Cache[_id]._isAlive <- true;
-	::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
 	::VSLib.EasyLogic.Cache[_id]._startPos <- ents.entity.GetLocation();
 	
 	// Remove any bots off the global cache
@@ -2097,10 +2066,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	local oldteam = ::VSLib.EasyLogic.GetEventInt(params, "oldteam");
 	local newteam = ::VSLib.EasyLogic.GetEventInt(params, "team");
-	
-	local _id = ents.entity.GetIndex();
-	if(_id in ::VSLib.EasyLogic.Cache)
-		::VSLib.EasyLogic.Cache[_id]._team <- newteam;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnTeamChanged)
 		func(ents.entity, oldteam, newteam, params);
@@ -2326,10 +2291,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local healee = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
 	local health = ::VSLib.EasyLogic.GetEventInt(params, "health_restored");
 	
-	local _id = healee.GetIndex();
-	if(_id in ::VSLib.EasyLogic.Cache)
-		::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
-	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHealSuccess)
 		func(healee, healer, health, params);
 }
@@ -2406,15 +2367,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 {
 	local revivor = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
 	local revivee = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
-	
-	local _id = revivee.GetIndex();
-	if(_id in ::VSLib.EasyLogic.Cache)
-	{
-		if ( !("_reviveCount" in ::VSLib.EasyLogic.Cache[_id]) )
-			::VSLib.EasyLogic.Cache[_id]._reviveCount <- 0;
-		
-		::VSLib.EasyLogic.Cache[_id]._reviveCount++;
-	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnReviveSuccess)
 		func(revivee, revivor, params);
