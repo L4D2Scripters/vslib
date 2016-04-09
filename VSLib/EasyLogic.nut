@@ -1271,10 +1271,19 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		
 		if ( query.team == "Survivor" || query.team == "L4D1_Survivor" )
 		{
+			if ( "instartarea" in query )
+			{
+				if ( !::VSLib.EasyLogic.SurvivorsLeftStart && query.instartarea == 0 && query.team == "Survivor" )
+				{
+					::VSLib.EasyLogic.SurvivorsLeftStart <- true;
+					
+					foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
+						func();
+				}
+				::VSLib.EasyLogic.Cache[_id]._inStartArea <- query.instartarea;
+			}
 			if ( "insafespot" in query )
 				::VSLib.EasyLogic.Cache[_id]._inSafeSpot <- query.insafespot;
-			if ( "instartarea" in query )
-				::VSLib.EasyLogic.Cache[_id]._inStartArea <- query.instartarea;
 			if ( "incheckpoint" in query )
 				::VSLib.EasyLogic.Cache[_id]._inCheckpoint <- query.incheckpoint;
 			if ( "inbattlefield" in query )
@@ -1285,18 +1294,10 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 				::VSLib.EasyLogic.Cache[_id]._coughing <- query.coughing;
 			if ( "sneaking" in query )
 				::VSLib.EasyLogic.Cache[_id]._sneaking <- query.sneaking;
-			if ( "intensity" in query )
-				::VSLib.EasyLogic.Cache[_id]._intensity <- query.intensity;
 			if ( "timeaveragedintensity" in query )
 				::VSLib.EasyLogic.Cache[_id]._timeAveragedIntensity <- query.timeaveragedintensity;
 			if ( "beinghealed" in query )
 				::VSLib.EasyLogic.Cache[_id]._beingHealed <- query.beinghealed;
-			if ( "beingjockeyed" in query )
-				::VSLib.EasyLogic.Cache[_id]._beingJockeyed <- query.beingjockeyed;
-			if ( "pouncevictim" in query )
-				::VSLib.EasyLogic.Cache[_id]._pounceVictim <- query.pouncevictim;
-			if ( "hangingfromtongue" in query )
-				::VSLib.EasyLogic.Cache[_id]._hangingFromTongue <- query.hangingfromtongue;
 			if ( "zombieskilledwhileincapacitated" in query )
 				::VSLib.EasyLogic.Cache[_id]._zombiesKilledWhileIncapacitated <- query.zombieskilledwhileincapacitated;
 			if ( "botisinnarrowcorridor" in query )
@@ -1342,26 +1343,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(amount);
 }
 
-::vslib_left_start <- function (args)
-{
-	vslib_survivors_left_start_area();
-}
-
-::VSLib_LeftStart <- function ()
-{
-	::VSLib.Entity(self).DisconnectOutput( "OnOpen", "VSLibLeftStart" );
-	vslib_survivors_left_start_area();
-}
-
-::VSLib_LeftSafeAreaCheck <- function (params)
-{
-	if ( Director.HasAnySurvivorLeftSafeArea() )
-	{
-		::VSLib.Timers.RemoveTimerByName("VSLib_LeftSafeAreaCheck");
-		vslib_survivors_left_start_area();
-	}
-}
-
 ::VSLib_SurvivorsSpawnedCheck <- function (params)
 {
 	if ( Entities.FindByClassname( null, "player" ) )
@@ -1392,51 +1373,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.SurvivorsSpawned <- true;
 			vslib_survivors_spawned(4);
 		}
-		
-		if ( survs > 0 )
-		{
-			if ( Director.HasAnySurvivorLeftSafeArea() && !::VSLib.EasyLogic.SurvivorsLeftStart )
-			{
-				foreach (saferoomDoor in Objects.OfModel("models/props_doors/checkpoint_door_01.mdl"))
-				{
-					local dist = ::VSLib.Utils.CalculateDistance(saferoomDoor.GetLocation(), Players.AnySurvivor().GetSpawnLocation());
-					
-					if ( dist < 500 )
-					{
-						::VSLib.EasyLogic.SurvivorsLeftStart <- true;
-						saferoomDoor.ConnectOutput( "OnOpen", VSLib_LeftStart, "VSLibLeftStart" );
-					}
-				}
-				foreach (saferoomDoor in Objects.OfModel("models/props_doors/checkpoint_door_-01.mdl"))
-				{
-					local dist = ::VSLib.Utils.CalculateDistance(saferoomDoor.GetLocation(), Players.AnySurvivor().GetSpawnLocation());
-					
-					if ( dist < 500 )
-					{
-						::VSLib.EasyLogic.SurvivorsLeftStart <- true;
-						saferoomDoor.ConnectOutput( "OnOpen", VSLib_LeftStart, "VSLibLeftStart" );
-					}
-				}
-				
-				if ( !::VSLib.EasyLogic.SurvivorsLeftStart )
-				{
-					::VSLib.EasyLogic.SurvivorsLeftStart <- true;
-					::VSLib.Timers.AddTimer(5.0, false, vslib_left_start);
-				}
-			}
-			else if ( !Director.HasAnySurvivorLeftSafeArea() && !::VSLib.EasyLogic.SurvivorsLeftStart )
-			{
-				::VSLib.EasyLogic.SurvivorsLeftStart <- true;
-				::VSLib.Timers.AddTimerByName("VSLib_LeftSafeAreaCheck", 0.1, true, VSLib_LeftSafeAreaCheck);
-			}
-		}
 	}
-}
-
-::vslib_survivors_left_start_area <- function ()
-{
-	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
-		func();
 }
 
 ::vslib_map_first_start <- function ()

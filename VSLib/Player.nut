@@ -95,14 +95,14 @@ function VSLib::Player::GetCharacterName()
 		return "";
 	}
 	
-	if ( GetTargetname() == "!bill" )
+	if ( GetSurvivorCharacter() == 4 )
 		return "Bill";
-	else if ( GetTargetname() == "!francis" )
-		return "Francis";
-	else if ( GetTargetname() == "!louis" )
-		return "Louis";
-	else if ( GetTargetname() == "!zoey" )
+	else if ( GetSurvivorCharacter() == 5 )
 		return "Zoey";
+	else if ( GetSurvivorCharacter() == 6 )
+		return "Francis";
+	else if ( GetSurvivorCharacter() == 7 )
+		return "Louis";
 	
 	return g_MapScript.GetCharacterDisplayName(_ent);
 }
@@ -118,17 +118,14 @@ function VSLib::Player::GetBaseCharacterName()
 		return "";
 	}
 	
-	if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
-	{
-		if ( GetTargetname() == "!bill" )
-			return "Nick";
-		else if ( GetTargetname() == "!francis" )
-			return "Ellis";
-		else if ( GetTargetname() == "!louis" )
-			return "Coach";
-		else if ( GetTargetname() == "!zoey" )
-			return "Rochelle";
-	}
+	if ( GetSurvivorCharacter() == 0 )
+		return "Nick";
+	else if ( GetSurvivorCharacter() == 1 )
+		return "Rochelle";
+	else if ( GetSurvivorCharacter() == 2 )
+		return "Coach";
+	else if ( GetSurvivorCharacter() == 3 )
+		return "Ellis";
 	
 	return GetCharacterName();
 }
@@ -349,6 +346,90 @@ function VSLib::Player::IsHangingFromLedge()
 }
 
 /**
+ * Returns true if the player is being held by a Smoker tongue
+ */
+function VSLib::Player::IsHangingFromTongue()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isHangingFromTongue" );
+}
+
+/**
+ * Returns true if the player is being jockeyed
+ */
+function VSLib::Player::IsBeingJockeyed()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return (GetNetPropInt( "m_jockeyAttacker" ) > 0) ? true : false;
+}
+
+/**
+ * Returns true if the player is a victim of a Hunter pounce
+ */
+function VSLib::Player::IsPounceVictim()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return (GetNetPropInt( "m_pounceAttacker" ) > 0) ? true : false;
+}
+
+/**
+ * Returns true if the player is a victim of a Smoker pull
+ */
+function VSLib::Player::IsTongueVictim()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return (GetNetPropInt( "m_tongueOwner" ) > 0) ? true : false;
+}
+
+/**
+ * Returns true if the player is being carried by a Charger
+ */
+function VSLib::Player::IsCarryVictim()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return (GetNetPropInt( "m_carryAttacker" ) > 0) ? true : false;
+}
+
+/**
+ * Returns true if the player is being pummeled by a Charger
+ */
+function VSLib::Player::IsPummelVictim()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return (GetNetPropInt( "m_pummelAttacker" ) > 0) ? true : false;
+}
+
+/**
  * Returns true if the player is in ghost mode (i.e. infected ghost).
  */
 function VSLib::Player::IsGhost()
@@ -383,6 +464,23 @@ function VSLib::Player::IsSpeaking()
 	}
 	
 	return false;
+}
+
+/**
+ * Returns true if the player is in noclip mode.
+ */
+function VSLib::Player::IsNoclipping()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( GetNetPropInt( "movetype" ) == 8 )
+		return true;
+	else
+		return false;
 }
 
 /**
@@ -2589,66 +2687,6 @@ function VSLib::Player::IsBeingHealed()
 	
 	if ("_beingHealed" in ::VSLib.EasyLogic.Cache[_idx])
 		return (::VSLib.EasyLogic.Cache[_idx]._beingHealed > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if survivor is being jockeyed
- */
-function VSLib::Player::IsBeingJockeyed()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_beingJockeyed" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._beingJockeyed > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if survivor is victim of a Hunter pounce
- */
-function VSLib::Player::IsPounceVictim()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_pounceVictim" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._pounceVictim > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if survivor is being held by a Smoker tongue
- */
-function VSLib::Player::IsHangingFromTongue()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_hangingFromTongue" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._hangingFromTongue > 0) ? true : false;
 	
 	return false;
 }
