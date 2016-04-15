@@ -105,10 +105,7 @@
 	RoundStartPostNavFired = false
 	PreSpawnFired = false
 	SurvivorsLeftStart = false
-	SurvivorSpawned = false
-	TwoSurvivorsSpawned = false
-	ThreeSurvivorsSpawned = false
-	SurvivorsSpawned = false
+	SurvivorsSpawned = {}
 	
 	// This is used to store the base mode name
 	BaseModeName = ""
@@ -131,6 +128,7 @@
 	MiscData =
 	{
 		maprestarted = 0
+		maprestarts = 0
 		previousmap = ""
 	}
 }
@@ -698,17 +696,20 @@ g_MapScript.ScriptMode_OnShutdown <- function (reason, nextmap)
 		if ( reason == 1 )
 		{
 			::VSLib.EasyLogic.MiscData.maprestarted <- 1;
+			::VSLib.EasyLogic.MiscData.maprestarts++;
 			SaveTable( "_vslib_session_vars", ::VSLib.EasyLogic.SessionVarsBackup );
 		}
 		else if ( reason == 2 )
 		{
 			::VSLib.EasyLogic.MiscData.maprestarted <- 1;
+			::VSLib.EasyLogic.MiscData.maprestarts++;
 			SaveTable( "_vslib_session_vars", ::VSLib.EasyLogic.SessionVars );
 		}
 		else if ( reason == 3 )
 		{
 			::VSLib.EasyLogic.MiscData.previousmap <- SessionState.MapName;
 			::VSLib.EasyLogic.MiscData.maprestarted <- 0;
+			::VSLib.EasyLogic.MiscData.maprestarts <- 0;
 			if ( ::VSLib.EasyLogic.NextMapContinues )
 			{
 				SaveTable( "_vslib_session_vars", ::VSLib.EasyLogic.SessionVars );
@@ -1343,39 +1344,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(amount);
 }
 
-::VSLib_SurvivorsSpawnedCheck <- function (params)
-{
-	if ( Entities.FindByClassname( null, "player" ) )
-	{
-		local survs = 0;
-		
-		foreach (survivor in Players.AliveSurvivors())
-			survs++;
-		
-		if ( survs == 1 && !::VSLib.EasyLogic.SurvivorSpawned )
-		{
-			::VSLib.EasyLogic.SurvivorSpawned <- true;
-			vslib_survivors_spawned(1);
-		}
-		else if ( survs == 2 && !::VSLib.EasyLogic.TwoSurvivorsSpawned )
-		{
-			::VSLib.EasyLogic.TwoSurvivorsSpawned <- true;
-			vslib_survivors_spawned(2);
-		}
-		else if ( survs == 3 && !::VSLib.EasyLogic.ThreeSurvivorsSpawned )
-		{
-			::VSLib.EasyLogic.ThreeSurvivorsSpawned <- true;
-			vslib_survivors_spawned(3);
-		}
-		else if ( survs >= 4 && !::VSLib.EasyLogic.SurvivorsSpawned )
-		{
-			::VSLib.Timers.RemoveTimerByName("VSLib_SurvivorsSpawnedCheck");
-			::VSLib.EasyLogic.SurvivorsSpawned <- true;
-			vslib_survivors_spawned(4);
-		}
-	}
-}
-
 ::vslib_map_first_start <- function ()
 {
 	foreach (func in ::VSLib.EasyLogic.OnProcessResponse)
@@ -1400,7 +1368,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		::VSLib.GlobalCache <- {};
 		
 		// Attempt read from session
-		::VSLib.GlobalCache <- Utils.DeserializeIdxTable(::VSLib.GlobalCacheSession);
+		::VSLib.GlobalCache <- ::VSLib.Utils.DeserializeIdxTable(::VSLib.GlobalCacheSession);
 		
 		if (::VSLib.GlobalCache == null)
 			::VSLib.GlobalCache <- {};
@@ -1415,7 +1383,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.BaseModeName <- SessionState.ModeName;
 	}
 	
-	::VSLib.Timers.AddTimerByName("VSLib_SurvivorsSpawnedCheck", 0.1, true, VSLib_SurvivorsSpawnedCheck);
 	::VSLib.Timers.AddTimerByName("VSLib_QueryCheck", 0.1, true, VSLib_QueryCheck);
 	
 	local diff = ::VSLib.Utils.GetDifficulty();
@@ -1435,7 +1402,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	foreach( key, val in ::VSLib.EasyLogic.SessionVars )
 		::VSLib.EasyLogic.SessionVarsBackup[key] <- val;
 	
-	if ( !Utils.HasMapRestarted() )
+	if ( !::VSLib.Utils.HasMapRestarted() )
 	{
 		local vsl_query_data =
 		[
@@ -1878,6 +1845,12 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	// Remove any bots off the global cache
 	if (ents.entity.IsBot() && ents.entity.GetTeam() == INFECTED && _id in ::VSLib.GlobalCache)
 		delete ::VSLib.GlobalCache[_id];
+	
+	if ( ents.entity.GetTeam() == SURVIVORS && !(_id in ::VSLib.EasyLogic.SurvivorsSpawned) )
+	{
+		::VSLib.EasyLogic.SurvivorsSpawned[_id] <- true;
+		vslib_survivors_spawned(::VSLib.EasyLogic.SurvivorsSpawned.len());
+	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
 		func(ents.entity, params);
@@ -4790,7 +4763,7 @@ function VSLib::EasyLogic::Players::AnyDeadSurvivor()
  */
 function VSLib::EasyLogic::Players::RandomAliveSurvivor()
 {
-	return Utils.GetRandValueFromArray(Players.AliveSurvivors());
+	return ::VSLib.Utils.GetRandValueFromArray(Players.AliveSurvivors());
 }
 
 /**
@@ -4798,7 +4771,7 @@ function VSLib::EasyLogic::Players::RandomAliveSurvivor()
  */
 function VSLib::EasyLogic::Players::RandomDeadSurvivor()
 {
-	return Utils.GetRandValueFromArray(Players.DeadSurvivors());
+	return ::VSLib.Utils.GetRandValueFromArray(Players.DeadSurvivors());
 }
 
 /**
