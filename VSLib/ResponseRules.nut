@@ -125,6 +125,7 @@
 	IsManager = [ "Who", "Manager" ]
 	IsNamVet = [ "Who", "NamVet" ]
 	IsTeenGirl = [ "Who", "TeenGirl" ]
+	IsUnknown = [ "Who", "Unknown" ]
 	
 	IsDeadCoach = [ "DeadCharacter", "Coach" ]
 	IsDeadGambler = [ "DeadCharacter", "Gambler" ]
@@ -134,6 +135,7 @@
 	IsDeadManager = [ "DeadCharacter", "Manager" ]
 	IsDeadNamVet = [ "DeadCharacter", "NamVet" ]
 	IsDeadTeenGirl = [ "DeadCharacter", "TeenGirl" ]
+	IsDeadUnknown = [ "DeadCharacter", "Unknown" ]
 	
 	IsCoachAlive = [ "IsCoachAlive", 1 ]
 	IsGamblerAlive = [ "IsGamblerAlive", 1 ]
@@ -170,6 +172,7 @@
 	SubjectIsManager = [ "Subject", "Manager" ]
 	SubjectIsNamVet = [ "Subject", "NamVet" ]
 	SubjectIsTeenGirl = [ "Subject", "TeenGirl" ]
+	SubjectIsUnknown = [ "Subject", "Unknown" ]
 	
 	IsGamblerNear200 = [ "DistToGambler", 0, 199 ]
 	IsGamblerNear400 = [ "DistToGambler", 0, 399 ]
@@ -540,7 +543,7 @@ function VSLib::ResponseRules::SetAwardSpeech(speaker, query)
 
 function VSLib::ResponseRules::SubjectAward( query )
 {
-	if ( "AwardSpeech" in query )
+	if ( "AwardSpeech" in query && "subject" in query )
 	{
 		if ( query["AwardSpeech"] == query["subject"] )
 		{

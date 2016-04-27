@@ -533,6 +533,62 @@ function VSLib::Entity::GetNetPropBool( prop )
 }
 
 /**
+ * Sets an entity's network property field by integer.
+ */
+function VSLib::Entity::SetNetPropInt( prop, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	NetProps.SetPropInt( _ent, prop.tostring(), value.tointeger() );
+}
+
+/**
+ * Sets an entity's network property field by float.
+ */
+function VSLib::Entity::SetNetPropFloat( prop, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	NetProps.SetPropFloat( _ent, prop.tostring(), value.tofloat() );
+}
+
+/**
+ * Sets an entity's network property field by Vector.
+ */
+function VSLib::Entity::SetNetPropVector( prop, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	NetProps.SetPropVector( _ent, prop.tostring(), value );
+}
+
+/**
+ * Sets an entity's network property field by entity.
+ */
+function VSLib::Entity::SetNetPropEntity( prop, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	NetProps.SetPropEntity( _ent, prop.tostring(), value.GetBaseEntity() );
+}
+
+/**
  * Sets an entity's network property field.
  */
 function VSLib::Entity::SetNetProp( prop, value )
@@ -546,13 +602,13 @@ function VSLib::Entity::SetNetProp( prop, value )
 	//if (typeof value == "string")
 		//NetProps.SetPropString( _ent, prop.tostring(), value.tostring() );
 	if (typeof value == "integer" || typeof value == "bool")
-		NetProps.SetPropInt( _ent, prop.tostring(), value.tointeger() );
+		SetNetPropInt( prop, value );
 	else if (typeof value == "float")
-		NetProps.SetPropFloat( _ent, prop.tostring(), value.tofloat() );
+		SetNetPropFloat( prop, value );
 	else if (typeof value == "Vector")
-		NetProps.SetPropVector( _ent, prop.tostring(), value );
+		SetNetPropVector( prop, value );
 	else
-		NetProps.SetPropEntity( _ent, prop.tostring(), value.GetBaseEntity() );
+		SetNetPropEntity( prop, value );
 }
 
 /**

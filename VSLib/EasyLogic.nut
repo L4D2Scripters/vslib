@@ -35,6 +35,7 @@
 	// Intercept chat hooks
 	_interceptCount = 0
 	_interceptList = {}
+	OnInterceptChat = {}
 	
 	// Update() hooks
 	Update = {}
@@ -1849,7 +1850,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if ( ents.entity.GetTeam() == SURVIVORS && !(_id in ::VSLib.EasyLogic.SurvivorsSpawned) )
 	{
 		::VSLib.EasyLogic.SurvivorsSpawned[_id] <- true;
-		vslib_survivors_spawned(::VSLib.EasyLogic.SurvivorsSpawned.len());
+		::VSLib.Timers.AddTimer(0.1, false, vslib_survivors_spawned, ::VSLib.EasyLogic.SurvivorsSpawned.len());
 	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
@@ -4263,7 +4264,7 @@ function VSLib::EasyLogic::RemoveInterceptChat(func)
 	if (srcEnt != null)
 	{
 		// Strip the name from the chat text
-		local name = srcEnt.GetName() + ": ";
+		local name = srcEnt.GetPlayerName() + ": ";
 		local text = strip(str.slice(str.find(name) + name.len()));
 
 		if (text.find(::VSLib.EasyLogic._triggerStart) == 0)
@@ -4311,11 +4312,36 @@ function VSLib::EasyLogic::RemoveInterceptChat(func)
 		}
 	}
 	
+	local player = null;
+	local text = "";
+	
+	if (srcEnt != null)
+	{
+		local name = srcEnt.GetPlayerName() + ": ";
+		text = strip(str.slice(str.find(name) + name.len()));
+		player = ::VSLib.Player(srcEnt);
+	}
+	else
+	{
+		if ( str.find("Console:") != null )
+		{
+			local name = "Console: ";
+			text = strip(str.slice(str.find(name) + name.len()));
+		}
+		else
+			text = str;
+	}
+	
 	// Fire any intercept hooks
 	foreach(v in ::VSLib.EasyLogic._interceptList)
 	{
 		if (v != null)
 			v(str, srcEnt);
+	}
+	foreach(v in ::VSLib.EasyLogic.OnInterceptChat)
+	{
+		if (v != null)
+			v(text, player);
 	}
 	
 	if ( "ModeInterceptChat" in g_ModeScript )
