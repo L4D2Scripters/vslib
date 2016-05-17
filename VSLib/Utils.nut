@@ -1193,14 +1193,14 @@ function VSLib::Utils::GetTimeTable( time )
 	// Hours
 	if (time >= SECONDS_IN_HOUR)
 	{
-	   bh = ceil(time / SECONDS_IN_HOUR);
+	   bh = ceil(time.tointeger() / SECONDS_IN_HOUR);
 	   time = time % SECONDS_IN_HOUR;
 	}
 	
 	// Minutes
 	if (time >= SECONDS_IN_MINUTE)
 	{
-	   bm = ceil(time / SECONDS_IN_MINUTE);
+	   bm = ceil(time.tointeger() / SECONDS_IN_MINUTE);
 	   time = time % SECONDS_IN_MINUTE;
 	}
 
@@ -1208,6 +1208,17 @@ function VSLib::Utils::GetTimeTable( time )
 	bs = time;
 	
 	return { hours = bh.tointeger(), minutes = bm.tointeger(), seconds = bs.tointeger() };
+}
+
+/**
+ * Returns the passed in time as a displayable string --:--
+ */
+function VSLib::Utils::GetDisplayTime( time )
+{
+	if ( time == null )
+		return "--:--";
+	
+	return "0" + g_MapScript.TimeToDisplayString( time );
 }
 
 /**

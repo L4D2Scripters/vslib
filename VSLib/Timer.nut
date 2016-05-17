@@ -28,6 +28,7 @@
 {
 	TimersList = {}
 	TimersID = {}
+	ClockList = {}
 	count = 0
 }
 
@@ -147,6 +148,51 @@ function VSLib::Timers::RemoveTimer(idx)
 }
 
 /**
+ * Manages VSLib timers.
+ */
+function VSLib::Timers::ManageTimer(idx, command, value = null, allowNegTimer = false)
+{
+	if ( idx in ::VSLib.Timers.ClockList && value == null )
+	{
+		::VSLib.Timers.ClockList[idx]._command <- command;
+		::VSLib.Timers.ClockList[idx]._allowNegTimer <- allowNegTimer;
+	}
+	else
+	{
+		if ( value == null )
+			value = 0;
+		
+		::VSLib.Timers.ClockList[idx] <-
+		{
+			_value = value
+			_startTime = Time()
+			_lastUpdateTime = Time()
+			_command = command
+			_allowNegTimer = allowNegTimer
+		}
+	}
+}
+
+/**
+ * Returns the value of a VSLib timer.
+ */
+function VSLib::Timers::ReadTimer(idx)
+{
+	if ( idx in ::VSLib.Timers.ClockList )
+		return ::VSLib.Timers.ClockList[idx]._value;
+	
+	return null;
+}
+
+/**
+ * Returns a VSLib timer as a displayable string --:--.
+ */
+function VSLib::Timers::DisplayTime(idx)
+{
+	return ::VSLib.Utils.GetDisplayTime(::VSLib.Timers.ReadTimer(idx));
+}
+
+/**
  * Manages all timers and provides interface for custom updates.
  */
 ::VSLib.Timers._thinkFunc <- function()
@@ -196,6 +242,28 @@ function VSLib::Timers::RemoveTimer(idx)
 			else
 				if (idx in ::VSLib.Timers.TimersList) // recheck-- timer may have been removed by timer callback
 					delete ::VSLib.Timers.TimersList[idx];
+		}
+	}
+	foreach (idx, timer in ::VSLib.Timers.ClockList)
+	{
+		if ( Time() > timer._lastUpdateTime )
+		{
+			local newTime = Time() - timer._lastUpdateTime;
+			
+			if ( timer._command == 1 )
+				timer._value += newTime;
+			else if ( timer._command == 2 )
+			{
+				if ( timer._allowNegTimer )
+					timer._value -= newTime;
+				else
+				{
+					if ( timer._value > 0 )
+						timer._value -= newTime;
+				}
+			}
+			
+			timer._lastUpdateTime <- Time();
 		}
 	}
 }
