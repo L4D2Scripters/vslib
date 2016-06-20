@@ -623,6 +623,54 @@ function VSLib::Utils::ConvertEntity(entity, classname, kvs = {})
 }
 
 /**
+ * Spawns an extra Survivor on your team.
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnSurvivor(survivor = null, pos = null, ang = QAngle(0,0,0))
+{
+	::VSLib.EasyLogic.L4D1Behavior = Convars.GetFloat("sb_l4d1_survivor_behavior").tointeger();
+	Convars.SetValue("sb_l4d1_survivor_behavior", 0);
+	
+	if ( survivor == null )
+	{
+		foreach( survivor in Players.AllSurvivors() )
+		{
+			if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
+			{
+				if ( survivor.GetSurvivorCharacter() == 0 || survivor.GetSurvivorCharacter() == 4 )
+				{
+					::VSLib.EasyLogic.ExtraBills.append( survivor );
+					survivor.SetNetProp("m_survivorCharacter", 4);
+				}
+			}
+			else if ( ::VSLib.Utils.GetSurvivorSet() == 2 && survivor.GetSurvivorCharacter() == 4 )
+			{
+				::VSLib.EasyLogic.ExtraBills.append( survivor );
+				survivor.SetNetProp("m_survivorCharacter", 8);
+			}
+		}
+		if ( ::VSLib.EasyLogic.ExtraBills.len() > 0 )
+			::VSLib.Timers.AddTimer(0.1, false, _ResetExtraBills );
+		
+		::VSLib.EasyLogic.SpawnExtraSurvivor = true;
+		if ( pos != null )
+		{
+			::VSLib.EasyLogic.ExtraSurvivorOrigin = pos;
+			::VSLib.EasyLogic.ExtraSurvivorAngles = ang;
+		}
+		::VSLib.Utils.SpawnL4D1Survivor(4);
+	}
+	else
+	{
+		::VSLib.EasyLogic.SpawnL4D1Survivor = true;
+		::VSLib.Utils.SpawnL4D1Survivor(survivor, pos, ang);
+	}
+	
+	::VSLib.Timers.AddTimerByName("VSLibExtraSurvivorFailsafe", 0.1, false, _ExtraSurvivorFailsafe );
+}
+
+/**
  * Spawns the requested L4D1 Survivor at the location you want.
  *
  * @authors Rayman1103
@@ -1013,6 +1061,20 @@ function VSLib::Utils::GetSurvivorFromActor( actor )
 	{
 		if ( actor == name )
 			return ::VSLib.Player(target);
+	}
+	
+	return null;
+}
+
+/**
+ * Returns a player from its name
+ */
+function VSLib::Utils::GetPlayerFromName( name )
+{
+	foreach (player in Players.All())
+	{
+		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) )
+			return player;
 	}
 	
 	return null;
@@ -1847,31 +1909,13 @@ function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
  */
 function VSLib::Utils::GetSurvivorSet()
 {
-	local L4D1Survs =
-	[
-		"!bill"
-		"!francis"
-		"!zoey"
-		"!louis"
-	]
-	
-	local ent = null;
-	
-	foreach( s in L4D1Survs )
+	foreach( survivor in Players.AllSurvivors() )
 	{
-		while ( ent = Entities.FindByName( ent, s ) )
-		{
-			if ( ent.IsValid() )
-			{
-				if ( !IsPlayerABot(ent) )
-				{
-					return 1;
-				}
-			}
-		}
+		if ( survivor.GetCharacterName() == "Nick" || survivor.GetCharacterName() == "Rochelle" || survivor.GetCharacterName() == "Coach" || survivor.GetCharacterName() == "Ellis" )
+			return 2;
 	}
 	
-	return 2;
+	return 1;
 }
 
 /**

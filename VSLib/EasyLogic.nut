@@ -119,6 +119,15 @@
 	RescueVehicleIncoming = false
 	RescueVehicleLeaving = false
 	
+	// Used for Utils.SpawnSurvivor()
+	ExtraBills = []
+	ExtraBillsData = {}
+	ExtraSurvivorOrigin = null
+	ExtraSurvivorAngles = null
+	L4D1Behavior = 1
+	SpawnExtraSurvivor = false
+	SpawnL4D1Survivor = false
+	
 	// Stores query context data retrieved from ResponseRules
 	QueryContextData = {}
 	
@@ -1826,6 +1835,52 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(ents.entity, params);
 }
 
+::_L4D1SurvivorTeamSwitch <- function (player)
+{
+	player.SetNetProp("m_iTeamNum", 2);
+	Convars.SetValue("sb_l4d1_survivor_behavior", ::VSLib.EasyLogic.L4D1Behavior);
+}
+
+::_ResetExtraBills <- function (params)
+{
+	foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
+	{
+		if ( Utils.GetSurvivorSet() == 1 )
+		{
+			survivor.SetNetProp("m_survivorCharacter", 0);
+			if ( survivor.GetBaseIndex() in ::VSLib.EasyLogic.ExtraBillsData )
+			{
+				survivor.SetLocation(::VSLib.EasyLogic.ExtraBillsData[survivor.GetBaseIndex()]["Origin"]);
+				survivor.SetAnglesVec(::VSLib.EasyLogic.ExtraBillsData[survivor.GetBaseIndex()]["Angles"]);
+			}
+		}
+		else
+			survivor.SetNetProp("m_survivorCharacter", 4);
+	}
+	::VSLib.EasyLogic.ExtraBills = [];
+	::VSLib.EasyLogic.ExtraBillsData = {};
+}
+
+::_ExtraSurvivorFailsafe <- function (params)
+{
+	::VSLib.EasyLogic.SpawnExtraSurvivor = false;
+	::VSLib.EasyLogic.SpawnL4D1Survivor = false;
+	Convars.SetValue("sb_l4d1_survivor_behavior", ::VSLib.EasyLogic.L4D1Behavior);
+	
+	if ( ::VSLib.EasyLogic.ExtraBills.len() > 0 )
+	{
+		foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
+		{
+			if ( Utils.GetSurvivorSet() == 1 )
+				survivor.SetNetProp("m_survivorCharacter", 0);
+			else
+				survivor.SetNetProp("m_survivorCharacter", 4);
+		}
+		::VSLib.EasyLogic.ExtraBills = [];
+		::VSLib.EasyLogic.ExtraBillsData = {};
+	}
+}
+
 ::VSLib.EasyLogic.Events.OnGameEvent_player_spawn <- function (params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -1851,6 +1906,40 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	{
 		::VSLib.EasyLogic.SurvivorsSpawned[_id] <- true;
 		::VSLib.Timers.AddTimer(0.1, false, vslib_survivors_spawned, ::VSLib.EasyLogic.SurvivorsSpawned.len());
+	}
+	
+	if ( ::VSLib.EasyLogic.SpawnExtraSurvivor && ents.entity.GetSurvivorCharacter() == 4 )
+	{
+		::VSLib.EasyLogic.SpawnExtraSurvivor = false;
+		if ( Utils.GetSurvivorSet() == 1 )
+		{
+			foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
+			{
+				survivor.SetNetProp("m_survivorCharacter", 0);
+				::VSLib.EasyLogic.ExtraBillsData.rawset(survivor.GetBaseIndex(), {});
+				::VSLib.EasyLogic.ExtraBillsData[survivor.GetBaseIndex()]["Origin"] <- survivor.GetLocation();
+				::VSLib.EasyLogic.ExtraBillsData[survivor.GetBaseIndex()]["Angles"] <- survivor.GetAngles();
+			}
+		}
+		ents.entity.SetNetProp("m_iTeamNum", 2);
+		Convars.SetValue("sb_l4d1_survivor_behavior", ::VSLib.EasyLogic.L4D1Behavior);
+		::VSLib.Timers.RemoveTimerByName("VSLibExtraSurvivorFailsafe");
+		if ( ::VSLib.EasyLogic.ExtraSurvivorOrigin != null )
+		{
+			ents.entity.SetLocation(::VSLib.EasyLogic.ExtraSurvivorOrigin);
+			ents.entity.SetAnglesVec(::VSLib.EasyLogic.ExtraSurvivorAngles);
+			::VSLib.EasyLogic.ExtraSurvivorOrigin = null;
+			::VSLib.EasyLogic.ExtraSurvivorAngles = null;
+		}
+	}
+	if ( ::VSLib.EasyLogic.SpawnL4D1Survivor )
+	{
+		if ( ents.entity.GetSurvivorCharacter() > 3 && ents.entity.GetSurvivorCharacter() < 8 )
+		{
+			::VSLib.EasyLogic.SpawnL4D1Survivor = false;
+			::VSLib.Timers.RemoveTimerByName("VSLibExtraSurvivorFailsafe");
+			::VSLib.Timers.AddTimer(0.1, false, _L4D1SurvivorTeamSwitch, ents.entity);
+		}
 	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
@@ -2623,6 +2712,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local _id = ents.entity.GetIndex();
 	::VSLib.EasyLogic.Cache[_id]._lastVomitedBy <- ents.attacker;
 	::VSLib.EasyLogic.Cache[_id]._wasVomited <- true;
+	::VSLib.EasyLogic.Cache[_id]._isVomited <- true;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerVomited)
 		func(ents.entity, ents.attacker, params);
@@ -2631,6 +2721,9 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 ::VSLib.EasyLogic.Events.OnGameEvent_player_no_longer_it <- function (params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	
+	local _id = ents.entity.GetIndex();
+	::VSLib.EasyLogic.Cache[_id]._isVomited <- false;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPlayerVomitEnd)
 		func(ents.entity, params);
@@ -2715,7 +2808,10 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::VSLib.EasyLogic.Events.OnGameEvent_survivor_rescued <- function (params)
 {
-	local rescuer = ::VSLib.EasyLogic.GetEventPlayer(params, "rescuer");
+	local rescuerid = ::VSLib.EasyLogic.GetEventInt(params, "rescuer");
+	local rescuer = null;
+	if (rescuerid != 0)
+		rescuer = ::VSLib.EasyLogic.GetEventPlayer(params, "rescuer");
 	local victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorRescued)
@@ -4298,12 +4394,14 @@ function VSLib::EasyLogic::RemoveInterceptChat(func)
 			{
 				if (baseCmd in ::VSLib.EasyLogic.Triggers)
 					::VSLib.EasyLogic.Triggers[baseCmd](player, args, text);
+				else if (baseCmd.tolower() in ::VSLib.EasyLogic.Triggers)
+					::VSLib.EasyLogic.Triggers[baseCmd.tolower()](player, args, text);
 			}
 			
 			// Execute the removable trigger (if it is a trigger).
 			foreach (i, trigger in ::VSLib.EasyLogic._itChatTextIndex)
 			{
-				if (trigger == cmd)
+				if (trigger == cmd || trigger.tolower() == cmd.tolower())
 				{
 					::VSLib.EasyLogic._itChatFunction[i](player, args, text);
 					break;
@@ -4901,24 +4999,13 @@ function VSLib::EasyLogic::Players::L4D1Survivors()
 	local t = {};
 	local ent = null;
 	local i = -1;
-	
-	local L4D1Survs =
-	[
-		"!bill"
-		"!francis" 
-		"!zoey" 
-		"!louis"
-	]
-	
-	foreach (s in L4D1Survs)
+	while (ent = Entities.FindByClassname(ent, "player"))
 	{
-		while (ent = Entities.FindByName( ent, s ))
+		if (ent.IsValid())
 		{
-			if (ent.IsValid())
-			{
-				local libObj = ::VSLib.Player(ent);
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == L4D1_SURVIVORS)
 				t[++i] <- libObj;
-			}
 		}
 	}
 	

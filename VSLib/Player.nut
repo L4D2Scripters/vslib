@@ -47,16 +47,6 @@ getconsttable()["SLOT_PILLS"] <- 4;
 getconsttable()["SLOT_CARRIED"] <- 5;
 getconsttable()["SLOT_HELD"] <- "Held";
 
-// Survivor IDs to be used with GetSurvivorCharacter() and Utils.SpawnL4D1Survivor()
-getconsttable()["NICK"] <- 0;
-getconsttable()["ROCHELLE"] <- 1;
-getconsttable()["COACH"] <- 2;
-getconsttable()["ELLIS"] <- 3;
-getconsttable()["BILL"] <- 4;
-getconsttable()["ZOEY"] <- 5;
-getconsttable()["FRANCIS"] <- 6;
-getconsttable()["LOUIS"] <- 7;
-
 
 
 /**
@@ -1341,6 +1331,24 @@ function VSLib::Player::WasEverVomited()
 }
 
 /**
+ * Returns true if this player is currently vomited on
+ */
+function VSLib::Player::IsVomited()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if(_idx in ::VSLib.EasyLogic.Cache)
+		if ("_isVomited" in ::VSLib.EasyLogic.Cache[_idx])
+			return ::VSLib.EasyLogic.Cache[_idx]._isVomited;
+	
+	return false;
+}
+
+/**
  * Staggers this entity
  */
 function VSLib::Player::Stagger()
@@ -1487,6 +1495,48 @@ function VSLib::Player::GiveAdrenaline( time )
 }
 
 /**
+ * Returns true if the survivor is currently under the effect of adrenaline
+ */
+function VSLib::Player::IsAdrenalineActive()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_bAdrenalineActive" );
+}
+
+/**
+ * Returns true if the player was present at the start of the survival round
+ */
+function VSLib::Player::WasPresentAtSurvivalStart()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_bWasPresentAtSurvivalStart" );
+}
+
+/**
+ * Returns true if the player is currently using a mounted gun
+ */
+function VSLib::Player::IsUsingMountedGun()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_usingMountedGun" ) || GetNetPropBool( "m_usingMountedWeapon" );
+}
+
+/**
  * Gets the userid of the player
  */
 function VSLib::Player::GetUserID()
@@ -1512,23 +1562,6 @@ function VSLib::Player::GetSurvivorSlot()
 	}
 	
 	return _ent.GetSurvivorSlot();
-}
-
-/**
- * Gets the survivor character ID
- */
-function VSLib::Player::GetSurvivorCharacter()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	return GetNetPropInt( "m_survivorCharacter" );
 }
 
 /**

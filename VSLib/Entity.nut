@@ -182,6 +182,16 @@ getconsttable()["Z_RIOT"] <- 15;
 getconsttable()["Z_CLOWN"] <- 16;
 getconsttable()["Z_JIMMY"] <- 17;
 
+// Survivor IDs to be used with GetSurvivorCharacter() and Utils.SpawnL4D1Survivor()
+getconsttable()["NICK"] <- 0;
+getconsttable()["ROCHELLE"] <- 1;
+getconsttable()["COACH"] <- 2;
+getconsttable()["ELLIS"] <- 3;
+getconsttable()["BILL"] <- 4;
+getconsttable()["ZOEY"] <- 5;
+getconsttable()["FRANCIS"] <- 6;
+getconsttable()["LOUIS"] <- 7;
+
 // "Ammo" types, to be used with network properties
 getconsttable()["AMMOTYPE_PISTOL"] <- 1;
 getconsttable()["AMMOTYPE_MAGNUM"] <- 2;
@@ -1445,6 +1455,34 @@ function VSLib::Entity::SetFriction(value)
 }
 
 /**
+ * Gets the entity's gravity.
+ */
+function VSLib::Entity::GetGravity()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropFloat( "m_flGravity" );
+}
+
+/**
+ * Gets the entity's friction.
+ */
+function VSLib::Entity::GetFriction()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropFloat( "m_flFriction" );
+}
+
+/**
  * Overrides the entity's friction for the desired duration.
  */
 function VSLib::Entity::OverrideFriction(duration, friction)
@@ -1692,6 +1730,20 @@ function VSLib::Entity::GetIndex()
 }
 
 /**
+ * Gets the entity's current origin.
+ */
+function VSLib::Entity::GetOrigin()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return _ent.GetOrigin();
+}
+
+/**
  * Gets the entity's current location.
  */
 function VSLib::Entity::GetLocation()
@@ -1766,6 +1818,20 @@ function VSLib::Entity::GetTeam()
 	}
 	
 	return GetNetPropInt( "m_iTeamNum" );
+}
+
+/**
+ * Sets the team the player or entity is on.
+ */
+function VSLib::Entity::SetTeam( team )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetNetProp( "m_iTeamNum", team.tointeger() );
 }
 
 /**
@@ -2541,6 +2607,23 @@ function VSLib::Entity::IsOnFire()
 		return _ent.IsOnFire();
 	else
 		return false;
+}
+
+/**
+ * Gets the survivor character ID
+ */
+function VSLib::Entity::GetSurvivorCharacter()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetType() != Z_SURVIVOR)
+		return;
+	
+	return GetNetPropInt( "m_survivorCharacter" );
 }
 
 /**
