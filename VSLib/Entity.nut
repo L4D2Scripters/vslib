@@ -847,10 +847,9 @@ function VSLib::Entity::BecomeRagdoll()
 	local origin = GetLocation();
 	local angles = GetAngles();
 	
-	local function VSLib_RagdollDeathModel( origin )
+	local function VSLib_RagdollDeathModel( player )
 	{
-		foreach ( death_model in Objects.OfClassnameWithin( "survivor_death_model", origin, 1 ) )
-			death_model.Input( "BecomeRagdoll" );
+		player.GetSurvivorDeathModel().Input( "BecomeRagdoll" );
 	}
 	
 	if ( IsSurvivor() )
@@ -864,10 +863,10 @@ function VSLib::Entity::BecomeRagdoll()
 		{
 			if ( IsAlive() )
 				Kill();
-			if ( Entities.FindByClassnameWithin( null, "survivor_death_model", origin, 1 ) )
-				VSLib_RagdollDeathModel( origin );
+			if ( GetSurvivorDeathModel() != null )
+				VSLib_RagdollDeathModel( this );
 			else
-				::VSLib.Timers.AddTimer(0.1, false, VSLib_RagdollDeathModel, origin);
+				::VSLib.Timers.AddTimer(0.1, false, VSLib_RagdollDeathModel, this);
 		}
 	}
 	else if ( GetTeam() == 3 )
@@ -3420,6 +3419,23 @@ function VSLib::Entity::IsUncommonInfected()
 	
 	if ( GetGender() >= 11 && GetGender() <= 17 )
 		return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if the infected is carrying an item.
+ */
+function VSLib::Entity::IsCarryingItem()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( _ent.GetClassname() == "infected" )
+		return GetNetPropBool( "m_nFallenFlags" );
 	
 	return false;
 }

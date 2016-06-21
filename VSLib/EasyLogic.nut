@@ -1845,7 +1845,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 {
 	foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
 	{
-		if ( Utils.GetSurvivorSet() == 1 )
+		if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
 		{
 			survivor.SetNetProp("m_survivorCharacter", 0);
 			if ( survivor.GetBaseIndex() in ::VSLib.EasyLogic.ExtraBillsData )
@@ -1871,7 +1871,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	{
 		foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
 		{
-			if ( Utils.GetSurvivorSet() == 1 )
+			if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
 				survivor.SetNetProp("m_survivorCharacter", 0);
 			else
 				survivor.SetNetProp("m_survivorCharacter", 4);
@@ -1911,7 +1911,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if ( ::VSLib.EasyLogic.SpawnExtraSurvivor && ents.entity.GetSurvivorCharacter() == 4 )
 	{
 		::VSLib.EasyLogic.SpawnExtraSurvivor = false;
-		if ( Utils.GetSurvivorSet() == 1 )
+		if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
 		{
 			foreach( survivor in ::VSLib.EasyLogic.ExtraBills )
 			{
@@ -2263,6 +2263,11 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local healer = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
 	local healee = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
 	
+	if ( healer.GetIndex() == healee.GetIndex() )
+		::VSLib.EasyLogic.Cache[healer.GetIndex()]._isHealing <- true;
+	else
+		::VSLib.EasyLogic.Cache[healee.GetIndex()]._isBeingHealed <- true;
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHealStart)
 		func(healee, healer, params);
 }
@@ -2271,6 +2276,12 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 {
 	local healer = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
 	local healee = ::VSLib.EasyLogic.GetEventPlayer(params, "subject");
+	
+	::VSLib.EasyLogic.Cache[healer.GetIndex()]._isHealing <- false;
+	
+	foreach( survivor in Players.AllSurvivors() )
+		if ("_isBeingHealed" in ::VSLib.EasyLogic.Cache[survivor.GetIndex()])
+			::VSLib.EasyLogic.Cache[survivor.GetIndex()]._isBeingHealed <- false;
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHealEnd)
 		func(healee, healer, params);

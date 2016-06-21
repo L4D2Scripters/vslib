@@ -982,10 +982,10 @@ function VSLib::Utils::StopSoundOnAll(sound)
 /**
  * Returns a table with some infected counts.
  */
-function VSLib::Utils::InfectedStats()
+function VSLib::Utils::GetInfectedStats()
 {
 	local t = {};
-	GetInfectedStats(t);
+	g_MapScript.GetInfectedStats(t);
 	
 	return t;
 }
@@ -1039,17 +1039,27 @@ function VSLib::Utils::GetEntityFromHandle( ehandle )
 /**
  * Returns the VSLib.Player from character ID
  */
-function VSLib::Utils::GetVSLibPlayerFromCharacter( id )
+function VSLib::Utils::GetPlayerFromCharacter( id )
 {
-	return ::VSLib.Player(GetPlayerFromCharacter(id));
+	local player = g_MapScript.GetPlayerFromCharacter(id);
+	
+	if (player)
+		return ::VSLib.Player(player);
+	
+	return null;
 }
 
 /**
  * Returns the VSLib.Player from UserID
  */
-function VSLib::Utils::GetVSLibPlayerFromUserID( id )
+function VSLib::Utils::GetPlayerFromUserID( id )
 {
-	return ::VSLib.Player(GetPlayerFromUserID(id));
+	local player = g_MapScript.GetPlayerFromUserID(id);
+	
+	if (player)
+		return ::VSLib.Player(player);
+	
+	return null;
 }
 
 /**
@@ -1886,6 +1896,17 @@ function VSLib::Utils::IsScavengeFinale()
 }
 
 /**
+ * Returns true if the finale has started.
+ */
+function VSLib::Utils::HasFinaleStarted()
+{
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return false
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropBool( "m_isFinale" );
+}
+
+/**
  * Gets a random value from an array
  */
 function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
@@ -2006,6 +2027,19 @@ function VSLib::Utils::GetMaxIncapCount()
 		maxIncap = DirectorScript.GetDirectorOptions().SurvivorMaxIncapacitatedCount;
 	
 	return maxIncap;
+}
+
+/**
+ * Gets the number of entities in the map
+ */
+function VSLib::Utils::GetEntityCount()
+{
+	local count = 0;
+	
+	foreach( ent in Objects.OfClassname("*") )
+		count++;
+	
+	return count;
 }
 
 /**

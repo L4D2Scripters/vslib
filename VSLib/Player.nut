@@ -434,6 +434,20 @@ function VSLib::Player::IsGhost()
 }
 
 /**
+ * Returns true if the player is calm.
+ */
+function VSLib::Player::IsCalm()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isCalm" );
+}
+
+/**
  * Returns true if the survivor is speaking.
  */
 function VSLib::Player::IsSpeaking()
@@ -485,6 +499,73 @@ function VSLib::Player::GetActiveWeapon()
 	}
 	
 	return ::VSLib.Entity(_ent.GetActiveWeapon());
+}
+
+/**
+ * Returns the VSLib::Entity of the player's last weapon
+ */
+function VSLib::Player::GetLastWeapon()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return null;
+	}
+	
+	return GetNetPropEntity( "m_hLastWeapon" );
+}
+
+/**
+ * Returns the time since the player died.
+ */
+function VSLib::Player::GetTimeSinceDeath()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local time = GetNetPropFloat( "m_flDeathTime" );
+	
+	if (time <= 0.0)
+		return time;
+	
+	return Time() - time;
+}
+
+/**
+ * Returns the player spectating this bot.
+ */
+function VSLib::Player::GetHumanSpectator()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (!IsHumanSpectating())
+		return null;
+	
+	return ::VSLib.Utils.GetPlayerFromUserID(GetNetPropInt( "m_humanSpectatorUserID" ));
+}
+
+/**
+ * Returns true if a player is spectating this bot.
+ */
+function VSLib::Player::IsHumanSpectating()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetNetPropInt( "m_humanSpectatorUserID" ) < 1)
+		return false;
+	
+	return true;
 }
 
 /**
@@ -851,9 +932,7 @@ function VSLib::Player::Ragdoll()
 	
 	local function VSLib_RemoveDeathModel( args )
 	{
-		foreach ( death_model in Objects.OfClassnameWithin( "survivor_death_model", args.origin, 1 ) )
-			death_model.KillEntity();
-		
+		args.player.GetSurvivorDeathModel().KillEntity();
 		::VSLib.Utils.SpawnRagdoll( args.model, args.origin, args.angles );
 	}
 	
@@ -866,10 +945,10 @@ function VSLib::Player::Ragdoll()
 	{
 		if ( IsAlive() )
 			Kill();
-		if ( Entities.FindByClassnameWithin( null, "survivor_death_model", origin, 1 ) )
-			VSLib_RemoveDeathModel( { origin = origin, angles = angles, model = GetSurvivorModel() } );
+		if ( GetSurvivorDeathModel() != null )
+			VSLib_RemoveDeathModel( { player = this, origin = origin, angles = angles, model = GetSurvivorModel() } );
 		else
-			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { origin = origin, angles = angles, model = GetSurvivorModel() });
+			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { player = this, origin = origin, angles = angles, model = GetSurvivorModel() });
 	}
 }
 
@@ -1333,7 +1412,7 @@ function VSLib::Player::WasEverVomited()
 /**
  * Returns true if this player is currently vomited on
  */
-function VSLib::Player::IsVomited()
+function VSLib::Player::IsVomitedOn()
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1788,6 +1867,46 @@ function VSLib::Player::GetStats()
 }
 
 /**
+ * Returns true if the survivor is healing
+ */
+function VSLib::Player::IsHealing()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return false;
+	
+	if ("_isHealing" in ::VSLib.EasyLogic.Cache[_idx])
+		return ::VSLib.EasyLogic.Cache[_idx]._isHealing;
+	
+	return false;
+}
+
+/**
+ * Returns true if the survivor is being healed
+ */
+function VSLib::Player::IsBeingHealed()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return false;
+	
+	if ("_isBeingHealed" in ::VSLib.EasyLogic.Cache[_idx])
+		return ::VSLib.EasyLogic.Cache[_idx]._isBeingHealed;
+	
+	return false;
+}
+
+/**
  * Returns true if the survivor is in the rescue vehicle.
  */
 function VSLib::Player::IsInRescue()
@@ -1810,7 +1929,7 @@ function VSLib::Player::IsInRescue()
 /**
  * Prints a chat message as if this player typed it in chat
  */
-function VSLib::Player::SayChat( str, teamOnly = false )
+function VSLib::Player::Say( str, teamOnly = false )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1818,7 +1937,7 @@ function VSLib::Player::SayChat( str, teamOnly = false )
 		return;
 	}
 	
-	Say(GetBaseEntity(), str, teamOnly);
+	g_MapScript.Say(GetBaseEntity(), str, teamOnly);
 }
 
 /**
@@ -2700,26 +2819,6 @@ function VSLib::Player::IsSneaking()
 	
 	if ("_sneaking" in ::VSLib.EasyLogic.Cache[_idx])
 		return (::VSLib.EasyLogic.Cache[_idx]._sneaking > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if survivor is being healed
- */
-function VSLib::Player::IsBeingHealed()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ("_beingHealed" in ::VSLib.EasyLogic.Cache[_idx])
-		return (::VSLib.EasyLogic.Cache[_idx]._beingHealed > 0) ? true : false;
 	
 	return false;
 }
