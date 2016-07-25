@@ -1693,6 +1693,20 @@ function VSLib::Entity::SetSpawnFlags(flags)
 }
 
 /**
+ * Gets the entity's spawn flags.
+ */
+function VSLib::Entity::GetSpawnFlags()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_spawnflags" );
+}
+
+/**
  * Gets the direction that the entity's eyes are facing.
  */
 function VSLib::Entity::GetEyeAngles()
@@ -1978,6 +1992,60 @@ function VSLib::Entity::GetDefaultAmmoType()
 	}
 	
 	return;
+}
+
+/**
+ * Returns true if the flag exists in the entity's current flags.
+ */
+function VSLib::Entity::HasFlag( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_fFlags" );
+	
+	return flags == ( flags | flag );
+}
+
+/**
+ * Adds the flag to the entity's current flags.
+ */
+function VSLib::Entity::AddFlag( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_fFlags" );
+	
+	if ( HasFlag(flag) )
+		return;
+	
+	SetNetProp( "m_fFlags", ( flags | flag ) );
+}
+
+/**
+ * Removes the flag from the entity's current flags.
+ */
+function VSLib::Entity::RemoveFlag( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_fFlags" );
+	
+	if ( !HasFlag(flag) )
+		return;
+	
+	SetNetProp( "m_fFlags", ( flags & ~flag ) );
 }
 
 /**
@@ -2327,7 +2395,10 @@ function VSLib::Entity::GetParent()
 		return;
 	}
 	
-	return ::VSLib.Entity(GetBaseEntity().GetMoveParent());
+	local moveParent = GetBaseEntity().GetMoveParent();
+	if (!moveParent)
+		return null;
+	return ::VSLib.Utils.GetEntityOrPlayer(moveParent);
 }
 
 /**
@@ -2576,7 +2647,6 @@ function VSLib::Entity::IsSurvivor()
 
 /**
  * Returns true if the entity is alive.
- * For players, once a player dies, it still reports alive. Use Player class for IsAlive().
  */
 function VSLib::Entity::IsAlive()
 {
@@ -2586,7 +2656,10 @@ function VSLib::Entity::IsAlive()
 		return false;
 	}
 	
-	return GetHealth() > 0;
+	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" || _ent.GetClassname() == "player" )
+		return GetNetPropInt( "m_lifeState" ) == 0;
+	else
+		return GetHealth() > 0;
 }
 
 /**
@@ -2770,7 +2843,7 @@ function VSLib::Entity::FirstMoveChild()
 	local firstMoveChild = _ent.FirstMoveChild();
 	if (!firstMoveChild)
 		return null;
-	return ::VSLib.Entity(firstMoveChild);
+	return ::VSLib.Utils.GetEntityOrPlayer(firstMoveChild);
 }
 
 /**
@@ -2787,7 +2860,7 @@ function VSLib::Entity::GetMoveParent()
 	local moveParent = _ent.GetMoveParent();
 	if (!moveParent)
 		return null;
-	return ::VSLib.Entity(moveParent);
+	return ::VSLib.Utils.GetEntityOrPlayer(moveParent);
 }
 
 /**
@@ -2804,7 +2877,7 @@ function VSLib::Entity::NextMovePeer()
 	local nextMovePeer = _ent.NextMovePeer();
 	if (!nextMovePeer)
 		return null;
-	return ::VSLib.Entity(nextMovePeer);
+	return ::VSLib.Utils.GetEntityOrPlayer(nextMovePeer);
 }
 
 /**
@@ -2821,7 +2894,7 @@ function VSLib::Entity::GetRootMoveParent()
 	local rootMoveParent = _ent.GetRootMoveParent();
 	if (!rootMoveParent)
 		return null;
-	return ::VSLib.Entity(rootMoveParent);
+	return ::VSLib.Utils.GetEntityOrPlayer(rootMoveParent);
 }
 
 /**
@@ -2981,7 +3054,7 @@ function VSLib::Entity::IsPressingLookspin()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & 0x2000000;
+	return (_ent.GetButtonMask() & 0x2000000) > 0;
 }
 
 /**
@@ -2996,7 +3069,7 @@ function VSLib::Entity::IsPressingAttack()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 0);
+	return (_ent.GetButtonMask() & (1 << 0)) > 0;
 }
 
 /**
@@ -3010,7 +3083,7 @@ function VSLib::Entity::IsPressingJump()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 1);
+	return (_ent.GetButtonMask() & (1 << 1)) > 0;
 }
 
 /**
@@ -3024,7 +3097,7 @@ function VSLib::Entity::IsPressingDuck()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 2);
+	return (_ent.GetButtonMask() & (1 << 2)) > 0;
 }
 
 /**
@@ -3038,7 +3111,7 @@ function VSLib::Entity::IsPressingForward()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 3);
+	return (_ent.GetButtonMask() & (1 << 3)) > 0;
 }
 
 /**
@@ -3052,7 +3125,7 @@ function VSLib::Entity::IsPressingBackward()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 4);
+	return (_ent.GetButtonMask() & (1 << 4)) > 0;
 }
 
 /**
@@ -3066,7 +3139,7 @@ function VSLib::Entity::IsPressingUse()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 5);
+	return (_ent.GetButtonMask() & (1 << 5)) > 0;
 }
 
 /**
@@ -3080,7 +3153,7 @@ function VSLib::Entity::IsPressingLeft()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 9);
+	return (_ent.GetButtonMask() & (1 << 9)) > 0;
 }
 
 /**
@@ -3094,7 +3167,7 @@ function VSLib::Entity::IsPressingRight()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 10);
+	return (_ent.GetButtonMask() & (1 << 10)) > 0;
 }
 
 /**
@@ -3108,7 +3181,7 @@ function VSLib::Entity::IsPressingShove()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 11);
+	return (_ent.GetButtonMask() & (1 << 11)) > 0;
 }
 
 /**
@@ -3122,7 +3195,7 @@ function VSLib::Entity::IsPressingReload()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 13);
+	return (_ent.GetButtonMask() & (1 << 13)) > 0;
 }
 
 /**
@@ -3136,7 +3209,7 @@ function VSLib::Entity::IsPressingWalk()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 17);
+	return (_ent.GetButtonMask() & (1 << 17)) > 0;
 }
 
 /**
@@ -3150,7 +3223,7 @@ function VSLib::Entity::IsPressingZoom()
 		return false;
 	}
 	
-	return _ent.GetButtonMask() & (1 << 19);
+	return (_ent.GetButtonMask() & (1 << 19)) > 0;
 }
 
 /**
@@ -3167,7 +3240,7 @@ function VSLib::Entity::GetOwnerEntity()
 	local owner = _ent.GetOwnerEntity();
 	if (!owner)
 		return null;
-	return ::VSLib.Entity(owner);
+	return ::VSLib.Utils.GetEntityOrPlayer(owner);
 }
 
 /**
@@ -3421,6 +3494,51 @@ function VSLib::Entity::IsUncommonInfected()
 		return true;
 	
 	return false;
+}
+
+/**
+ * Returns true if the entity is on the ground.
+ */
+function VSLib::Entity::IsOnGround()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return HasFlag(1);
+}
+
+/**
+ * Returns true if the entity is ducking.
+ */
+function VSLib::Entity::IsDucking()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return HasFlag(3);
+}
+
+/**
+ * Returns true if the entity is jumping.
+ */
+function VSLib::Entity::IsJumping()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (IsDucking())
+		return false;
+	
+	return HasFlag(2);
 }
 
 /**
@@ -3877,6 +3995,20 @@ function VSLib::Entity::GetClosestUncommonInfected()
 	}
 	
 	return GetClosestEntityFromTable( Players.UncommonInfected() );
+}
+
+/**
+ * Get the speed the entity is moving
+ */
+function VSLib::Entity::GetMovementSpeed()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropFloat( "m_flGroundSpeed" );
 }
 
 

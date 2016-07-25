@@ -58,6 +58,12 @@ getconsttable()["STAGE_ESCAPE"] <- 7;
 getconsttable()["STAGE_RESULTS"] <- 8;
 getconsttable()["STAGE_NONE"] <- 9;
 
+// Finale types to be used with Utils.GetFinaleType().
+getconsttable()["FINALE_STANDARD"] <- 0;
+getconsttable()["FINALE_GAUNTLET"] <- 1;
+getconsttable()["FINALE_CUSTOM"] <- 2;
+getconsttable()["FINALE_SCAVENGE"] <- 4;
+
 
 /**
  * Replaces parts of a string with another string,
@@ -1083,7 +1089,7 @@ function VSLib::Utils::GetPlayerFromName( name )
 {
 	foreach (player in Players.All())
 	{
-		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) )
+		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) || (player.GetName().tolower().find(name.tolower()) != null) )
 			return player;
 	}
 	
@@ -1896,14 +1902,58 @@ function VSLib::Utils::IsScavengeFinale()
 }
 
 /**
+ * Returns true if the finale is a Sacrifice finale.
+ */
+function VSLib::Utils::IsSacrificeFinale()
+{
+	if ( !Entities.FindByClassname( null, "trigger_finale" ) )
+		return false;
+	
+	return ::VSLib.Entity("trigger_finale").GetNetPropBool( "m_bIsSacrificeFinale" );
+}
+
+/**
+ * Gets the type of finale.
+ */
+function VSLib::Utils::GetFinaleType()
+{
+	if ( !Entities.FindByClassname( null, "trigger_finale" ) )
+		return;
+	
+	return ::VSLib.Entity("trigger_finale").GetNetPropInt( "m_type" );
+}
+
+/**
  * Returns true if the finale has started.
  */
 function VSLib::Utils::HasFinaleStarted()
 {
 	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
-		return false
+		return false;
 	
 	return ::VSLib.Entity("terror_player_manager").GetNetPropBool( "m_isFinale" );
+}
+
+/**
+ * Returns true if the world is cold.
+ */
+function VSLib::Utils::IsColdWorld()
+{
+	if ( !Entities.FindByClassname( null, "worldspawn" ) )
+		return false;
+	
+	return ::VSLib.Entity("worldspawn").GetNetPropBool( "m_bColdWorld" );
+}
+
+/**
+ * Returns true if the world started dark.
+ */
+function VSLib::Utils::HasStartedDark()
+{
+	if ( !Entities.FindByClassname( null, "worldspawn" ) )
+		return false;
+	
+	return ::VSLib.Entity("worldspawn").GetNetPropBool( "m_bStartDark" );
 }
 
 /**
@@ -2040,6 +2090,190 @@ function VSLib::Utils::GetEntityCount()
 		count++;
 	
 	return count;
+}
+
+/**
+ * Checks if any players are stuck using a deleted minigun and frees them
+ */
+function VSLib::Utils::MountedGunFix()
+{
+	local playerIndexes = {};
+	local owner = null;
+	
+	foreach( minigun in Objects.MountedGuns() )
+	{
+		owner = minigun.GetNetPropEntity( "m_owner" );
+		
+		if ( owner != null )
+			playerIndexes[owner.GetBaseIndex()] <- true;
+	}
+	foreach( player in Players.All() )
+	{
+		if ( player.IsUsingMountedGun() && !(player.GetBaseIndex() in playerIndexes) )
+		{
+			player.SetNetProp( "m_UsingMountedGun", 0 );
+			player.SetNetProp( "m_UsingMountedWeapon", 0 );
+		}
+	}
+}
+
+/**
+ * Gets the number of survivors that are currently alive.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsAlive()
+{
+	local teamAlive = 0;
+	
+	foreach( survivor in Players.AliveSurvivors() )
+		teamAlive++;
+	
+	return teamAlive;
+}
+
+/**
+ * Gets the number of survivors that are currently incapacitated.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsIncapacitated()
+{
+	local teamIncapacitated = 0;
+	
+	foreach( survivor in Players.IncapacitatedSurvivors() )
+		teamIncapacitated++;
+	
+	return teamIncapacitated;
+}
+
+/**
+ * Gets the number of survivors that are currently dead.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsDead()
+{
+	local teamDead = 0;
+	
+	foreach( survivor in Players.DeadSurvivors() )
+		teamDead++;
+	
+	return teamDead;
+}
+
+/**
+ * Returns true if a common infected is present in the world
+ */
+function VSLib::Utils::IsCommonInfectedPresent()
+{
+	foreach( common in Players.CommonInfected() )
+		if ( common.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if an uncommon infected is present in the world
+ */
+function VSLib::Utils::IsUncommonInfectedPresent()
+{
+	foreach( uncommon in Players.UncommonInfected() )
+		if ( uncommon.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a witch is present in the world
+ */
+function VSLib::Utils::IsWitchPresent()
+{
+	foreach( witch in Players.Witches() )
+		if ( witch.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a smoker is present in the world
+ */
+function VSLib::Utils::IsSmokerPresent()
+{
+	foreach( smoker in Players.OfType(Z_SMOKER) )
+		if ( smoker.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a hunter is present in the world
+ */
+function VSLib::Utils::IsHunterPresent()
+{
+	foreach( hunter in Players.OfType(Z_HUNTER) )
+		if ( hunter.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a boomer is present in the world
+ */
+function VSLib::Utils::IsBoomerPresent()
+{
+	foreach( boomer in Players.OfType(Z_BOOMER) )
+		if ( boomer.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a spitter is present in the world
+ */
+function VSLib::Utils::IsSpitterPresent()
+{
+	foreach( spitter in Players.OfType(Z_SPITTER) )
+		if ( spitter.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a jockey is present in the world
+ */
+function VSLib::Utils::IsJockeyPresent()
+{
+	foreach( jockey in Players.OfType(Z_JOCKEY) )
+		if ( jockey.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a charger is present in the world
+ */
+function VSLib::Utils::IsChargerPresent()
+{
+	foreach( charger in Players.OfType(Z_CHARGER) )
+		if ( charger.IsAlive() )
+			return true;
+	
+	return false;
+}
+
+/**
+ * Returns true if a tank is present in the world
+ */
+function VSLib::Utils::IsTankPresent()
+{
+	foreach( tank in Players.OfType(Z_TANK) )
+		if ( tank.IsAlive() )
+			return true;
+	
+	return false;
 }
 
 /**
@@ -2716,39 +2950,6 @@ function VSLib::Utils::GetNumberOutsideSafeSpot()
 }
 
 /**
- * Gets the number of survivors that are currently alive.
- */
-function VSLib::Utils::GetNumberOfTeamAlive()
-{
-	if ("NumberOfTeamAlive" in ::VSLib.EasyLogic.QueryContextData)
-		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamAlive;
-	
-	return;
-}
-
-/**
- * Gets the number of survivors that are currently incapacitated.
- */
-function VSLib::Utils::GetNumberOfTeamIncapacitated()
-{
-	if ("NumberOfTeamIncapacitated" in ::VSLib.EasyLogic.QueryContextData)
-		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamIncapacitated;
-	
-	return;
-}
-
-/**
- * Gets the number of survivors that are currently dead.
- */
-function VSLib::Utils::GetNumberOfTeamDead()
-{
-	if ("NumberOfTeamDead" in ::VSLib.EasyLogic.QueryContextData)
-		return ::VSLib.EasyLogic.QueryContextData.NumberOfTeamDead;
-	
-	return;
-}
-
-/**
  * Get the time since the group was last in combat
  */
 function VSLib::Utils::GetTimeSinceGroupInCombat()
@@ -2788,83 +2989,6 @@ function VSLib::Utils::IsLowViolence()
 {
 	if ("LowViolence" in ::VSLib.EasyLogic.QueryContextData)
 		return (::VSLib.EasyLogic.QueryContextData.LowViolence > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a common infected is near survivors
- */
-function VSLib::Utils::IsCommonInfectedPresent()
-{
-	if ("ZombiePresentNormal" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentNormal > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a smoker is near survivors
- */
-function VSLib::Utils::IsSmokerPresent()
-{
-	if ("ZombiePresentSmoker" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentSmoker > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a hunter is near survivors
- */
-function VSLib::Utils::IsHunterPresent()
-{
-	if ("ZombiePresentHunter" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentHunter > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a boomer is near survivors
- */
-function VSLib::Utils::IsBoomerPresent()
-{
-	if ("ZombiePresentBoomer" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentBoomer > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a charger is near survivors
- */
-function VSLib::Utils::IsChargerPresent()
-{
-	if ("ZombiePresentCharger" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentCharger > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a witch is near survivors
- */
-function VSLib::Utils::IsWitchPresent()
-{
-	if ("ZombiePresentWitch" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentWitch > 0) ? true : false;
-	
-	return false;
-}
-
-/**
- * Returns true if a tank is near survivors
- */
-function VSLib::Utils::IsTankPresent()
-{
-	if ("ZombiePresentTank" in ::VSLib.EasyLogic.QueryContextData)
-		return (::VSLib.EasyLogic.QueryContextData.ZombiePresentTank > 0) ? true : false;
 	
 	return false;
 }

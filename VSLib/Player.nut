@@ -121,6 +121,38 @@ function VSLib::Player::GetBaseCharacterName()
 }
 
 /**
+ * Returns the survivor's filter name.
+ */
+function VSLib::Player::GetFilterName()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return "";
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return "";
+	
+	if ( GetSurvivorCharacter() == 0 )
+		return "!nick";
+	else if ( GetSurvivorCharacter() == 1 )
+		return "!rochelle";
+	else if ( GetSurvivorCharacter() == 2 )
+		return "!coach";
+	else if ( GetSurvivorCharacter() == 3 )
+		return "!ellis";
+	else if ( GetSurvivorCharacter() == 4 )
+		return "!bill";
+	else if ( GetSurvivorCharacter() == 5 )
+		return "!zoey";
+	else if ( GetSurvivorCharacter() == 6 )
+		return "!francis";
+	else if ( GetSurvivorCharacter() == 7 )
+		return "!louis";
+}
+
+/**
  * Gets the player's Steam ID.
  */
 function VSLib::Player::GetSteamID()
@@ -312,10 +344,7 @@ function VSLib::Player::IsIncapacitated()
 		return false;
 	}
 	
-	if (!IsPlayer())
-		return false;
-	
-	return GetPlayerType() == Z_SURVIVOR && _ent.IsIncapacitated();
+	return _ent.IsIncapacitated();
 }
 
 /**
@@ -329,10 +358,7 @@ function VSLib::Player::IsHangingFromLedge()
 		return false;
 	}
 	
-	if (!IsPlayer())
-		return false;
-	
-	return GetPlayerType() == Z_SURVIVOR && _ent.IsHangingFromLedge();
+	return _ent.IsHangingFromLedge();
 }
 
 /**
@@ -566,6 +592,20 @@ function VSLib::Player::IsHumanSpectating()
 		return false;
 	
 	return true;
+}
+
+/**
+ * Returns true if the player is in the starting area of the first map of a campaign.
+ */
+function VSLib::Player::IsInMissionStartArea()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isInMissionStartArea" );
 }
 
 /**
@@ -825,6 +865,114 @@ function VSLib::Player::GetPlayerType()
 }
 
 /**
+ * Returns true if the button exists in the player's current forced buttons.
+ */
+function VSLib::Player::HasForcedButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonForced" );
+	
+	return buttons == ( buttons | button );
+}
+
+/**
+ * Adds the button to the player's current forced buttons.
+ */
+function VSLib::Player::ForceButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonForced" );
+	
+	if ( HasForcedButton(button) )
+		return;
+	
+	SetNetProp( "m_afButtonForced", ( buttons | button ) );
+}
+
+/**
+ * Removes the button from the player's current forced buttons.
+ */
+function VSLib::Player::UnforceButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonForced" );
+	
+	if ( !HasForcedButton(button) )
+		return;
+	
+	SetNetProp( "m_afButtonForced", ( buttons & ~button ) );
+}
+
+/**
+ * Returns true if the button exists in the player's current disabled buttons.
+ */
+function VSLib::Player::HasDisabledButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonDisabled" );
+	
+	return buttons == ( buttons | button );
+}
+
+/**
+ * Adds the button to the player's current disabled buttons.
+ */
+function VSLib::Player::DisableButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonDisabled" );
+	
+	if ( HasDisabledButton(button) )
+		return;
+	
+	SetNetProp( "m_afButtonDisabled", ( buttons | button ) );
+}
+
+/**
+ * Removes the button from the player's current disabled buttons.
+ */
+function VSLib::Player::EnableButton( button )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local buttons = GetNetPropInt( "m_afButtonDisabled" );
+	
+	if ( !HasDisabledButton(button) )
+		return;
+	
+	SetNetProp( "m_afButtonDisabled", ( buttons & ~button ) );
+}
+
+/**
  * Returns the survivor's modelname.
  */
 function VSLib::Player::GetSurvivorModel()
@@ -916,7 +1064,7 @@ function VSLib::Player::Kill()
 /**
  * Ragdolls the player
  */
-function VSLib::Player::Ragdoll()
+function VSLib::Player::Ragdoll( allowDefib = false )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -928,12 +1076,21 @@ function VSLib::Player::Ragdoll()
 		return;
 	
 	local origin = GetLocation();
-	local angles = GetAngles();
+	local angles = GetEyeAngles();
 	
 	local function VSLib_RemoveDeathModel( args )
 	{
 		args.player.GetSurvivorDeathModel().KillEntity();
-		::VSLib.Utils.SpawnRagdoll( args.model, args.origin, args.angles );
+		local ragdoll = ::VSLib.Utils.SpawnRagdoll( args.model, args.origin, args.angles );
+		
+		if ( args.allowDefib )
+		{
+			local deathModel = ::VSLib.Utils.CreateEntity("survivor_death_model", ragdoll.GetLocation());
+			deathModel.SetNetProp("m_nCharacterType", args.player.GetSurvivorCharacter());
+			ragdoll.AttachOther(deathModel, false);
+			::VSLib.EasyLogic.SurvivorRagdolls.rawset(args.player.GetBaseIndex(), {});
+			::VSLib.EasyLogic.SurvivorRagdolls[args.player.GetBaseIndex()]["Ragdoll"] <- ragdoll;
+		}
 	}
 	
 	if ( GetTeam() == 4 )
@@ -946,9 +1103,9 @@ function VSLib::Player::Ragdoll()
 		if ( IsAlive() )
 			Kill();
 		if ( GetSurvivorDeathModel() != null )
-			VSLib_RemoveDeathModel( { player = this, origin = origin, angles = angles, model = GetSurvivorModel() } );
+			VSLib_RemoveDeathModel( { player = this, origin = origin, angles = angles, model = GetSurvivorModel(), allowDefib = allowDefib } );
 		else
-			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { player = this, origin = origin, angles = angles, model = GetSurvivorModel() });
+			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { player = this, origin = origin, angles = angles, model = GetSurvivorModel(), allowDefib = allowDefib });
 	}
 }
 
@@ -1090,7 +1247,7 @@ function VSLib::Player::ClientCommand(str)
 		return;
 	}
 	
-	local cl_cmd = Utils.CreateEntity( "point_clientcommand", GetLocation() );
+	local cl_cmd = ::VSLib.Utils.CreateEntity( "point_clientcommand", GetLocation() );
 	if (!cl_cmd)
 	{
 		printf("VSLib Error: Could not exec cl_cmd; entity is invalid!");
@@ -1134,6 +1291,45 @@ function VSLib::Player::SetHealthBuffer(value)
 	}
 	
 	_ent.SetHealthBuffer(value);
+}
+
+/**
+ * Switches the survivor's health from permanent to temporary and vice-versa.
+ */
+function VSLib::Player::SwitchHealth(type = 0)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( type == 1 )
+	{
+		SetRawHealth(GetHealth());
+		SetHealthBuffer(0);
+	}
+	else if ( type == 2 )
+	{
+		SetHealthBuffer(GetHealth());
+		SetRawHealth(1);
+	}
+	else
+	{
+		if ( GetRawHealth() > 1 )
+		{
+			SetHealthBuffer(GetHealth());
+			SetRawHealth(1);
+		}
+		else
+		{
+			SetRawHealth(GetHealth());
+			SetHealthBuffer(0);
+		}
+	}
 }
 
 /**
@@ -1531,8 +1727,8 @@ function VSLib::Player::IsBoomette()
 	if (GetPlayerType() != Z_BOOMER)
 		return false;
 	
-	if ( GetGender() == 2 )
-		return true;
+	if ("_isBoomette" in ::VSLib.EasyLogic.Cache[_idx])
+		return ::VSLib.EasyLogic.Cache[_idx]._isBoomette;
 	
 	return false;
 }
@@ -1548,13 +1744,11 @@ function VSLib::Player::IsLeaker()
 		return false;
 	}
 	
-	local ability = GetNetPropEntity( "m_customAbility" );
-	
-	if (GetPlayerType() != Z_BOOMER || !ability)
+	if (GetPlayerType() != Z_BOOMER)
 		return false;
 	
-	if ( ability.GetClassname() == "ability_selfdestruct" )
-		return true;
+	if ("_isLeaker" in ::VSLib.EasyLogic.Cache[_idx])
+		return ::VSLib.EasyLogic.Cache[_idx]._isLeaker;
 	
 	return false;
 }
@@ -1694,8 +1888,7 @@ function VSLib::Player::Vomit()
 		return;
 	}
 	
-	if ("HitWithVomit" in _ent)
-		_ent.HitWithVomit();
+	_ent.HitWithVomit();
 }
 
 /**
@@ -1731,6 +1924,46 @@ function VSLib::Player::GiveAmmo( amount )
 	}
 	
 	_ent.GiveAmmo(amount);
+}
+
+/**
+ * Get the amount of zombies the survivor has killed
+ */
+function VSLib::Player::GetZombiesKilled()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !("_zombiesKilled" in ::VSLib.EasyLogic.Cache[_idx]) )
+		return 0;
+	
+	return ::VSLib.EasyLogic.Cache[_idx]._zombiesKilled;
+}
+
+/**
+ * Get the amount of zombies the survivor has killed while being incapacitated
+ */
+function VSLib::Player::GetZombiesKilledWhileIncapacitated()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return;
+	
+	if ( !("_zombiesKilledWhileIncapacitated" in ::VSLib.EasyLogic.Cache[_idx]) )
+		return 0;
+	
+	return ::VSLib.EasyLogic.Cache[_idx]._zombiesKilledWhileIncapacitated;
 }
 
 /**
@@ -2028,185 +2261,6 @@ function VSLib::Player::Speak( scene, delay = 0 )
 		SpeakScene( { scene = scene, player = this } );
 }
 
-
-
-
-
-/**
- * Stops Amnesia/HL2 style object pickups
- */
-function VSLib::Player::DisablePickups( )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (_idx in ::VSLib.EntData._objPickupTimer)
-		::VSLib.Timers.RemoveTimer(::VSLib.EntData._objPickupTimer[_idx]);
-}
-
-/**
- * Enables Amnesia/HL2 style object pickups
- */
-function VSLib::Player::AllowPickups( BTN_PICKUP, BTN_THROW )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	DisablePickups();
-	
-	::VSLib.EntData._objBtnPickup[_idx] <- BTN_PICKUP;
-	::VSLib.EntData._objBtnThrow[_idx] <- BTN_THROW;
-	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
-	::VSLib.EntData._objHolding[_idx] <- null;
-	
-	::VSLib.EntData._objPickupTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, 1, @(pEnt) pEnt.__CalcPickups(), this);
-}
-
-/**
- * Instead of using this directly, @see AllowPickups
- */
-function VSLib::Player::__CalcPickups( )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	// Update global entity cache
-	local buttons = GetPressedButtons();
-	local OldButtons = ::VSLib.EntData._objOldBtnMask[_idx];
-	local btnPickup = ::VSLib.EntData._objBtnPickup[_idx];
-	local btnThrow = ::VSLib.EntData._objBtnThrow[_idx];
-	local HoldingEntity = ::VSLib.EntData._objHolding[_idx];
-	
-	// Constants -- \todo @TODO Make these user-configurable
-	const DISTANCE_TO_HOLD = 100.0
-	const DISTANCE_CLOSE = 256.0;
-	const OBJECT_SPEED = 25.0;
-	const THROW_SPEED = 1000.0;
-	
-	// Are they trying to pick up an object?
-	if (buttons & btnPickup && !(OldButtons & btnPickup) && HoldingEntity == null && !(buttons & btnThrow) && !IsIncapacitated() && !IsHangingFromLedge())
-	{
-		// Are they looking at a valid grabbable entity?
-		// If so, then cache it.
-		local object = GetLookingEntity();
-		if (object != null)
-			::VSLib.EntData._objHolding[_idx] <- object;
-	}
-	
-	// Are they holding an object?
-	else if (buttons & btnPickup && OldButtons & btnPickup && !(buttons & btnThrow) &&
-			HoldingEntity != null && !IsIncapacitated() && !IsHangingFromLedge())
-	{
-		if (HoldingEntity.IsEntityValid())
-		{	
-			local eyeAngles = GetEyeAngles();
-			if (eyeAngles == null) return;
-			local vecDir = eyeAngles.Forward();
-			
-			local vecPos = GetEyePosition();
-			if (vecPos == null) return;
-			
-			local holdPos = HoldingEntity.GetLocation();
-			if (holdPos == null) return;
-			
-			if (::VSLib.Utils.CalculateDistance(vecPos, holdPos) < DISTANCE_CLOSE)
-			{
-				// update object 
-				vecPos.x += vecDir.x * DISTANCE_TO_HOLD;
-				vecPos.y += vecDir.y * DISTANCE_TO_HOLD;
-				vecPos.z += vecDir.z * DISTANCE_TO_HOLD;
-				
-				local vecVel = vecPos - holdPos;
-				vecVel = vecVel.Scale(OBJECT_SPEED);
-				
-				HoldingEntity.SetVelocity(vecVel);
-			}
-			else
-			{
-				// Entity is no longer valid
-				DropPickup();
-			}
-		}
-	}
-	// Are they trying to throw the object?
-	else if(buttons & btnPickup && OldButtons & btnPickup && buttons & btnThrow && HoldingEntity != null)
-	{
-		if (HoldingEntity.IsEntityValid())
-		{
-			// then throw it!
-			local eyeAngles = GetEyeAngles();
-			if (eyeAngles == null) return;
-			local speed = eyeAngles.Forward().Scale(THROW_SPEED);
-			HoldingEntity.Push(speed);
-			DropPickup();
-		}
-	}
-	// Are they letting go of an object?
-	else if (!(buttons & btnPickup) && OldButtons & btnPickup && HoldingEntity != null)
-	{
-		if (HoldingEntity.IsEntityValid())
-		{	
-			// let go of the object
-			DropPickup();
-		}
-	}
-	
-	// Cache old buttons
-	::VSLib.EntData._objOldBtnMask[_idx] <- buttons;
-}
-
-/**
- * Drops the held HL2/Amnesia physics-based object or the valve-style object
- */
-function VSLib::Player::DropPickup( )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	// Drop amnesia object
-	::VSLib.EntData._objHolding[_idx] <- null;
-	
-	// Drop valve object
-	if (_idx in ::VSLib.EntData._objValveHolding)
-	{
-		::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), 100));
-		delete ::VSLib.EntData._objValveHolding[_idx];
-	}
-}
-
-
-/**
- * Picks up the given VSLib Entity object
- */
-function VSLib::Player::NativePickupObject( otherEnt )
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	DropPickup();
-	
-	if (otherEnt.GetClassname() != "prop_physics")
-		return;
-	
-	::VSLib.EntData._objValveHolding[_idx] <- otherEnt.GetBaseEntity();
-	PickupObject(_ent, otherEnt.GetBaseEntity());
-}
-
 /**
  * Gives a random melee weapon.
  */
@@ -2221,6 +2275,33 @@ function VSLib::Player::GiveRandomMelee( )
 	local melee = ::VSLib.Entity(g_ModeScript.SpawnMeleeWeapon( "any", Vector(0,0,0), QAngle(0,0,0) ));
 	Use(melee);
 	melee.Input("Kill");
+}
+
+/**
+ * Gives a weapon and sets an optional ammo count.
+ */
+function VSLib::Player::GiveWeapon(str, ammo = 0)
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( HasItem(str) )
+		return;
+	
+	local function GiveAmmoDelay(args)
+	{
+		args.player.GiveAmmo(args.ammo);
+	}
+	
+	if ( str.find("weapon_") == null )
+		str = "weapon_" + str;
+	
+	local wep = ::VSLib.Utils.CreateEntity(str);
+	Use(wep);
+	::VSLib.Timers.AddTimer(0.2, false, GiveAmmoDelay, {player = this, ammo = ammo});
 }
 
 /**
@@ -2404,10 +2485,201 @@ function VSLib::Player::HasLaserSight()
 	return false;
 }
 
+/**
+ * Get the current state the infected is in
+ */
+function VSLib::Player::GetInfectedState()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (GetTeam() != INFECTED)
+		return;
+	
+	return GetNetPropInt( "m_zombieState" );
+}
 
 
 
 
+
+/**
+ * Stops Amnesia/HL2 style object pickups
+ */
+function VSLib::Player::DisablePickups( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (_idx in ::VSLib.EntData._objPickupTimer)
+		::VSLib.Timers.RemoveTimer(::VSLib.EntData._objPickupTimer[_idx]);
+}
+
+/**
+ * Enables Amnesia/HL2 style object pickups
+ */
+function VSLib::Player::AllowPickups( BTN_PICKUP, BTN_THROW )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	DisablePickups();
+	
+	::VSLib.EntData._objBtnPickup[_idx] <- BTN_PICKUP;
+	::VSLib.EntData._objBtnThrow[_idx] <- BTN_THROW;
+	::VSLib.EntData._objOldBtnMask[_idx] <- GetPressedButtons();
+	::VSLib.EntData._objHolding[_idx] <- null;
+	
+	::VSLib.EntData._objPickupTimer[_idx] <- ::VSLib.Timers.AddTimer(0.1, 1, @(pEnt) pEnt.__CalcPickups(), this);
+}
+
+/**
+ * Instead of using this directly, @see AllowPickups
+ */
+function VSLib::Player::__CalcPickups( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	// Update global entity cache
+	local buttons = GetPressedButtons();
+	local OldButtons = ::VSLib.EntData._objOldBtnMask[_idx];
+	local btnPickup = ::VSLib.EntData._objBtnPickup[_idx];
+	local btnThrow = ::VSLib.EntData._objBtnThrow[_idx];
+	local HoldingEntity = ::VSLib.EntData._objHolding[_idx];
+	
+	// Constants -- \todo @TODO Make these user-configurable
+	const DISTANCE_TO_HOLD = 100.0
+	const DISTANCE_CLOSE = 256.0;
+	const OBJECT_SPEED = 25.0;
+	const THROW_SPEED = 1000.0;
+	
+	// Are they trying to pick up an object?
+	if (buttons & btnPickup && !(OldButtons & btnPickup) && HoldingEntity == null && !(buttons & btnThrow) && !IsIncapacitated() && !IsHangingFromLedge())
+	{
+		// Are they looking at a valid grabbable entity?
+		// If so, then cache it.
+		local object = GetLookingEntity();
+		if (object != null)
+			::VSLib.EntData._objHolding[_idx] <- object;
+	}
+	
+	// Are they holding an object?
+	else if (buttons & btnPickup && OldButtons & btnPickup && !(buttons & btnThrow) &&
+			HoldingEntity != null && !IsIncapacitated() && !IsHangingFromLedge())
+	{
+		if (HoldingEntity.IsEntityValid())
+		{	
+			local eyeAngles = GetEyeAngles();
+			if (eyeAngles == null) return;
+			local vecDir = eyeAngles.Forward();
+			
+			local vecPos = GetEyePosition();
+			if (vecPos == null) return;
+			
+			local holdPos = HoldingEntity.GetLocation();
+			if (holdPos == null) return;
+			
+			if (::VSLib.Utils.CalculateDistance(vecPos, holdPos) < DISTANCE_CLOSE)
+			{
+				// update object 
+				vecPos.x += vecDir.x * DISTANCE_TO_HOLD;
+				vecPos.y += vecDir.y * DISTANCE_TO_HOLD;
+				vecPos.z += vecDir.z * DISTANCE_TO_HOLD;
+				
+				local vecVel = vecPos - holdPos;
+				vecVel = vecVel.Scale(OBJECT_SPEED);
+				
+				HoldingEntity.SetVelocity(vecVel);
+			}
+			else
+			{
+				// Entity is no longer valid
+				DropPickup();
+			}
+		}
+	}
+	// Are they trying to throw the object?
+	else if(buttons & btnPickup && OldButtons & btnPickup && buttons & btnThrow && HoldingEntity != null)
+	{
+		if (HoldingEntity.IsEntityValid())
+		{
+			// then throw it!
+			local eyeAngles = GetEyeAngles();
+			if (eyeAngles == null) return;
+			local speed = eyeAngles.Forward().Scale(THROW_SPEED);
+			HoldingEntity.Push(speed);
+			DropPickup();
+		}
+	}
+	// Are they letting go of an object?
+	else if (!(buttons & btnPickup) && OldButtons & btnPickup && HoldingEntity != null)
+	{
+		if (HoldingEntity.IsEntityValid())
+		{	
+			// let go of the object
+			DropPickup();
+		}
+	}
+	
+	// Cache old buttons
+	::VSLib.EntData._objOldBtnMask[_idx] <- buttons;
+}
+
+/**
+ * Drops the held HL2/Amnesia physics-based object or the valve-style object
+ */
+function VSLib::Player::DropPickup( )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	// Drop amnesia object
+	::VSLib.EntData._objHolding[_idx] <- null;
+	
+	// Drop valve object
+	if (_idx in ::VSLib.EntData._objValveHolding)
+	{
+		::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), 100));
+		delete ::VSLib.EntData._objValveHolding[_idx];
+	}
+}
+
+
+/**
+ * Picks up the given VSLib Entity object
+ */
+function VSLib::Player::NativePickupObject( otherEnt )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	DropPickup();
+	
+	if (otherEnt.GetClassname() != "prop_physics")
+		return;
+	
+	::VSLib.EntData._objValveHolding[_idx] <- otherEnt.GetBaseEntity();
+	PickupObject(_ent, otherEnt.GetBaseEntity());
+}
 
 /**
  * Enables Valve-style object pickups
@@ -2574,7 +2846,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 			PlaySound(pickupSound);
 			
 			if (::VSLib.EntData._objEnableDmg[_idx])
-				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
+				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = ::VSLib.Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveHoldDmg[_idx] } );
 		}
 	}
 	else if (IsPressingAttack() && _idx in ::VSLib.EntData._objValveHolding)
@@ -2584,7 +2856,7 @@ function VSLib::Player::__CalcValvePickups( pickupSound, throwSound )
 			::VSLib.EntData._objValveHolding[_idx].ApplyAbsVelocityImpulse(::VSLib.Utils.VectorFromQAngle(GetEyeAngles(), ::VSLib.EntData._objValveThrowPower[_idx]));
 			
 			if (::VSLib.EntData._objEnableDmg[_idx])
-				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
+				::VSLib.Timers.AddTimerByName( "vPickup" + _idx, 0.1, true, _calcThrowDmg, { ent = ::VSLib.Entity(::VSLib.EntData._objValveHolding[_idx]), ignore = this, dmg = ::VSLib.EntData._objValveThrowDmg[_idx] }, TIMER_FLAG_COUNTDOWN, { count = 12 } );
 			
 			delete ::VSLib.EntData._objValveHolding[_idx];
 			PlaySound(throwSound);
@@ -2858,63 +3130,6 @@ function VSLib::Player::GetTimeSinceCombat()
 		return;
 	
 	return ::VSLib.EasyLogic.Cache[_idx]._timeSinceCombat;
-}
-
-/**
- * Get the amount of zombies the survivor has killed while being incapacitated
- */
-function VSLib::Player::GetZombiesKilledWhileIncapacitated()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	if ( !("_zombiesKilledWhileIncapacitated" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return;
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._zombiesKilledWhileIncapacitated;
-}
-
-/**
- * Get the speed the player is moving
- */
-function VSLib::Player::GetMovementSpeed()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if ( !("_movementSpeed" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return;
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._movementSpeed;
-}
-
-/**
- * Get the current state the infected is in
- */
-function VSLib::Player::GetInfectedState()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetTeam() != INFECTED)
-		return;
-	
-	if ( !("_infectedState" in ::VSLib.EasyLogic.Cache[_idx]) )
-		return "";
-	
-	return ::VSLib.EasyLogic.Cache[_idx]._infectedState;
 }
 
 /**

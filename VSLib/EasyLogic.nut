@@ -119,6 +119,9 @@
 	RescueVehicleIncoming = false
 	RescueVehicleLeaving = false
 	
+	// Used for Player.Ragdoll()
+	SurvivorRagdolls = {}
+	
 	// Used for Utils.SpawnSurvivor()
 	ExtraBills = []
 	ExtraBillsData = {}
@@ -392,6 +395,10 @@
 	OnSurvivorsLeftStartArea = {}
 	OnEnterRescueVehicle = {}
 	OnLeaveRescueVehicle = {}
+	
+	// SourceTV events
+	OnSourceTVStatus = {}
+	OnSourceTVRankEntity = {}
 	
 	// Hint events from info_game_event_proxy
 	OnExplainSurvivorGlowsDisabled = {}
@@ -1228,12 +1235,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.QueryContextData.NumberInSafeSpot <- query.numberinsafespot;
 		if ( "numberoutsidesafespot" in query )
 			::VSLib.EasyLogic.QueryContextData.NumberOutsideSafeSpot <- query.numberoutsidesafespot;
-		if ( "numberofteamalive" in query )
-			::VSLib.EasyLogic.QueryContextData.NumberOfTeamAlive <- query.numberofteamalive;
-		if ( "numberofteamincapacitated" in query )
-			::VSLib.EasyLogic.QueryContextData.NumberOfTeamIncapacitated <- query.numberofteamincapacitated;
-		if ( "numberofteamdead" in query )
-			::VSLib.EasyLogic.QueryContextData.NumberOfTeamDead <- query.numberofteamdead;
 		if ( "timesincegroupincombat" in query )
 			::VSLib.EasyLogic.QueryContextData.TimeSinceGroupInCombat <- query.timesincegroupincombat;
 		if ( "introactor" in query )
@@ -1242,34 +1243,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.QueryContextData.CampaignRandomNum <- query.campaignrandomnum;
 		if ( "lowviolence" in query )
 			::VSLib.EasyLogic.QueryContextData.LowViolence <- query.lowviolence;
-		if ( "zombiepresentnormal" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentNormal <- query.zombiepresentnormal;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentNormal <- 0;
-		if ( "zombiepresentsmoker" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentSmoker <- query.zombiepresentsmoker;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentSmoker <- 0;
-		if ( "zombiepresenthunter" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentHunter <- query.zombiepresenthunter;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentHunter <- 0;
-		if ( "zombiepresentboomer" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentBoomer <- query.zombiepresentboomer;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentBoomer <- 0;
-		if ( "zombiepresentcharger" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentCharger <- query.zombiepresentcharger;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentCharger <- 0;
-		if ( "zombiepresentwitch" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentWitch <- query.zombiepresentwitch;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentWitch <- 0;
-		if ( "zombiepresenttank" in query )
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentTank <- query.zombiepresenttank;
-		else
-			::VSLib.EasyLogic.QueryContextData.ZombiePresentTank <- 0;
 		
 		local _id = ::VSLib.Utils.StringReplace(query.concept, "VSLibQueryData_", "").tointeger();
 		
@@ -1277,8 +1250,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 			::VSLib.EasyLogic.Cache[_id]._inCombat <- query.incombat;
 		if ( "timesincecombat" in query )
 			::VSLib.EasyLogic.Cache[_id]._timeSinceCombat <- query.timesincecombat;
-		if ( "movementspeed" in query )
-			::VSLib.EasyLogic.Cache[_id]._movementSpeed <- query.movementspeed;
 		
 		if ( query.team == "Survivor" || query.team == "L4D1_Survivor" )
 		{
@@ -1307,10 +1278,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 				::VSLib.EasyLogic.Cache[_id]._sneaking <- query.sneaking;
 			if ( "timeaveragedintensity" in query )
 				::VSLib.EasyLogic.Cache[_id]._timeAveragedIntensity <- query.timeaveragedintensity;
-			if ( "beinghealed" in query )
-				::VSLib.EasyLogic.Cache[_id]._beingHealed <- query.beinghealed;
-			if ( "zombieskilledwhileincapacitated" in query )
-				::VSLib.EasyLogic.Cache[_id]._zombiesKilledWhileIncapacitated <- query.zombieskilledwhileincapacitated;
 			if ( "botisinnarrowcorridor" in query )
 				::VSLib.EasyLogic.Cache[_id]._botIsInNarrowCorridor <- query.botisinnarrowcorridor;
 			if ( "botisnearcheckpoint" in query )
@@ -1327,11 +1294,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 				::VSLib.EasyLogic.Cache[_id]._botClosestInCombatFriend <- query.botclosestincombatfriend;
 			if ( "botisavailable" in query )
 				::VSLib.EasyLogic.Cache[_id]._botIsAvailable <- query.botisavailable;
-		}
-		else if ( query.team == "Infected" )
-		{
-			if ( "infectedstate" in query )
-				::VSLib.EasyLogic.Cache[_id]._infectedState <- query.infectedstate;
 		}
 		
 		return false;
@@ -1697,6 +1659,24 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		::VSLib.EasyLogic.Cache[idx]._isFrustrated <- false;
 	}
 	
+	if ( (ents.attacker != null) && (ents.attacker.IsSurvivor()) && (ents.entity.GetTeam() == INFECTED) )
+	{
+		local _id = ents.attacker.GetIndex();
+		
+		if ( ents.attacker.IsIncapacitated() )
+		{
+			if ( !("_zombiesKilledWhileIncapacitated" in ::VSLib.EasyLogic.Cache[_id]) )
+				::VSLib.EasyLogic.Cache[_id]._zombiesKilledWhileIncapacitated <- 0;
+			
+			::VSLib.EasyLogic.Cache[_id]._zombiesKilledWhileIncapacitated++;
+		}
+		
+		if ( !("_zombiesKilled" in ::VSLib.EasyLogic.Cache[_id]) )
+			::VSLib.EasyLogic.Cache[_id]._zombiesKilled <- 0;
+		
+		::VSLib.EasyLogic.Cache[_id]._zombiesKilled++;
+	}
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDeath)
 		func(ents.entity, ents.attacker, params);
 }
@@ -1755,6 +1735,12 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local idx = subject.GetIndex();
 	::VSLib.EasyLogic.Cache[idx]._isAlive <- true;
 	::VSLib.EasyLogic.Cache[idx]._lastDefibBy <- reviver;
+	
+	if ( subject.GetBaseIndex() in ::VSLib.EasyLogic.SurvivorRagdolls )
+	{
+		::VSLib.EasyLogic.SurvivorRagdolls[subject.GetBaseIndex()]["Ragdoll"].Kill();
+		::VSLib.EasyLogic.SurvivorRagdolls.rawdelete(subject.GetBaseIndex());
+	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnDefibSuccess)
 		func(subject, reviver, params);
@@ -1902,10 +1888,25 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if (ents.entity.IsBot() && ents.entity.GetTeam() == INFECTED && _id in ::VSLib.GlobalCache)
 		delete ::VSLib.GlobalCache[_id];
 	
+	if ("_isLeaker" in ::VSLib.EasyLogic.Cache[_id])
+		delete ::VSLib.EasyLogic.Cache[_id]["_isLeaker"];
+	if ("_isBoomette" in ::VSLib.EasyLogic.Cache[_id])
+		delete ::VSLib.EasyLogic.Cache[_id]["_isBoomette"];
+	
 	if ( ents.entity.GetTeam() == SURVIVORS && !(_id in ::VSLib.EasyLogic.SurvivorsSpawned) )
 	{
 		::VSLib.EasyLogic.SurvivorsSpawned[_id] <- true;
 		::VSLib.Timers.AddTimer(0.1, false, vslib_survivors_spawned, ::VSLib.EasyLogic.SurvivorsSpawned.len());
+	}
+	
+	if ( ents.entity.GetType() == Z_BOOMER )
+	{
+		local ability = ents.entity.GetNetPropEntity( "m_customAbility" );
+		
+		if ( (ability) && (ability.GetClassname() == "ability_selfdestruct") )
+			::VSLib.EasyLogic.Cache[_id]._isLeaker <- true;
+		if ( ents.entity.GetGender() == FEMALE )
+			::VSLib.EasyLogic.Cache[_id]._isBoomette <- true;
 	}
 	
 	if ( ::VSLib.EasyLogic.SpawnExtraSurvivor && ents.entity.GetSurvivorCharacter() == 4 )
@@ -2387,9 +2388,10 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	local giver = ::VSLib.EasyLogic.GetEventPlayer(params, "giver");
+	local weapon = ::VSLib.EasyLogic.GetEventEntity(params, "weaponentid");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponGiven)
-		func(ents.entity, giver, params);
+		func(ents.entity, giver, weapon, params);
 }
 
 ::VSLib.EasyLogic.Events.OnGameEvent_weapon_drop <- function (params)
@@ -2824,6 +2826,14 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if (rescuerid != 0)
 		rescuer = ::VSLib.EasyLogic.GetEventPlayer(params, "rescuer");
 	local victim = ::VSLib.EasyLogic.GetEventPlayer(params, "victim");
+	
+	::VSLib.EasyLogic.Cache[victim.GetIndex()]._isAlive <- true;
+	
+	if ( victim.GetBaseIndex() in ::VSLib.EasyLogic.SurvivorRagdolls )
+	{
+		::VSLib.EasyLogic.SurvivorRagdolls[victim.GetBaseIndex()]["Ragdoll"].Kill();
+		::VSLib.EasyLogic.SurvivorRagdolls.rawdelete(victim.GetBaseIndex());
+	}
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorRescued)
 		func(rescuer, victim, params);
@@ -3315,6 +3325,32 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnChristmasGiftGrab)
 		func(player, params);
+}
+
+
+
+::VSLib.EasyLogic.Events.OnGameEvent_hltv_status <- function (params)
+{
+	local clients = ::VSLib.EasyLogic.GetEventInt(params, "clients");
+	local slots = ::VSLib.EasyLogic.GetEventInt(params, "slots");
+	local proxies = ::VSLib.EasyLogic.GetEventInt(params, "proxies");
+	local master = ::VSLib.EasyLogic.GetEventString(params, "master");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSourceTVStatus)
+		func(clients, slots, proxies, master, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_hltv_rank_entity <- function (params)
+{
+	local entity = ::VSLib.EasyLogic.GetEventEntity(params, "index");
+	if ( entity.IsPlayer() )
+		entity = ::VSLib.EasyLogic.GetEventPlayer(params, "index");
+	
+	local rank = ::VSLib.EasyLogic.GetEventFloat(params, "rank");
+	local target = ::VSLib.EasyLogic.GetEventInt(params, "target");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnSourceTVRankEntity)
+		func(entity, rank, target, params);
 }
 
 
@@ -4618,6 +4654,27 @@ function VSLib::EasyLogic::Players::AliveSurvivorBots()
 }
 
 /**
+ * Returns a table of all incapacitated survivor bots.
+ */
+function VSLib::EasyLogic::Players::IncapacitatedSurvivorBots()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.IsBot() && libObj.GetTeam() == SURVIVORS && libObj.IsIncapacitated())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a table of all dead survivor bots.
  */
 function VSLib::EasyLogic::Players::DeadSurvivorBots()
@@ -4816,6 +4873,27 @@ function VSLib::EasyLogic::Players::AliveSurvivors()
 }
 
 /**
+ * Returns a table of all incapacitated survivors.
+ */
+function VSLib::EasyLogic::Players::IncapacitatedSurvivors()
+{
+	local t = {};
+	local ent = null;
+	local i = -1;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && libObj.IsIncapacitated())
+				t[++i] <- libObj;
+		}
+	}
+	
+	return t;
+}
+
+/**
  * Returns a table of all dead survivors.
  */
 function VSLib::EasyLogic::Players::DeadSurvivors()
@@ -4875,6 +4953,25 @@ function VSLib::EasyLogic::Players::AnyAliveSurvivor()
 }
 
 /**
+ * Returns one valid incapacitated survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::AnyIncapacitatedSurvivor()
+{
+	local ent = null;
+	while (ent = Entities.FindByClassname(ent, "player"))
+	{
+		if (ent.IsValid())
+		{
+			local libObj = ::VSLib.Player(ent);
+			if (libObj.GetTeam() == SURVIVORS && libObj.IsIncapacitated())
+				return libObj;
+		}
+	}
+	
+	return null;
+}
+
+/**
  * Returns one valid alive survivor, or null if none exist
  */
 function VSLib::EasyLogic::Players::AnyDeadSurvivor()
@@ -4899,6 +4996,14 @@ function VSLib::EasyLogic::Players::AnyDeadSurvivor()
 function VSLib::EasyLogic::Players::RandomAliveSurvivor()
 {
 	return ::VSLib.Utils.GetRandValueFromArray(Players.AliveSurvivors());
+}
+
+/**
+ * Returns one RANDOM valid incapacitated survivor, or null if none exist
+ */
+function VSLib::EasyLogic::Players::RandomIncapacitatedSurvivor()
+{
+	return ::VSLib.Utils.GetRandValueFromArray(Players.IncapacitatedSurvivors());
 }
 
 /**
@@ -5329,6 +5434,24 @@ function VSLib::EasyLogic::Objects::AliveAroundRadius(pos, radius)
 			delete t[idx];
 		else if (::VSLib.Player(ent).IsDead()) // tag on a branched if statement
 			delete t[idx];
+	
+	return t;
+}
+
+/**
+ * Returns a table of all mounted guns and miniguns.
+ */
+function VSLib::EasyLogic::Objects::MountedGuns()
+{
+	local t = {};
+	local i = -1;
+	
+	foreach( ent in ::VSLib.EasyLogic.Objects.OfClassname("prop_minigun") )
+		t[i++] <- ent;
+	foreach( ent in ::VSLib.EasyLogic.Objects.OfClassname("prop_minigun_l4d1") )
+		t[i++] <- ent;
+	foreach( ent in ::VSLib.EasyLogic.Objects.OfClassname("prop_mounted_machine_gun") )
+		t[i++] <- ent;
 	
 	return t;
 }
