@@ -278,6 +278,12 @@ getconsttable()["DMG_BUCKSHOT"] <- (1 << 29);
 getconsttable()["DMG_HEADSHOT"] <- (1 << 30);
 getconsttable()["DMG_DISMEMBER"] <- (1 << 31);
 
+// Settings for the m_takedamage network property
+getconsttable()["DAMAGE_NO"] <- 0;
+getconsttable()["DAMAGE_EVENTS_ONLY"] <- 1;
+getconsttable()["DAMAGE_YES"] <- 2;
+getconsttable()["DAMAGE_AIM"] <- 3;
+
 // Move types to be used with network properties
 getconsttable()["MOVETYPE_NONE"] <- 0;		/**< never moves */
 getconsttable()["MOVETYPE_ISOMETRIC"] <- 1;		/**< For players */
@@ -470,9 +476,9 @@ function VSLib::Entity::IsEntityValid()
 }
 
 /**
- * Gets an integer from the entity's network property field.
+ * Gets a string from the entity's network property field.
  */
-function VSLib::Entity::GetNetPropInt( prop )
+function VSLib::Entity::GetNetPropString( prop, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -480,13 +486,27 @@ function VSLib::Entity::GetNetPropInt( prop )
 		return;
 	}
 	
-	return NetProps.GetPropInt( _ent, prop );
+	return NetProps.GetPropStringArray( _ent, prop.tostring(), element.tointeger() );
+}
+
+/**
+ * Gets an integer from the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropInt( prop, element = 0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropIntArray( _ent, prop.tostring(), element.tointeger() );
 }
 
 /**
  * Gets a float from the entity's network property field.
  */
-function VSLib::Entity::GetNetPropFloat( prop )
+function VSLib::Entity::GetNetPropFloat( prop, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -494,13 +514,13 @@ function VSLib::Entity::GetNetPropFloat( prop )
 		return;
 	}
 	
-	return NetProps.GetPropFloat( _ent, prop );
+	return NetProps.GetPropFloatArray( _ent, prop.tostring(), element.tointeger() );
 }
 
 /**
  * Gets a Vector from the entity's network property field.
  */
-function VSLib::Entity::GetNetPropVector( prop )
+function VSLib::Entity::GetNetPropVector( prop, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -508,13 +528,13 @@ function VSLib::Entity::GetNetPropVector( prop )
 		return;
 	}
 	
-	return NetProps.GetPropVector( _ent, prop );
+	return NetProps.GetPropVectorArray( _ent, prop.tostring(), element.tointeger() );
 }
 
 /**
  * Gets an entity from the entity's network property field.
  */
-function VSLib::Entity::GetNetPropEntity( prop )
+function VSLib::Entity::GetNetPropEntity( prop, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -522,7 +542,7 @@ function VSLib::Entity::GetNetPropEntity( prop )
 		return;
 	}
 	
-	local entity = NetProps.GetPropEntity( _ent, prop );
+	local entity = NetProps.GetPropEntityArray( _ent, prop.tostring(), element.tointeger() );
 	if (!entity)
 		return null;
 	return ::VSLib.Utils.GetEntityOrPlayer( entity );
@@ -531,7 +551,7 @@ function VSLib::Entity::GetNetPropEntity( prop )
 /**
  * Gets a boolean from the entity's network property field.
  */
-function VSLib::Entity::GetNetPropBool( prop )
+function VSLib::Entity::GetNetPropBool( prop, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -539,13 +559,62 @@ function VSLib::Entity::GetNetPropBool( prop )
 		return;
 	}
 	
-	return (NetProps.GetPropInt( _ent, prop ) > 0) ? true : false;
+	return (NetProps.GetPropIntArray( _ent, prop.tostring(), element.tointeger() ) > 0) ? true : false;
+}
+
+/**
+ * Gets an entity's network property field.
+ */
+function VSLib::Entity::GetNetProp( prop, element = 0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (!HasNetProp( prop ))
+		return null;
+	
+	local type = GetNetPropType( prop );
+	
+	if (type == "integer")
+	{
+		local entity = GetNetPropEntity( prop, element );
+		
+		if ( entity != null )
+			return entity;
+		else
+			return GetNetPropInt( prop, element );
+	}
+	else if (type == "float")
+		return GetNetPropFloat( prop, element );
+	else if (type == "string")
+		return GetNetPropString( prop, element );
+	else if (type == "Vector")
+		return GetNetPropVector( prop, element );
+	
+	return null;
+}
+
+/**
+ * Sets an entity's network property field by string.
+ */
+function VSLib::Entity::SetNetPropString( prop, value, element = 0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	NetProps.SetPropStringArray( _ent, prop.tostring(), value.tostring(), element.tointeger() );
 }
 
 /**
  * Sets an entity's network property field by integer.
  */
-function VSLib::Entity::SetNetPropInt( prop, value )
+function VSLib::Entity::SetNetPropInt( prop, value, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -553,13 +622,13 @@ function VSLib::Entity::SetNetPropInt( prop, value )
 		return;
 	}
 	
-	NetProps.SetPropInt( _ent, prop.tostring(), value.tointeger() );
+	NetProps.SetPropIntArray( _ent, prop.tostring(), value.tointeger(), element.tointeger() );
 }
 
 /**
  * Sets an entity's network property field by float.
  */
-function VSLib::Entity::SetNetPropFloat( prop, value )
+function VSLib::Entity::SetNetPropFloat( prop, value, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -567,13 +636,13 @@ function VSLib::Entity::SetNetPropFloat( prop, value )
 		return;
 	}
 	
-	NetProps.SetPropFloat( _ent, prop.tostring(), value.tofloat() );
+	NetProps.SetPropFloatArray( _ent, prop.tostring(), value.tofloat(), element.tointeger() );
 }
 
 /**
  * Sets an entity's network property field by Vector.
  */
-function VSLib::Entity::SetNetPropVector( prop, value )
+function VSLib::Entity::SetNetPropVector( prop, value, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -581,13 +650,13 @@ function VSLib::Entity::SetNetPropVector( prop, value )
 		return;
 	}
 	
-	NetProps.SetPropVector( _ent, prop.tostring(), value );
+	NetProps.SetPropVectorArray( _ent, prop.tostring(), value, element.tointeger() );
 }
 
 /**
  * Sets an entity's network property field by entity.
  */
-function VSLib::Entity::SetNetPropEntity( prop, value )
+function VSLib::Entity::SetNetPropEntity( prop, value, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -595,13 +664,16 @@ function VSLib::Entity::SetNetPropEntity( prop, value )
 		return;
 	}
 	
-	NetProps.SetPropEntity( _ent, prop.tostring(), value.GetBaseEntity() );
+	if ( typeof value == "VSLIB_ENTITY" || typeof value == "VSLIB_PLAYER" )
+		value = value.GetBaseEntity();
+	
+	NetProps.SetPropEntityArray( _ent, prop.tostring(), value, element.tointeger() );
 }
 
 /**
  * Sets an entity's network property field.
  */
-function VSLib::Entity::SetNetProp( prop, value )
+function VSLib::Entity::SetNetProp( prop, value, element = 0 )
 {
 	if (!IsEntityValid())
 	{
@@ -609,16 +681,86 @@ function VSLib::Entity::SetNetProp( prop, value )
 		return;
 	}
 	
-	//if (typeof value == "string")
-		//NetProps.SetPropString( _ent, prop.tostring(), value.tostring() );
-	if (typeof value == "integer" || typeof value == "bool")
-		SetNetPropInt( prop, value );
+	if (typeof value == "string")
+		SetNetPropString( prop, value, element );
+	else if (typeof value == "integer" || typeof value == "bool")
+		SetNetPropInt( prop, value, element );
 	else if (typeof value == "float")
-		SetNetPropFloat( prop, value );
+		SetNetPropFloat( prop, value, element );
 	else if (typeof value == "Vector")
-		SetNetPropVector( prop, value );
+		SetNetPropVector( prop, value, element );
 	else
-		SetNetPropEntity( prop, value );
+		SetNetPropEntity( prop, value, element );
+}
+
+/**
+ * Gets the size of the entity's network property field's array.
+ */
+function VSLib::Entity::GetNetPropArraySize( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropArraySize( _ent, prop.tostring() );
+}
+
+/**
+ * Returns true if the network property field exists for the entity.
+ */
+function VSLib::Entity::HasNetProp( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.HasProp( _ent, prop.tostring() );
+}
+
+/**
+ * Gets the type of the entity's network property field.
+ */
+function VSLib::Entity::GetNetPropType( prop )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return NetProps.GetPropType( _ent, prop.tostring() );
+}
+
+/**
+ * Gets a table of the entity's glow color.
+ */
+function VSLib::Entity::GetGlowColor()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return ::VSLib.Utils.GetColor32( GetNetPropInt( "m_Glow.m_glowColorOverride" ) );
+}
+
+/**
+ * Sets the glow color for the entity.
+ */
+function VSLib::Entity::SetGlowColor( red, green, blue, alpha = 255 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetNetProp( "m_Glow.m_glowColorOverride", ::VSLib.Utils.SetColor32( red, green, blue, alpha ) );
 }
 
 /**
@@ -773,7 +915,7 @@ function VSLib::Entity::HurtAround(value, dmgtype = 0, weapon = "", attacker = n
 /**
  * Damages the entity.
  */
-function VSLib::Entity::Damage(value, dmgtype = 0)
+function VSLib::Entity::Damage(value, dmgtype = 0, attacker = null)
 {
 	if (!IsEntityValid())
 	{
@@ -781,25 +923,10 @@ function VSLib::Entity::Damage(value, dmgtype = 0)
 		return;
 	}
 	
-	value = value.tointeger();
-	dmgtype = dmgtype.tointeger();
+	if ( typeof attacker == "VSLIB_ENTITY" || typeof attacker == "VSLIB_PLAYER" )
+		attacker = attacker.GetBaseEntity();
 	
-	local removeName = false;
-	
-	if ( _ent.GetName() == "" )
-	{
-		SetName("vslib_damage_tmp_" + GetBaseIndex());
-		removeName = true;
-	}
-	
-	local spawn = { targetname = "vslib_tmp_" + UniqueString(), Damage = value, DamageType = dmgtype, DamageRadius = "64.0", DamageTarget = _ent.GetName() };
-	local vsDamage = ::VSLib.Utils.CreateEntity("point_hurt", GetLocation(), QAngle(0,0,0), spawn);
-	
-	vsDamage.Input("Hurt");
-	vsDamage.Input("Kill");
-	
-	if ( removeName )
-		Input("Addoutput", "targetname ");
+	_ent.TakeDamage(value, dmgtype.tointeger(), attacker);
 }
 
 /**
@@ -814,7 +941,12 @@ function VSLib::Entity::Input(input, value = "", delay = 0, activator = null)
 	}
 	
 	if (activator != null)
-		DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), activator.GetBaseEntity(), _ent);
+	{
+		if ( typeof activator == "VSLIB_ENTITY" || typeof activator == "VSLIB_PLAYER" )
+			activator = activator.GetBaseEntity();
+		
+		DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), activator, _ent);
+	}
 	else
 		DoEntFire("!self", input.tostring(), value.tostring(), delay.tofloat(), null, _ent);
 }
@@ -857,7 +989,7 @@ function VSLib::Entity::BecomeRagdoll()
 		if ( GetTeam() == 4 )
 		{
 			Input( "Kill" );
-			::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
+			::VSLib.Utils.SpawnRagdoll( GetModel(), origin, angles );
 		}
 		else
 		{
@@ -918,7 +1050,7 @@ function VSLib::Entity::HurtTime(value, dmgtype, interval, time, weapon = "", at
  * Same as Damage(), except it keeps damaging for the specified time.
  * It damages at the specified interval for the specified time.
  */
-function VSLib::Entity::DamageTime(value, dmgtype, interval, time)
+function VSLib::Entity::DamageTime(value, dmgtype, attacker, interval, time)
 {
 	if (!IsEntityValid())
 	{
@@ -931,7 +1063,7 @@ function VSLib::Entity::DamageTime(value, dmgtype, interval, time)
 	time = time.tofloat();
 	interval = interval.tofloat();
 	
-	::VSLib.Timers.AddTimer( interval, true, @(params) params.player.Damage(params.val, params.dmgt), { player = this, val = value, dmgt = dmgtype }, TIMER_FLAG_DURATION, { duration = time } );
+	::VSLib.Timers.AddTimer( interval, true, @(params) params.player.Damage(params.val, params.dmgt), { player = this, val = value, dmgt = dmgtype, attacker = attacker }, TIMER_FLAG_DURATION, { duration = time } );
 }
 
 /**
@@ -1029,6 +1161,34 @@ function VSLib::Entity::DecreaseHealth(value)
 }
 
 /**
+ * Adds health to the entity by the value entered.
+ */
+function VSLib::Entity::AddHealth(value)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetRawHealth(_ent.GetRawHealth() + value.tointeger());
+}
+
+/**
+ * Removes health from the entity by the value entered.
+ */
+function VSLib::Entity::RemoveHealth(value)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetRawHealth(_ent.GetRawHealth() - value.tointeger());
+}
+
+/**
  * Gets the entity's classname.
  * If the entity is valid, the entity's class is returned; otherwise, null is returned.
  * For example, "prop_dynamic" or "weapon_rifle_ak47"
@@ -1094,6 +1254,20 @@ function VSLib::Entity::SetName(name)
 	name = name.tostring();
 	
 	_ent.__KeyValueFromString("targetname", name);
+}
+
+/**
+ * Sets the global name of the entity.
+ */
+function VSLib::Entity::SetGlobalName( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetNetProp( "m_iGlobalname", name );
 }
 
 /**
@@ -1300,12 +1474,22 @@ function VSLib::Entity::SetModel(mdl)
 		return;
 	}
 	
+	local index = -1;
 	::VSLib.Utils.PrecacheModel( mdl );
-	local dummyEnt = ::VSLib.Utils.CreateEntity("prop_dynamic_override", Vector(0, 0, 0), QAngle(0, 0, 0), { model = mdl, renderfx = 15, solid = 1 });
+	if ( mdl in ::VSLib.EasyLogic.SetModelIndexes )
+		index = ::VSLib.EasyLogic.SetModelIndexes[mdl];
+	else
+	{
+		local dummyEnt = ::VSLib.Utils.CreateEntity("prop_dynamic_override", Vector(0, 0, 0), QAngle(0, 0, 0), { model = mdl, renderfx = 15, solid = 1 });
+		index = dummyEnt.GetNetPropInt("m_nModelIndex");
+		::VSLib.EasyLogic.SetModelIndexes[mdl] <- index;
+		dummyEnt.Kill();
+	}
+	
 	if ( _ent.GetClassname().find("weapon_") != null )
-		SetNetProp("m_iWorldModelIndex", dummyEnt.GetNetPropInt("m_nModelIndex"));
-	SetNetProp("m_nModelIndex", dummyEnt.GetNetPropInt("m_nModelIndex"));
-	dummyEnt.Kill();
+		SetNetProp("m_iWorldModelIndex", index);
+	SetNetProp("m_nModelIndex", index);
+	SetNetProp("m_ModelName", mdl);
 }
 
 /**
@@ -1707,6 +1891,116 @@ function VSLib::Entity::GetSpawnFlags()
 }
 
 /**
+ * Returns true if the spawn flag exists in the entity's spawn flags.
+ */
+function VSLib::Entity::HasSpawnFlags( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_spawnflags" );
+	
+	return flags == ( flags | flag );
+}
+
+/**
+ * Adds the spawn flag to the entity's current spawn flags.
+ */
+function VSLib::Entity::AddSpawnFlags( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_spawnflags" );
+	
+	if ( HasFlag(flag) )
+		return;
+	
+	SetNetProp( "m_spawnflags", ( flags | flag ) );
+}
+
+/**
+ * Removes the spawn flag from the entity's current spawn flags.
+ */
+function VSLib::Entity::RemoveSpawnFlags( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_spawnflags" );
+	
+	if ( !HasFlag(flag) )
+		return;
+	
+	SetNetProp( "m_spawnflags", ( flags & ~flag ) );
+}
+
+/**
+ * Gets the entity's move type.
+ */
+function VSLib::Entity::GetMoveType()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "movetype" );
+}
+
+/**
+ * Sets the entity's move type.
+ */
+function VSLib::Entity::SetMoveType( moveType )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return SetNetProp( "movetype", moveType.tointeger() );
+}
+
+/**
+ * Gets the entity's model scale.
+ */
+function VSLib::Entity::GetModelScale()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropFloat( "m_flModelScale" );
+}
+
+/**
+ * Sets the entity's model scale.
+ */
+function VSLib::Entity::SetModelScale( scale )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return SetNetProp( "m_flModelScale", scale.tofloat() );
+}
+
+/**
  * Gets the direction that the entity's eyes are facing.
  */
 function VSLib::Entity::GetEyeAngles()
@@ -1743,6 +2037,20 @@ function VSLib::Entity::GetIndex()
 }
 
 /**
+ * Gets the entity's modelname.
+ */
+function VSLib::Entity::GetModel()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropString( "m_ModelName" );
+}
+
+/**
  * Gets the entity's current origin.
  */
 function VSLib::Entity::GetOrigin()
@@ -1768,6 +2076,20 @@ function VSLib::Entity::GetLocation()
 	}
 	
 	return _ent.GetOrigin();
+}
+
+/**
+ * Sets the entity's current origin vector (i.e. teleports the entity).
+ */
+function VSLib::Entity::SetOrigin(vec)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	_ent.SetOrigin(vec);
 }
 
 /**
@@ -1928,7 +2250,7 @@ function VSLib::Entity::GetWeaponSlot()
 	{
 		foreach( weapon, slot in WeaponNames )
 		{
-			foreach( wep in Objects.OfClassname(weapon) )
+			foreach( wep in ::VSLib.EasyLogic.Objects.OfClassname(weapon) )
 			{
 				if ( wep.GetClassname() == _ent.GetClassname() )
 					return slot;
@@ -1995,6 +2317,134 @@ function VSLib::Entity::GetDefaultAmmoType()
 }
 
 /**
+ * Gets the max ammo for the weapon.
+ */
+function VSLib::Entity::GetMaxAmmo()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") != null )
+	{
+		local AmmoType = GetNetPropInt( "m_iPrimaryAmmoType" );
+		
+		if ( AmmoType == 1 || AmmoType == 2 )
+			return Convars.GetFloat( "ammo_pistol_max" ).tointeger();
+		else if ( AmmoType == 3 )
+			return Convars.GetFloat( "ammo_assaultrifle_max" ).tointeger();
+		else if ( AmmoType == 5 )
+			return Convars.GetFloat( "ammo_smg_max" ).tointeger();
+		else if ( AmmoType == 6 )
+			return Convars.GetFloat( "ammo_m60_max" ).tointeger();
+		else if ( AmmoType == 7 )
+			return Convars.GetFloat( "ammo_shotgun_max" ).tointeger();
+		else if ( AmmoType == 8 )
+			return Convars.GetFloat( "ammo_autoshotgun_max" ).tointeger();
+		else if ( AmmoType == 9 )
+			return Convars.GetFloat( "ammo_huntingrifle_max" ).tointeger();
+		else if ( AmmoType == 10 )
+			return Convars.GetFloat( "ammo_sniperrifle_max" ).tointeger();
+		else if ( AmmoType == 12 )
+			return Convars.GetFloat( "ammo_pipebomb_max" ).tointeger();
+		else if ( AmmoType == 13 )
+			return Convars.GetFloat( "ammo_molotov_max" ).tointeger();
+		else if ( AmmoType == 14 )
+			return Convars.GetFloat( "ammo_vomitjar_max" ).tointeger();
+		else if ( AmmoType == 15 )
+			return Convars.GetFloat( "ammo_painpills_max" ).tointeger();
+		else if ( AmmoType == 16 )
+			return Convars.GetFloat( "ammo_firstaid_max" ).tointeger();
+		else if ( AmmoType == 17 )
+			return Convars.GetFloat( "ammo_grenadelauncher_max" ).tointeger();
+		else if ( AmmoType == 18 )
+			return Convars.GetFloat( "ammo_adrenaline_max" ).tointeger();
+		else if ( AmmoType == 19 )
+			return Convars.GetFloat( "ammo_chainsaw_max" ).tointeger();
+		else
+			return;
+	}
+	
+	return;
+}
+
+/**
+ * Gets the ammo for the weapon.
+ */
+function VSLib::Entity::GetAmmo()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") != null )
+	{
+		local owner = GetNetPropEntity( "m_hOwner" );
+		
+		if ( (!owner) || (!owner.IsPlayer()) )
+			return;
+		
+		return owner.GetNetPropInt( "m_iAmmo", GetNetPropInt( "m_iPrimaryAmmoType" ) );
+	}
+	
+	return;
+}
+
+/**
+ * Sets the ammo for the weapon.
+ */
+function VSLib::Entity::SetAmmo( amount )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") != null )
+	{
+		local owner = GetNetPropEntity( "m_hOwner" );
+		
+		if ( (!owner) || (!owner.IsPlayer()) )
+			return;
+		
+		owner.SetNetProp( "m_iAmmo", amount.tointeger(), GetNetPropInt( "m_iPrimaryAmmoType" ) );
+	}
+}
+
+/**
+ * Gets the entity's flags.
+ */
+function VSLib::Entity::GetFlags()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_fFlags" );
+}
+
+/**
+ * Sets the entity's flags.
+ */
+function VSLib::Entity::SetFlags( flags )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetNetProp( "m_fFlags", flags.tointeger() );
+}
+
+/**
  * Returns true if the flag exists in the entity's current flags.
  */
 function VSLib::Entity::HasFlag( flag )
@@ -2046,6 +2496,88 @@ function VSLib::Entity::RemoveFlag( flag )
 		return;
 	
 	SetNetProp( "m_fFlags", ( flags & ~flag ) );
+}
+
+/**
+ * Gets the entity's eflags.
+ */
+function VSLib::Entity::GetEFlags()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_fFlags" );
+}
+
+/**
+ * Sets the entity's eflags.
+ */
+function VSLib::Entity::SetEFlags( flags )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	SetNetProp( "m_fFlags", flags.tointeger() );
+}
+
+/**
+ * Returns true if the flag exists in the entity's current eflags.
+ */
+function VSLib::Entity::IsEFlagSet( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_iEFlags" );
+	
+	return flags == ( flags | flag );
+}
+
+/**
+ * Adds the flag to the entity's current eflags.
+ */
+function VSLib::Entity::AddEFlags( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_iEFlags" );
+	
+	if ( IsEFlagSet(flag) )
+		return;
+	
+	SetNetProp( "m_iEFlags", ( flags | flag ) );
+}
+
+/**
+ * Removes the flag from the entity's current eflags.
+ */
+function VSLib::Entity::RemoveEFlags( flag )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local flags = GetNetPropInt( "m_iEFlags" );
+	
+	if ( !IsEFlagSet(flag) )
+		return;
+	
+	SetNetProp( "m_iEFlags", ( flags & ~flag ) );
 }
 
 /**
@@ -2133,7 +2665,7 @@ function VSLib::Entity::GetZombieName()
 /**
  * Kills common infected and witches, and removes other entities from the map.
  */
-function VSLib::Entity::Kill()
+function VSLib::Entity::Kill( attacker = null )
 {
 	if (!IsEntityValid())
 	{
@@ -2142,7 +2674,12 @@ function VSLib::Entity::Kill()
 	}
 	
 	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
-		Damage(GetHealth());
+	{
+		Damage(GetHealth(), 0, attacker);
+		
+		if ( IsAlive() && Entities.FindByClassname( null, "worldspawn" ) )
+			Damage(GetHealth(), 0, ::VSLib.Entity("worldspawn"));
+	}
 	else
 		Input("Kill");
 }
@@ -2178,7 +2715,7 @@ function VSLib::Entity::GetAngles()
 /**
  * Sets the base angles.
  */
-function VSLib::Entity::SetAngles(x, y, z)
+function VSLib::Entity::SetAngles(x, y = 0.0, z = 0.0)
 {
 	if (!IsEntityValid())
 	{
@@ -2186,11 +2723,14 @@ function VSLib::Entity::SetAngles(x, y, z)
 		return;
 	}
 	
-	return _ent.SetAngles(QAngle(x,y,z));
+	if ( typeof x == "QAngle" )
+		return _ent.SetAngles(x);
+	else
+		return _ent.SetAngles(QAngle(x,y,z));
 }
 
 /**
- * Sets the base angles.
+ * Sets the base angles from another entity.
  *
  * @authors shotgunefx
  */
@@ -2395,10 +2935,7 @@ function VSLib::Entity::GetParent()
 		return;
 	}
 	
-	local moveParent = GetBaseEntity().GetMoveParent();
-	if (!moveParent)
-		return null;
-	return ::VSLib.Utils.GetEntityOrPlayer(moveParent);
+	return GetMoveParent();
 }
 
 /**
@@ -2412,7 +2949,6 @@ function VSLib::Entity::GetEyePosition()
 		return;
 	}
 	
-	//// 5/21 EMS update
 	// If the entity has an eyeposition function, return it.
 	if ("EyePosition" in _ent)
 		return _ent.EyePosition();
@@ -2469,17 +3005,7 @@ function VSLib::Entity::GetBaseIndex()
 		return -1;
 	}
 	
-	// After the 5/21 EMS update, we now have GetEntityIndex()
 	return _ent.GetEntityIndex();
-	
-	// No longer needed
-	/*
-	for (local i = 1; i <= 2048; i++)	
-		if (_ent == Ent(i))
-			return i;
-	
-	return -1;
-	*/
 }
 
 /**
@@ -2682,6 +3208,57 @@ function VSLib::Entity::IsOnFire()
 }
 
 /**
+ * Extinguish a burning entity or player (also checks if entity is on fire first).
+ * Returns true if the entity was extinguished.
+ */
+function VSLib::Entity::Extinguish()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (IsOnFire())
+	{
+		if ( _ent.GetClassname() == "player" )
+			_ent.Extinguish();
+		else
+			Input( "IgniteLifetime", 0 );
+		
+		return true;
+	}
+	
+	return false;
+}
+
+/**
+ * Returns true if this entity is currently biled on.
+ */
+function VSLib::Entity::IsBiled()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
+	{
+		if ( GetNetPropInt( "m_Glow.m_glowColorOverride" ) == -4713783 )
+			return true;
+	}
+	else if ( _ent.GetClassname() == "player" )
+	{
+		if(_idx in ::VSLib.EasyLogic.Cache)
+			if ("_isBiled" in ::VSLib.EasyLogic.Cache[_idx])
+				return ::VSLib.EasyLogic.Cache[_idx]._isBiled;
+	}
+	
+	return false;
+}
+
+/**
  * Gets the survivor character ID
  */
 function VSLib::Entity::GetSurvivorCharacter()
@@ -2710,6 +3287,20 @@ function VSLib::Entity::GetName()
 	}
 	
 	return _ent.GetName();
+}
+
+/**
+ * Returns the global name of the entity.
+ */
+function VSLib::Entity::GetGlobalName()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropString( "m_iGlobalname" );
 }
 
 /**
@@ -2922,7 +3513,10 @@ function VSLib::Entity::SetContext( name, value, duration )
 		return;
 	}
 	
-	_ent.SetContext(name, value, duration);
+	if ( duration == 0 )
+		duration = 999999;
+	
+	_ent.SetContext(name, value.tostring(), duration);
 }
 
 /**
@@ -2935,6 +3529,9 @@ function VSLib::Entity::SetContextNum( name, value, duration )
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return;
 	}
+	
+	if ( duration == 0 )
+		duration = 999999;
 	
 	_ent.SetContextNum(name, value, duration);
 }
@@ -3269,7 +3866,7 @@ function VSLib::Entity::BotMoveToLocation(newpos)
 		return;
 	}
 	
-	CommandABot( { cmd = 1, pos = newpos, bot = _ent } );
+	return CommandABot( { cmd = 1, pos = newpos, bot = _ent } );
 }
 
 /**
@@ -3283,7 +3880,7 @@ function VSLib::Entity::BotMoveToOther(otherEntity)
 		return;
 	}
 	
-	CommandABot( { cmd = 1, pos = otherEntity.GetLocation(), bot = _ent } );
+	return CommandABot( { cmd = 1, pos = otherEntity.GetLocation(), bot = _ent } );
 }
 
 /**
@@ -3297,7 +3894,7 @@ function VSLib::Entity::BotMoveOtherToThis(otherEntity)
 		return;
 	}
 	
-	CommandABot( { cmd = 1, pos = GetLocation(), bot = otherEntity.GetBaseEntity() } );
+	return CommandABot( { cmd = 1, pos = GetLocation(), bot = otherEntity.GetBaseEntity() } );
 }
 
 /**
@@ -3311,7 +3908,7 @@ function VSLib::Entity::BotAttack(otherEntity)
 		return;
 	}
 	
-	CommandABot( { cmd = 0, target = otherEntity.GetBaseEntity(), bot = _ent } );
+	return CommandABot( { cmd = 0, target = otherEntity.GetBaseEntity(), bot = _ent } );
 }
 
 /**
@@ -3325,7 +3922,7 @@ function VSLib::Entity::BotRetreatFrom(otherEntity)
 		return;
 	}
 	
-	CommandABot( { cmd = 2, target = otherEntity.GetBaseEntity(), bot = _ent } );
+	return CommandABot( { cmd = 2, target = otherEntity.GetBaseEntity(), bot = _ent } );
 }
 
 /**
@@ -3339,7 +3936,7 @@ function VSLib::Entity::BotReset()
 		return;
 	}
 	
-	CommandABot( { cmd = 3, bot = _ent } );
+	return CommandABot( { cmd = 3, bot = _ent } );
 }
 
 /**
@@ -3559,26 +4156,6 @@ function VSLib::Entity::IsCarryingItem()
 }
 
 /**
- * Returns true if the passed in model matches the entity.
- */
-function VSLib::Entity::IsModel( mdl )
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return false;
-	}
-	
-	foreach( model in Objects.OfModel(mdl) )
-	{
-		if ( model.GetEntityHandle() == _ent.GetEntityHandle() )
-			return true;
-	}
-	
-	return false;
-}
-
-/**
  * Adds to the entity's THINK function. You can use "this.ent" when you need to use the VSLib::Entity.
  * 
  * @param func A function to add to the think timer.
@@ -3712,7 +4289,7 @@ function VSLib::Entity::GetClosestSurvivor()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.Survivors() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.Survivors() );
 }
 
 /**
@@ -3726,7 +4303,7 @@ function VSLib::Entity::GetClosestL4D1Survivor()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.L4D1Survivors() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.L4D1Survivors() );
 }
 
 /**
@@ -3740,7 +4317,7 @@ function VSLib::Entity::GetAnyClosestSurvivor()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.AllSurvivors() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.AllSurvivors() );
 }
 
 /**
@@ -3757,7 +4334,7 @@ function VSLib::Entity::GetClosestHumanSurvivor()
 	local dist = null;
 	local surv = null;
 	
-	foreach( survivor in Players.AllSurvivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.AllSurvivors() )
 	{
 		if ( survivor.IsHuman() && survivor.GetEntityHandle() != GetEntityHandle() )
 		{
@@ -3840,7 +4417,7 @@ function VSLib::Entity::GetClosestInfected()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.AllInfected() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Zombies.All() );
 }
 
 /**
@@ -3854,7 +4431,7 @@ function VSLib::Entity::GetClosestSpecialInfected()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.Infected() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.Infected() );
 }
 
 /**
@@ -3868,7 +4445,7 @@ function VSLib::Entity::GetClosestSmoker()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_SMOKER) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_SMOKER) );
 }
 
 /**
@@ -3882,7 +4459,7 @@ function VSLib::Entity::GetClosestBoomer()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_BOOMER) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_BOOMER) );
 }
 
 /**
@@ -3896,7 +4473,7 @@ function VSLib::Entity::GetClosestHunter()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_HUNTER) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_HUNTER) );
 }
 
 /**
@@ -3910,7 +4487,7 @@ function VSLib::Entity::GetClosestSpitter()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_SPITTER) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_SPITTER) );
 }
 
 /**
@@ -3924,7 +4501,7 @@ function VSLib::Entity::GetClosestJockey()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_JOCKEY) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_JOCKEY) );
 }
 
 /**
@@ -3938,7 +4515,7 @@ function VSLib::Entity::GetClosestCharger()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_CHARGER) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_CHARGER) );
 }
 
 /**
@@ -3952,7 +4529,7 @@ function VSLib::Entity::GetClosestTank()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.OfType(Z_TANK) );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Players.OfType(Z_TANK) );
 }
 
 /**
@@ -3966,7 +4543,7 @@ function VSLib::Entity::GetClosestWitch()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.Witches() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Zombies.Witches() );
 }
 
 /**
@@ -3980,7 +4557,7 @@ function VSLib::Entity::GetClosestCommonInfected()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.CommonInfected() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Zombies.CommonInfected() );
 }
 
 /**
@@ -3994,7 +4571,7 @@ function VSLib::Entity::GetClosestUncommonInfected()
 		return;
 	}
 	
-	return GetClosestEntityFromTable( Players.UncommonInfected() );
+	return GetClosestEntityFromTable( ::VSLib.EasyLogic.Zombies.UncommonInfected() );
 }
 
 /**

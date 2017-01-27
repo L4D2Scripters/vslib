@@ -150,6 +150,8 @@ function VSLib::Player::GetFilterName()
 		return "!francis";
 	else if ( GetSurvivorCharacter() == 7 )
 		return "!louis";
+	
+	return "";
 }
 
 /**
@@ -163,21 +165,26 @@ function VSLib::Player::GetSteamID()
 		return "";
 	}
 	
-	local userid = "_vslUserID_" + GetUserID();
-	
-	if ( userid in ::VSLib.EasyLogic.UserCache && IsHuman() )
-	{
-		if ("_steam" in ::VSLib.EasyLogic.UserCache[userid])
-			return ::VSLib.EasyLogic.UserCache[userid]["_steam"];
-	}
+	if ("GetNetworkIDString" in _ent)
+		return _ent.GetNetworkIDString();
 	else
 	{
-		local id = _idx;
-		if (!(id in ::VSLib.GlobalCache))
-			return "";
+		local userid = "_vslUserID_" + GetUserID();
 		
-		if ("_steam" in ::VSLib.GlobalCache[id])
-			return ::VSLib.GlobalCache[id]["_steam"];
+		if ( userid in ::VSLib.EasyLogic.UserCache && IsHuman() )
+		{
+			if ("_steam" in ::VSLib.EasyLogic.UserCache[userid])
+				return ::VSLib.EasyLogic.UserCache[userid]["_steam"];
+		}
+		else
+		{
+			local id = _idx;
+			if (!(id in ::VSLib.GlobalCache))
+				return GetNetPropString( "m_szNetworkIDString" );
+			
+			if ("_steam" in ::VSLib.GlobalCache[id])
+				return ::VSLib.GlobalCache[id]["_steam"];
+		}
 	}
 	
 	return "";
@@ -275,14 +282,92 @@ function VSLib::Player::GetName()
 		return base.GetName();
 	}
 	
-	/*local id = _idx;
-	if (!(id in ::VSLib.GlobalCache))
-		return base.GetName();
-	
-	if ("_name" in ::VSLib.GlobalCache[id] && _ent.GetPlayerName() == this.GetCharacterName())
-		return ::VSLib.GlobalCache[id]["_name"];*/
-	
 	return _ent.GetPlayerName();
+}
+
+/**
+ * Returns the player's ping.
+ */
+function VSLib::Player::GetPing()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return;
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropInt( "m_iPing", _idx );
+}
+
+/**
+ * Returns true if the player is the host of a listen server.
+ */
+function VSLib::Player::IsServerHost()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return false;
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropBool( "m_listenServerHost", _idx );
+}
+
+/**
+ * Returns true if the player is connected to the server.
+ */
+function VSLib::Player::IsConnected()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return false;
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropBool( "m_bConnected", _idx );
+}
+
+/**
+ * Gets the player's record Survival time.
+ */
+function VSLib::Player::GetSurvivalRecordTime()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return;
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropFloat( "m_flSurvivalRecordTime", _idx );
+}
+
+/**
+ * Gets the player's top Survival medal.
+ */
+function VSLib::Player::GetSurvivalTopMedal()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( !Entities.FindByClassname( null, "terror_player_manager" ) )
+		return;
+	
+	return ::VSLib.Entity("terror_player_manager").GetNetPropInt( "m_nSurvivalTopMedal", _idx );
 }
 
 /**
@@ -297,12 +382,6 @@ function VSLib::Player::IsAlive()
 	}
 	
 	return !_ent.IsDead() && !_ent.IsDying();
-	
-	// No longer needed after EMS 5/29 update:
-	
-	//local baseStats = GetPlayerType() > 0 && !IsGhost() && !_ent.IsDead();
-	//if ("_isAlive" in ::VSLib.EasyLogic.Cache[_idx])
-	//	return ::VSLib.EasyLogic.Cache[_idx]._isAlive && baseStats;
 }
 
 /**
@@ -345,6 +424,34 @@ function VSLib::Player::IsIncapacitated()
 	}
 	
 	return _ent.IsIncapacitated();
+}
+
+/**
+ * Returns true if the player is being culled
+ */
+function VSLib::Player::IsCulling()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isCulling" );
+}
+
+/**
+ * Returns true if the player is being relocated
+ */
+function VSLib::Player::IsRelocating()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isRelocating" );
 }
 
 /**
@@ -474,9 +581,79 @@ function VSLib::Player::IsCalm()
 }
 
 /**
+ * Returns true if the player is going to die.
+ */
+function VSLib::Player::IsGoingToDie()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_isGoingToDie" );
+}
+
+/**
+ * Returns true if the player is the first to enter the rescue vehicle with DirectorOptions.cm_FirstManOut = 1.
+ */
+function VSLib::Player::IsFirstManOut()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_bIsFirstManOut" );
+}
+
+/**
+ * Returns true if the player has visible threats.
+ */
+function VSLib::Player::HasVisibleThreats()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_hasVisibleThreats" );
+}
+
+/**
+ * Returns true if the survivor's glow is enabled.
+ */
+function VSLib::Player::IsSurvivorGlowEnabled()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_bSurvivorGlowEnabled" );
+}
+
+/**
+ * Returns true if the survivors's weapons are being hid.
+ */
+function VSLib::Player::IsSurvivorPositionHidingWeapons()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	return GetNetPropBool( "m_bSurvivorPositionHidingWeapons" );
+}
+
+/**
  * Returns true if the survivor is speaking.
  */
-function VSLib::Player::IsSpeaking()
+function VSLib::Player::IsSpeaking( sceneFile = "" )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -487,10 +664,18 @@ function VSLib::Player::IsSpeaking()
 	if (GetPlayerType() != Z_SURVIVOR)
 		return;
 	
-	foreach( scene in Objects.OfClassname("instanced_scripted_scene") )
+	foreach( scene in ::VSLib.EasyLogic.Objects.OfClassname("instanced_scripted_scene") )
 	{
 		if ( scene.GetNetPropEntity("m_hOwner").GetEntityHandle() == _ent.GetEntityHandle() )
-			return true;
+		{
+			if ( sceneFile == "" )
+				return true;
+			else
+			{
+				if ( scene.GetNetPropString("m_iszSceneFile").find(sceneFile) != null )
+					return true;
+			}
+		}
 	}
 	
 	return false;
@@ -514,7 +699,7 @@ function VSLib::Player::IsNoclipping()
 }
 
 /**
- * Returns the VSLib::Entity of the player's active weapon
+ * Returns the VSLib::Entity of the player's active weapon.
  */
 function VSLib::Player::GetActiveWeapon()
 {
@@ -528,7 +713,7 @@ function VSLib::Player::GetActiveWeapon()
 }
 
 /**
- * Returns the VSLib::Entity of the player's last weapon
+ * Returns the VSLib::Entity of the player's last weapon.
  */
 function VSLib::Player::GetLastWeapon()
 {
@@ -539,6 +724,48 @@ function VSLib::Player::GetLastWeapon()
 	}
 	
 	return GetNetPropEntity( "m_hLastWeapon" );
+}
+
+/**
+ * Returns the ability of the special infected.
+ */
+function VSLib::Player::GetAbility()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return null;
+	}
+	
+	return GetNetPropEntity( "m_customAbility" );
+}
+
+/**
+ * Returns the player's viewmodel.
+ */
+function VSLib::Player::GetViewModel()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return null;
+	}
+	
+	return GetNetPropEntity( "m_hViewModel" );
+}
+
+/**
+ * Returns the player's vocalization subject.
+ */
+function VSLib::Player::GetVocalizationSubject()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return null;
+	}
+	
+	return GetNetPropEntity( "m_vocalizationSubject" );
 }
 
 /**
@@ -558,6 +785,34 @@ function VSLib::Player::GetTimeSinceDeath()
 		return time;
 	
 	return Time() - time;
+}
+
+/**
+ * Returns the team the player is on.
+ */
+function VSLib::Player::GetVersusTeam()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_iVersusTeam" );
+}
+
+/**
+ * Gets the frustration of the human Tank.
+ */
+function VSLib::Player::GetFrustration()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_frustration" );
 }
 
 /**
@@ -973,49 +1228,9 @@ function VSLib::Player::EnableButton( button )
 }
 
 /**
- * Returns the survivor's modelname.
- */
-function VSLib::Player::GetSurvivorModel()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if (GetPlayerType() != Z_SURVIVOR)
-		return;
-	
-	local SurvivorModels =
-	[
-		"models/survivors/survivor_coach.mdl"
-		"models/survivors/survivor_mechanic.mdl"
-		"models/survivors/survivor_gambler.mdl"
-		"models/survivors/survivor_producer.mdl"
-		"models/survivors/survivor_namvet.mdl"
-		"models/survivors/survivor_biker.mdl"
-		"models/survivors/survivor_manager.mdl"
-		"models/survivors/survivor_teenangst.mdl"
-		"models/survivors/survivor_biker_light.mdl"
-		"models/survivors/survivor_teenangst_light.mdl"
-	]
-	
-	foreach( modelname in SurvivorModels )
-	{
-		foreach( survivor in Objects.OfModel(modelname) )
-		{
-			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
-				return modelname;
-		}
-	}
-	
-	return;
-}
-
-/**
  * Incaps the player
  */
-function VSLib::Player::Incapacitate()
+function VSLib::Player::Incapacitate( attacker = null )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1026,36 +1241,22 @@ function VSLib::Player::Incapacitate()
 	if (IsIncapacitated())
 		return;
 	
-	local function IncapFailsafe(player)
-	{
-		if ( !player.IsIncapacitated() )
-			player.Damage(player.GetHealth());
-	}
-	
-	SetHealthBuffer(0);
-	Input("SetHealth", "0");
-	::VSLib.Timers.AddTimer(0.1, false, IncapFailsafe, this);
+	Damage(GetHealth(), 0, attacker);
 }
 
 /**
  * Kills the player.
  */
-function VSLib::Player::Kill()
+function VSLib::Player::Kill( attacker = null )
 {
 	if (IsPlayerEntityValid())
 	{
-		local function KillFailsafe(player)
-		{
-			if ( player.IsAlive() )
-				player.Damage(player.GetHealth());
-		}
 		if ( _ent.IsSurvivor() )
-		{
 			SetLastStrike();
-			SetHealthBuffer(0);
-		}
-		Input("SetHealth", "0");
-		::VSLib.Timers.AddTimer(0.1, false, KillFailsafe, this);
+		Damage(GetHealth(), 0, attacker);
+		
+		if ( IsAlive() && Entities.FindByClassname( null, "worldspawn" ) )
+			Damage(GetHealth(), 0, ::VSLib.Entity("worldspawn"));
 	}
 	else
 		base.Kill();
@@ -1088,24 +1289,24 @@ function VSLib::Player::Ragdoll( allowDefib = false )
 			local deathModel = ::VSLib.Utils.CreateEntity("survivor_death_model", ragdoll.GetLocation());
 			deathModel.SetNetProp("m_nCharacterType", args.player.GetSurvivorCharacter());
 			ragdoll.AttachOther(deathModel, false);
-			::VSLib.EasyLogic.SurvivorRagdolls.rawset(args.player.GetBaseIndex(), {});
-			::VSLib.EasyLogic.SurvivorRagdolls[args.player.GetBaseIndex()]["Ragdoll"] <- ragdoll;
+			::VSLib.EasyLogic.SurvivorRagdolls.rawset(args.player.GetIndex(), {});
+			::VSLib.EasyLogic.SurvivorRagdolls[args.player.GetIndex()]["Ragdoll"] <- ragdoll;
 		}
 	}
 	
 	if ( GetTeam() == 4 )
 	{
 		Input( "Kill" );
-		::VSLib.Utils.SpawnRagdoll( GetSurvivorModel(), origin, angles );
+		::VSLib.Utils.SpawnRagdoll( GetModel(), origin, angles );
 	}
 	else
 	{
 		if ( IsAlive() )
 			Kill();
 		if ( GetSurvivorDeathModel() != null )
-			VSLib_RemoveDeathModel( { player = this, origin = origin, angles = angles, model = GetSurvivorModel(), allowDefib = allowDefib } );
+			VSLib_RemoveDeathModel( { player = this, origin = origin, angles = angles, model = GetModel(), allowDefib = allowDefib } );
 		else
-			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { player = this, origin = origin, angles = angles, model = GetSurvivorModel(), allowDefib = allowDefib });
+			::VSLib.Timers.AddTimer(0.1, false, VSLib_RemoveDeathModel, { player = this, origin = origin, angles = angles, model = GetModel(), allowDefib = allowDefib });
 	}
 }
 
@@ -1258,7 +1459,7 @@ function VSLib::Player::ClientCommand(str)
 		printf("VSLib Error: Could not exec cl_cmd; entity is invalid!");
 		return;
 	}
-	DoEntFire("!self", "Command", str.tostring(), 0, _ent, cl_cmd.GetBaseEntity());
+	cl_cmd.Input("Command", str, 0, _ent);
 	cl_cmd.Kill();
 }
 
@@ -1296,7 +1497,7 @@ function VSLib::Player::SetHealthBuffer(value)
 /**
  * Switches the survivor's health from permanent to temporary and vice-versa.
  */
-function VSLib::Player::SwitchHealth(type = 0)
+function VSLib::Player::SwitchHealth(hpType = "")
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1304,15 +1505,17 @@ function VSLib::Player::SwitchHealth(type = 0)
 		return;
 	}
 	
-	if (GetPlayerType() != Z_SURVIVOR)
+	if (GetPlayerType() != Z_SURVIVOR || typeof hpType != "string")
 		return;
 	
-	if ( type == 1 )
+	hpType = hpType.tolower();
+	
+	if ( hpType.find("perm") != null )
 	{
 		SetRawHealth(GetHealth());
 		SetHealthBuffer(0);
 	}
-	else if ( type == 2 )
+	else if ( hpType.find("temp") != null )
 	{
 		SetHealthBuffer(GetHealth());
 		SetRawHealth(1);
@@ -1569,6 +1772,66 @@ function VSLib::Player::Defib()
 	return false;
 }
 
+/**
+ * Returns true if a player is currently inside a rescue closet.
+ */
+function VSLib::Player::IsInCloset()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return false;
+	
+	foreach( rescue in Objects.OfClassname("info_survivor_rescue") )
+	{
+		local survivor = rescue.GetNetPropEntity( "m_survivor" );
+		
+		if ( survivor != null )
+		{
+			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
+				return true;
+		}
+	}
+	
+	return false;
+}
+
+/**
+ * Rescues a player from a rescue closet.
+ * Returns true if the player was successfully rescued.
+ */
+function VSLib::Player::Rescue()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if (GetPlayerType() != Z_SURVIVOR)
+		return false;
+	
+	foreach( rescue in Objects.OfClassname("info_survivor_rescue") )
+	{
+		local survivor = rescue.GetNetPropEntity( "m_survivor" );
+		
+		if ( survivor != null )
+		{
+			if ( survivor.GetEntityHandle() == _ent.GetEntityHandle() )
+			{
+				rescue.Input( "Rescue" );
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
 
 /**
  * Gets the last player who vomited this player, or returns null if the player
@@ -1601,24 +1864,6 @@ function VSLib::Player::WasEverVomited()
 	if(_idx in ::VSLib.EasyLogic.Cache)
 		if ("_wasVomited" in ::VSLib.EasyLogic.Cache[_idx])
 			return ::VSLib.EasyLogic.Cache[_idx]._wasVomited;
-	
-	return false;
-}
-
-/**
- * Returns true if this player is currently vomited on
- */
-function VSLib::Player::IsVomitedOn()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	if(_idx in ::VSLib.EasyLogic.Cache)
-		if ("_isVomited" in ::VSLib.EasyLogic.Cache[_idx])
-			return ::VSLib.EasyLogic.Cache[_idx]._isVomited;
 	
 	return false;
 }
@@ -1851,7 +2096,7 @@ function VSLib::Player::GetSurvivorDeathModel()
 	if (GetPlayerType() != Z_SURVIVOR)
 		return null;
 	
-	foreach( death_model in Objects.OfClassname("survivor_death_model") )
+	foreach( death_model in ::VSLib.EasyLogic.Objects.OfClassname("survivor_death_model") )
 	{
 		if ( death_model.GetNetPropInt("m_nCharacterType") == GetNetPropInt("m_survivorCharacter") )
 			return death_model;
@@ -1880,7 +2125,7 @@ function VSLib::Player::GetIntensity()
 /**
  * Vomits on the player
  */
-function VSLib::Player::Vomit()
+function VSLib::Player::Vomit( duration = null )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1889,27 +2134,8 @@ function VSLib::Player::Vomit()
 	}
 	
 	_ent.HitWithVomit();
-}
-
-/**
- * Extinguish a burning player (also checks if player is on fire first).
- * Returns true if the player was extinguished.
- */
-function VSLib::Player::Extinguish()
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return false;
-	}
-	
-	if (IsOnFire())
-	{
-		_ent.Extinguish();
-		return true;
-	}
-	
-	return false;
+	if ( duration != null )
+		SetNetProp( "m_itTimer.m_timestamp", Time() + duration.tofloat() );
 }
 
 /**
@@ -1923,7 +2149,64 @@ function VSLib::Player::GiveAmmo( amount )
 		return;
 	}
 	
-	_ent.GiveAmmo(amount);
+	_ent.GiveAmmo(amount.tointeger());
+}
+
+/**
+ * Gets the player's max primary ammo
+ */
+function VSLib::Player::GetMaxPrimaryAmmo()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		return t["slot0"].GetMaxAmmo();
+	}
+}
+
+/**
+ * Gets the player's primary ammo
+ */
+function VSLib::Player::GetPrimaryAmmo()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		return t["slot0"].GetAmmo();
+	}
+}
+
+/**
+ * Sets the player's primary ammo
+ */
+function VSLib::Player::SetPrimaryAmmo( amount )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		SetNetProp( "m_iAmmo", amount.tointeger(), t["slot0"].GetNetPropInt( "m_iPrimaryAmmoType" ) );
+	}
 }
 
 /**
@@ -2020,7 +2303,7 @@ function VSLib::Player::GetClientConvarValue( name )
 		return;
 	}
 	
-	return Convars.GetClientConvarValue(name, _ent.GetEntityIndex());
+	return Convars.GetClientConvarValue(name, _idx);
 }
 
 /**
@@ -2170,7 +2453,7 @@ function VSLib::Player::Say( str, teamOnly = false )
 		return;
 	}
 	
-	g_MapScript.Say(GetBaseEntity(), str, teamOnly);
+	g_MapScript.Say(_ent, str.tostring(), teamOnly);
 }
 
 /**
@@ -2275,33 +2558,6 @@ function VSLib::Player::GiveRandomMelee( )
 	local melee = ::VSLib.Entity(g_ModeScript.SpawnMeleeWeapon( "any", Vector(0,0,0), QAngle(0,0,0) ));
 	Use(melee);
 	melee.Input("Kill");
-}
-
-/**
- * Gives a weapon and sets an optional ammo count.
- */
-function VSLib::Player::GiveWeapon(str, ammo = 0)
-{
-	if (!IsPlayerEntityValid())
-	{
-		printl("VSLib Warning: Player " + _idx + " is invalid.");
-		return;
-	}
-	
-	if ( HasItem(str) )
-		return;
-	
-	local function GiveAmmoDelay(args)
-	{
-		args.player.GiveAmmo(args.ammo);
-	}
-	
-	if ( str.find("weapon_") == null )
-		str = "weapon_" + str;
-	
-	local wep = ::VSLib.Utils.CreateEntity(str);
-	Use(wep);
-	::VSLib.Timers.AddTimer(0.2, false, GiveAmmoDelay, {player = this, ammo = ammo});
 }
 
 /**
@@ -2480,7 +2736,7 @@ function VSLib::Player::HasLaserSight()
 	local t = GetHeldItems();
 	
 	if (t && "slot0" in t)
-		return t["slot0"].GetNetPropInt( "m_upgradeBitVec" ) >= 4;
+		return (t["slot0"].GetNetPropInt( "m_upgradeBitVec" ) & 4) > 0;
 	
 	return false;
 }

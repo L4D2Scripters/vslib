@@ -36,10 +36,10 @@ IncludeScript("VSLib/Utils.nut");
 IncludeScript("VSLib/Timer.nut");
 IncludeScript("VSLib/Entity.nut");
 IncludeScript("VSLib/Player.nut");
-IncludeScript("VSLib/EasyLogic.nut");
+IncludeScript("VSLib/FileIO.nut");
 IncludeScript("VSLib/HUD.nut");
+IncludeScript("VSLib/EasyLogic.nut");
 IncludeScript("VSLib/ResponseRules.nut");
 IncludeScript("VSLib/RandomItemSpawner.nut");
-IncludeScript("VSLib/FileIO.nut");
 
 printf( "Loaded VSLib version %f", __VSLIB_VERSION__ );

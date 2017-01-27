@@ -633,43 +633,63 @@ function VSLib::Utils::ConvertEntity(entity, classname, kvs = {})
  *
  * @authors Rayman1103
  */
-function VSLib::Utils::SpawnSurvivor(survivor = null, pos = null, ang = QAngle(0,0,0))
+function VSLib::Utils::SpawnSurvivor(survivor = null, pos = null, ang = QAngle(0,0,0), survType = null)
 {
 	::VSLib.EasyLogic.L4D1Behavior = Convars.GetFloat("sb_l4d1_survivor_behavior").tointeger();
 	Convars.SetValue("sb_l4d1_survivor_behavior", 0);
 	
 	if ( survivor == null )
 	{
-		foreach( survivor in Players.AllSurvivors() )
+		foreach( survivor in ::VSLib.EasyLogic.Players.AllSurvivors() )
 		{
 			if ( ::VSLib.Utils.GetSurvivorSet() == 1 )
 			{
 				if ( survivor.GetSurvivorCharacter() == 0 || survivor.GetSurvivorCharacter() == 4 )
 				{
 					::VSLib.EasyLogic.ExtraBills.append( survivor );
+					::VSLib.EasyLogic.ExtraBillsData.rawset(survivor.GetIndex(), {});
+					::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["SurvivorCharacter"] <- survivor.GetSurvivorCharacter();
+					::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["Origin"] <- survivor.GetLocation();
+					::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["Angles"] <- survivor.GetAngles();
 					survivor.SetNetProp("m_survivorCharacter", 4);
 				}
 			}
 			else if ( ::VSLib.Utils.GetSurvivorSet() == 2 && survivor.GetSurvivorCharacter() == 4 )
 			{
 				::VSLib.EasyLogic.ExtraBills.append( survivor );
+				::VSLib.EasyLogic.ExtraBillsData.rawset(survivor.GetIndex(), {});
+				::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["SurvivorCharacter"] <- survivor.GetSurvivorCharacter();
+				::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["Origin"] <- survivor.GetLocation();
+				::VSLib.EasyLogic.ExtraBillsData[survivor.GetIndex()]["Angles"] <- survivor.GetAngles();
 				survivor.SetNetProp("m_survivorCharacter", 8);
 			}
 		}
 		if ( ::VSLib.EasyLogic.ExtraBills.len() > 0 )
 			::VSLib.Timers.AddTimer(0.1, false, _ResetExtraBills );
 		
-		::VSLib.EasyLogic.SpawnExtraSurvivor = true;
+		::VSLib.EasyLogic.SpawnExtraSurvivor++;
 		if ( pos != null )
 		{
-			::VSLib.EasyLogic.ExtraSurvivorOrigin = pos;
-			::VSLib.EasyLogic.ExtraSurvivorAngles = ang;
+			::VSLib.EasyLogic.ExtraSurvivorData.rawset(::VSLib.EasyLogic.SpawnExtraSurvivor, {});
+			::VSLib.EasyLogic.ExtraSurvivorData[::VSLib.EasyLogic.SpawnExtraSurvivor]["Origin"] <- pos;
+			::VSLib.EasyLogic.ExtraSurvivorData[::VSLib.EasyLogic.SpawnExtraSurvivor]["Angles"] <- ang;
 		}
 		::VSLib.Utils.SpawnL4D1Survivor(4);
 	}
 	else
 	{
-		::VSLib.EasyLogic.SpawnL4D1Survivor = true;
+		if ( survivor == 4 )
+			::VSLib.EasyLogic.SpawnL4D1Bill = true;
+		else if ( survivor == 5 )
+			::VSLib.EasyLogic.SpawnL4D1Zoey = true;
+		else if ( survivor == 6 )
+			::VSLib.EasyLogic.SpawnL4D1Francis = true;
+		else if ( survivor == 7 )
+			::VSLib.EasyLogic.SpawnL4D1Louis = true;
+		
+		if ( survType != null )
+			::VSLib.EasyLogic.SpawnL4D1Bot = survType;
+		
 		::VSLib.Utils.SpawnL4D1Survivor(survivor, pos, ang);
 	}
 	
@@ -710,7 +730,10 @@ function VSLib::Utils::SpawnZombie(zombieType, pos = null, ang = QAngle(0,0,0), 
 	
 	if ( (typeof zombieType) == "integer" )
 	{
-		ZSpawn( { type = zombieType, pos = pos, ang = ang } );
+		if ( zombieType == 10 && pos == null )
+			pos = Vector(0,0,0);
+		
+		return ZSpawn( { type = zombieType, pos = pos, ang = ang } );
 	}
 	else
 	{
@@ -845,6 +868,30 @@ function VSLib::Utils::SpawnCommentaryZombie(zombieModel, pos = Vector(0,0,0), a
 	ent.Input("Kill");
 }
 
+/**
+ * Spawns a leaker at the specified location.
+ *
+ * @authors Rayman1103
+ */
+function VSLib::Utils::SpawnLeaker(pos = null, ang = QAngle(0,0,0))
+{
+	::VSLib.EasyLogic.LeakerChance = Convars.GetFloat("boomer_leaker_chance");
+	Convars.SetValue("boomer_leaker_chance", 100);
+	::VSLib.EasyLogic.SpawnLeaker++;
+	
+	if ( !::VSLib.Utils.SpawnZombie(Z_BOOMER, pos, ang) )
+	{
+		Convars.SetValue("boomer_leaker_chance", ::VSLib.EasyLogic.LeakerChance);
+		::VSLib.EasyLogic.SpawnLeaker--;
+		return false;
+	}
+	else
+	{
+		::VSLib.Timers.AddTimerByName("VSLibLeakerFailsafe", 0.1, false, _LeakerFailsafe );
+		return true;
+	}
+}
+
 
 //
 // Below are helper math functions.
@@ -971,7 +1018,7 @@ function VSLib::Utils::ResumeTime(timescale = null)
  */
 function VSLib::Utils::PlaySoundToAll(sound)
 {
-	foreach (p in Players.All())
+	foreach (p in ::VSLib.EasyLogic.Players.All())
 		p.PlaySound(sound);
 }
 
@@ -980,7 +1027,7 @@ function VSLib::Utils::PlaySoundToAll(sound)
  */
 function VSLib::Utils::StopSoundOnAll(sound)
 {
-	foreach (p in Players.All())
+	foreach (p in ::VSLib.EasyLogic.Players.All())
 		p.StopSound(sound);
 }
 
@@ -1004,7 +1051,7 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
 	if (attacker.GetTeam() != INFECTED)
 		return;
 	
-	foreach (surv in Players.Survivors())
+	foreach (surv in ::VSLib.EasyLogic.Players.Survivors())
 	{
 		local curattker = surv.GetCurrentAttacker();
 		if (curattker != null && curattker.GetIndex() == attacker.GetIndex())
@@ -1017,7 +1064,7 @@ function VSLib::Utils::GetVictimOfAttacker( attacker )
  */
 function VSLib::Utils::GetEntityOrPlayer( ent )
 {
-	if (ent.IsValid())
+	if ( (ent != null) && (ent.IsValid()) )
 	{
 		if ( ent.IsPlayer() )
 			return ::VSLib.Player(ent);
@@ -1033,7 +1080,7 @@ function VSLib::Utils::GetEntityOrPlayer( ent )
  */
 function VSLib::Utils::GetEntityFromHandle( ehandle )
 {
-	foreach( ent in Objects.OfClassname("*") )
+	foreach( ent in ::VSLib.EasyLogic.Objects.OfClassname("*") )
 	{
 		if ( ent.GetEntityHandle() == ehandle )
 			return ent;
@@ -1087,9 +1134,26 @@ function VSLib::Utils::GetSurvivorFromActor( actor )
  */
 function VSLib::Utils::GetPlayerFromName( name )
 {
-	foreach (player in Players.All())
+	if ( typeof name != "string" )
+		return null;
+	
+	foreach (player in ::VSLib.EasyLogic.Players.All())
 	{
-		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) || (player.GetName().tolower().find(name.tolower()) != null) )
+		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetBaseCharacterName().tolower() == name.tolower()) || (player.GetName().tolower().find(name.tolower()) != null) )
+			return player;
+	}
+	
+	return null;
+}
+
+/**
+ * Returns the host player.
+ */
+function VSLib::Utils::GetHostPlayer()
+{
+	foreach( player in ::VSLib.EasyLogic.Players.All() )
+	{
+		if ( player.IsServerHost() )
 			return player;
 	}
 	
@@ -1159,7 +1223,7 @@ function VSLib::Utils::StartFinale( )
 	{
 		local vsent = ::VSLib.Entity(ent);
 		
-		local finale_nav = ::VSLib.Utils.CreateEntity("point_nav_attribute_region", Players.AnyAliveSurvivor().GetLocation(), QAngle(0,0,0), { maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64" });
+		local finale_nav = ::VSLib.Utils.CreateEntity("point_nav_attribute_region", ::VSLib.EasyLogic.Players.AnyAliveSurvivor().GetLocation(), QAngle(0,0,0), { maxs = "999999 999999 999999", mins = "-999999 -999999 -999999", spawnflags = "64" });
 		
 		if ( SessionState.MapName == "c2m5_concert" )
 			EntFire( "stadium_entrance_door_relay", "Kill" );
@@ -1234,7 +1298,7 @@ function VSLib::Utils::RollStatsCrawl()
 	
 	::VSLib.Utils.GenerateGameEvent("gameinstructor_nodraw");
 	::VSLib.Utils.StopDirector();
-	foreach( infected in Players.AllInfected() )
+	foreach( infected in ::VSLib.EasyLogic.Zombies.All() )
 	{
 		if ( infected.IsBot() )
 			infected.Input("Kill");
@@ -1475,9 +1539,6 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 		SpawnFlags = 10;
 		Count = 1;
 	}
-	local t = { ammo = Ammo, count = Count, spawnflags = SpawnFlags, };
-	foreach (idx, val in t)
-		keyvalues[idx] <- val;
 	
 	if ( weapon == "weapon_smg_mp5_spawn" )
 	{
@@ -1512,7 +1573,13 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 		return wep;
 	}
 	else
+	{
+		local t = { ammo = Ammo, count = Count, spawnflags = SpawnFlags, };
+		foreach (idx, val in t)
+			keyvalues[idx] <- val;
+		
 		return ::VSLib.Utils.CreateEntity(weapon, pos, ang, keyvalues);
+	}
 }
 
 /**
@@ -1650,7 +1717,7 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
 	
 	local function CalcPlayerPos()
 	{
-		foreach (surv in Players.AliveSurvivors())
+		foreach (surv in ::VSLib.EasyLogic.Players.AliveSurvivors())
 			if (::VSLib.Utils.CalculateDistance(surv.GetLocation(), this.ent.GetLocation()) < 32.0)
 				if (surv.CanTraceToOtherEntity(this.ent))
 				{
@@ -1673,7 +1740,7 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
  */
 function VSLib::Utils::ShowHintSurvivors( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
-	foreach( survivor in Players.Survivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.Survivors() )
 		survivor.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
 }
 
@@ -1682,7 +1749,7 @@ function VSLib::Utils::ShowHintSurvivors( text, duration = 5, icon = "icon_tip",
  */
 function VSLib::Utils::ShowHintInfected( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
-	foreach( infected in Players.Infected() )
+	foreach( infected in ::VSLib.EasyLogic.Players.Infected() )
 		infected.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
 }
 
@@ -1691,7 +1758,7 @@ function VSLib::Utils::ShowHintInfected( text, duration = 5, icon = "icon_tip", 
  */
 function VSLib::Utils::ShowHintAll( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
-	foreach( player in Players.All() )
+	foreach( player in ::VSLib.EasyLogic.Players.All() )
 		player.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
 }
 
@@ -1957,6 +2024,28 @@ function VSLib::Utils::HasStartedDark()
 }
 
 /**
+ * Gets the time of day.
+ */
+function VSLib::Utils::GetTimeOfDay()
+{
+	if ( !Entities.FindByClassname( null, "worldspawn" ) )
+		return;
+	
+	return ::VSLib.Entity("worldspawn").GetNetPropInt( "m_iTimeOfDay" );
+}
+
+/**
+ * Sets the time of day.
+ */
+function VSLib::Utils::SetTimeOfDay( time )
+{
+	if ( !Entities.FindByClassname( null, "worldspawn" ) )
+		return;
+	
+	::VSLib.Entity("worldspawn").SetNetProp( "m_iTimeOfDay", time.tointeger() );
+}
+
+/**
  * Gets a random value from an array
  */
 function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
@@ -1980,7 +2069,7 @@ function VSLib::Utils::GetRandValueFromArray(arr, removeValue = false)
  */
 function VSLib::Utils::GetSurvivorSet()
 {
-	foreach( survivor in Players.AllSurvivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.AllSurvivors() )
 	{
 		if ( survivor.GetCharacterName() == "Nick" || survivor.GetCharacterName() == "Rochelle" || survivor.GetCharacterName() == "Coach" || survivor.GetCharacterName() == "Ellis" )
 			return 2;
@@ -2043,6 +2132,24 @@ function VSLib::Utils::GetCampaign()
 }
 
 /**
+ * Gets the next map name
+ */
+function VSLib::Utils::GetNextMap()
+{
+	local ent = null;
+	if (ent = Entities.FindByClassname(ent, "info_changelevel"))
+	{
+		return ::VSLib.Entity(ent).GetNetPropString( "m_mapName" );
+	}
+	else if (ent = Entities.FindByClassname(ent, "trigger_changelevel"))
+	{
+		return ::VSLib.Entity(ent).GetNetPropString( "m_mapName" );
+	}
+	
+	return "";
+}
+
+/**
  * Gets the previous map name
  */
 function VSLib::Utils::GetPreviousMap()
@@ -2086,10 +2193,77 @@ function VSLib::Utils::GetEntityCount()
 {
 	local count = 0;
 	
-	foreach( ent in Objects.OfClassname("*") )
+	foreach( ent in ::VSLib.EasyLogic.Objects.All() )
 		count++;
 	
 	return count;
+}
+
+/**
+ * Gets a table of RGBA colors from 32 bit format to 8 bit.
+ */
+function VSLib::Utils::GetColor32( color32 )
+{
+	local t = {};
+	local readColor = color32;
+	
+	// Reads the 8 bit color values by rightshifting and masking the lowest byte out with bitwise AND.
+	// The >>> makes it consider the input value unsigned.
+	t.red <- (readColor & 0xFF);
+	t.green <- ((readColor >>> 8) & 0xFF);
+	t.blue <- ((readColor >>> 16) & 0xFF);
+	t.alpha <- ((readColor >>> 24) & 0xFF);
+	return t;
+}
+
+/**
+ * Sets the RGBA colors from 8 bit format to 32 bit.
+ */
+function VSLib::Utils::SetColor32( red, green, blue, alpha )
+{
+	// Shifts the bits left one byte and adds values to the lowest byte with bitwise OR.
+	local color = alpha //alpha
+	color = (color << 8) | blue //blue
+	color = (color << 8) | green //green
+	color = (color << 8) | red //red
+	
+	return color;
+}
+
+/**
+ * Gets a string of RGB colors from 32 bit format.
+ */
+function VSLib::Utils::GetColor32String( color32 )
+{
+	local t = null;
+	
+	if ( typeof color32 == "integer" )
+		t = ::VSLib.Utils.GetColor32( color32 );
+	else
+		t = color32;
+	
+	return t.red + " " + t.green + " " + t.blue;
+}
+
+/**
+ * Sets the RGB colors from string to 32 bit format.
+ */
+function VSLib::Utils::SetColor32String( str )
+{
+	local arr = split(str, " ");
+	
+	local colors = {};
+	local idx = 0;
+	foreach (k, v in arr)
+	{
+		if (k != -1 && v != null && v != "")
+		{
+			colors[idx] <- v;
+			idx++;
+		}
+	}
+	
+	return ::VSLib.Utils.SetColor32( colors[0].tointeger(), colors[1].tointeger(), colors[2].tointeger(), 255 );
 }
 
 /**
@@ -2100,16 +2274,16 @@ function VSLib::Utils::MountedGunFix()
 	local playerIndexes = {};
 	local owner = null;
 	
-	foreach( minigun in Objects.MountedGuns() )
+	foreach( minigun in ::VSLib.EasyLogic.Objects.MountedGuns() )
 	{
 		owner = minigun.GetNetPropEntity( "m_owner" );
 		
 		if ( owner != null )
-			playerIndexes[owner.GetBaseIndex()] <- true;
+			playerIndexes[owner.GetIndex()] <- true;
 	}
-	foreach( player in Players.All() )
+	foreach( player in ::VSLib.EasyLogic.Players.All() )
 	{
-		if ( player.IsUsingMountedGun() && !(player.GetBaseIndex() in playerIndexes) )
+		if ( player.IsUsingMountedGun() && !(player.GetIndex() in playerIndexes) )
 		{
 			player.SetNetProp( "m_UsingMountedGun", 0 );
 			player.SetNetProp( "m_UsingMountedWeapon", 0 );
@@ -2124,7 +2298,7 @@ function VSLib::Utils::GetNumberOfSurvivorsAlive()
 {
 	local teamAlive = 0;
 	
-	foreach( survivor in Players.AliveSurvivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.AliveSurvivors() )
 		teamAlive++;
 	
 	return teamAlive;
@@ -2137,7 +2311,7 @@ function VSLib::Utils::GetNumberOfSurvivorsIncapacitated()
 {
 	local teamIncapacitated = 0;
 	
-	foreach( survivor in Players.IncapacitatedSurvivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.IncapacitatedSurvivors() )
 		teamIncapacitated++;
 	
 	return teamIncapacitated;
@@ -2150,7 +2324,7 @@ function VSLib::Utils::GetNumberOfSurvivorsDead()
 {
 	local teamDead = 0;
 	
-	foreach( survivor in Players.DeadSurvivors() )
+	foreach( survivor in ::VSLib.EasyLogic.Players.DeadSurvivors() )
 		teamDead++;
 	
 	return teamDead;
@@ -2161,7 +2335,7 @@ function VSLib::Utils::GetNumberOfSurvivorsDead()
  */
 function VSLib::Utils::IsCommonInfectedPresent()
 {
-	foreach( common in Players.CommonInfected() )
+	foreach( common in ::VSLib.EasyLogic.Zombies.CommonInfected() )
 		if ( common.IsAlive() )
 			return true;
 	
@@ -2173,7 +2347,7 @@ function VSLib::Utils::IsCommonInfectedPresent()
  */
 function VSLib::Utils::IsUncommonInfectedPresent()
 {
-	foreach( uncommon in Players.UncommonInfected() )
+	foreach( uncommon in ::VSLib.EasyLogic.Zombies.UncommonInfected() )
 		if ( uncommon.IsAlive() )
 			return true;
 	
@@ -2185,7 +2359,7 @@ function VSLib::Utils::IsUncommonInfectedPresent()
  */
 function VSLib::Utils::IsWitchPresent()
 {
-	foreach( witch in Players.Witches() )
+	foreach( witch in ::VSLib.EasyLogic.Zombies.Witches() )
 		if ( witch.IsAlive() )
 			return true;
 	
@@ -2197,7 +2371,7 @@ function VSLib::Utils::IsWitchPresent()
  */
 function VSLib::Utils::IsSmokerPresent()
 {
-	foreach( smoker in Players.OfType(Z_SMOKER) )
+	foreach( smoker in ::VSLib.EasyLogic.Players.OfType(Z_SMOKER) )
 		if ( smoker.IsAlive() )
 			return true;
 	
@@ -2209,7 +2383,7 @@ function VSLib::Utils::IsSmokerPresent()
  */
 function VSLib::Utils::IsHunterPresent()
 {
-	foreach( hunter in Players.OfType(Z_HUNTER) )
+	foreach( hunter in ::VSLib.EasyLogic.Players.OfType(Z_HUNTER) )
 		if ( hunter.IsAlive() )
 			return true;
 	
@@ -2221,7 +2395,7 @@ function VSLib::Utils::IsHunterPresent()
  */
 function VSLib::Utils::IsBoomerPresent()
 {
-	foreach( boomer in Players.OfType(Z_BOOMER) )
+	foreach( boomer in ::VSLib.EasyLogic.Players.OfType(Z_BOOMER) )
 		if ( boomer.IsAlive() )
 			return true;
 	
@@ -2233,7 +2407,7 @@ function VSLib::Utils::IsBoomerPresent()
  */
 function VSLib::Utils::IsSpitterPresent()
 {
-	foreach( spitter in Players.OfType(Z_SPITTER) )
+	foreach( spitter in ::VSLib.EasyLogic.Players.OfType(Z_SPITTER) )
 		if ( spitter.IsAlive() )
 			return true;
 	
@@ -2245,7 +2419,7 @@ function VSLib::Utils::IsSpitterPresent()
  */
 function VSLib::Utils::IsJockeyPresent()
 {
-	foreach( jockey in Players.OfType(Z_JOCKEY) )
+	foreach( jockey in ::VSLib.EasyLogic.Players.OfType(Z_JOCKEY) )
 		if ( jockey.IsAlive() )
 			return true;
 	
@@ -2257,7 +2431,7 @@ function VSLib::Utils::IsJockeyPresent()
  */
 function VSLib::Utils::IsChargerPresent()
 {
-	foreach( charger in Players.OfType(Z_CHARGER) )
+	foreach( charger in ::VSLib.EasyLogic.Players.OfType(Z_CHARGER) )
 		if ( charger.IsAlive() )
 			return true;
 	
@@ -2269,7 +2443,7 @@ function VSLib::Utils::IsChargerPresent()
  */
 function VSLib::Utils::IsTankPresent()
 {
-	foreach( tank in Players.OfType(Z_TANK) )
+	foreach( tank in ::VSLib.EasyLogic.Players.OfType(Z_TANK) )
 		if ( tank.IsAlive() )
 			return true;
 	
@@ -2305,13 +2479,13 @@ function VSLib::Utils::GetSaferoomLocation()
 		return Vector( 6117.068848, -6170.154785, 386.031250 );
 	else
 	{
-		foreach( landmark in Objects.OfClassname("info_landmark") )
+		foreach( landmark in ::VSLib.EasyLogic.Objects.OfClassname("info_landmark") )
 		{
-			local dist = ::VSLib.Utils.CalculateDistance(landmark.GetLocation(), Players.AnySurvivor().GetSpawnLocation());
+			local dist = ::VSLib.Utils.CalculateDistance(landmark.GetLocation(), ::VSLib.EasyLogic.Players.AnySurvivor().GetSpawnLocation());
 			
 			if ( dist > 2000 )
 			{
-				foreach( saferoomDoor in Objects.OfClassname("prop_door_rotating_checkpoint") )
+				foreach( saferoomDoor in ::VSLib.EasyLogic.Objects.OfClassname("prop_door_rotating_checkpoint") )
 				{
 					if ( ::VSLib.Utils.CalculateDistance(saferoomDoor.GetLocation(), landmark.GetLocation()) < 2000 )
 						return landmark.GetLocation();
@@ -2678,10 +2852,10 @@ function VSLib::Utils::SanitizeAllUnheldWeapons()
 	
 	foreach (wclass, v in weaponsToRemove)
 	{
-		foreach(wep in Objects.OfClassname(wclass))
+		foreach(wep in ::VSLib.EasyLogic.Objects.OfClassname(wclass))
 			if (wep.GetOwnerEntity() == null)
 				wep.Kill();
-		foreach(wep in Objects.OfClassname(wclass+"_spawn")) /*kill spawns as well #shotgunefx*/
+		foreach(wep in ::VSLib.EasyLogic.Objects.OfClassname(wclass+"_spawn")) /*kill spawns as well #shotgunefx*/
 			wep.Kill();
 	}
 }
@@ -2799,32 +2973,28 @@ function VSLib::Utils::SanitizeMiniguns()
  */
 function VSLib::Utils::RemoveZombieSpawns()
 {
-	EntFire( "intro_zombie_spawn", "Kill" );
-    EntFire( "zspawn_lobby_fall_1", "Kill" );
-    EntFire( "zspawn_lobby_fall_2", "Kill" );
-    EntFire( "zspawn_lobby_fall_3", "Kill" );
-    EntFire( "zspawn_lobby_fall_4", "Kill" );
-    EntFire( "zspawn_lobby_fall_5", "Kill" );
-    EntFire( "zspawn_fall_1", "Kill" );
-    EntFire( "zspawn_fall_2", "Kill" );
-    EntFire( "zombie_outro", "Kill" );
-    EntFire( "escape_zombie", "Kill" );
-    EntFire( "zspawn_zombie_safe", "Kill" );
-    EntFire( "zspawn_zombie_safe2", "Kill" );
-    EntFire( "spawn_zombie_van", "Kill" );
-    EntFire( "spawn_zombie_alarm", "Kill" );
-    EntFire( "spawn_zombie_alarm2", "Kill" );
-    EntFire( "zombie_spawn1", "Kill" );
-    EntFire( "spawn_zombie_run", "Kill" );
-    EntFire( "spawn_zombie_end", "Kill" );
-    EntFire( "infected_spawner", "Kill" );
-    EntFire( "infected_spawner2", "Kill" );
-    EntFire( "spawn_zombie_location1", "Kill" );
-    EntFire( "spawn_zombie_location2", "Kill" );
-    EntFire( "spawn_zombie_location3", "Kill" );
-    EntFire( "spawn_zombie_location4", "Kill" );
-    EntFire( "spawn_zombie_location5", "Kill" );
-    EntFire( "spawn_zombie_location6", "Kill" );
+	foreach( spawn in ::VSLib.EasyLogic.Objects.OfClassname("info_zombie_spawn") )
+	{
+		local population = spawn.GetNetPropString( "m_szPopulation" );
+		
+		if ( population != "church"	&& population != "smoker" && population != "hunter"	&& population != "boomer" && population != "tank" && population != "witch" && population != "witch_bride" && population != "jockey" && population != "charger" && population != "spitter" && population != "new_special" && population != "river_docks_trap" )
+			spawn.Kill();
+	}
+}
+
+/**
+ * Removes special infected spawn locations.
+ * @authors Rayman1103
+ */
+function VSLib::Utils::RemoveSpecialSpawns()
+{
+	foreach( spawn in ::VSLib.EasyLogic.Objects.OfClassname("info_zombie_spawn") )
+	{
+		local population = spawn.GetNetPropString( "m_szPopulation" );
+		
+		if ( population == "church"	|| population == "smoker" || population == "hunter"	|| population == "boomer" || population == "tank" || population == "witch" || population == "witch_bride" || population == "jockey" || population == "charger" || population == "spitter" || population == "new_special" || population == "river_docks_trap" )
+			spawn.Kill();
+	}
 }
 
 /**
@@ -2859,10 +3029,10 @@ function VSLib::Utils::RemoveFootLockers()
  */
 function VSLib::Utils::DisableCarAlarms()
 {
-    foreach (glass in Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
+    foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
         glass.Kill();
     
-    foreach (glass in Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
+    foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
         glass.Input("Enable");
     
     EntFire( "prop_car_alarm", "Disable" );
@@ -2991,6 +3161,70 @@ function VSLib::Utils::IsLowViolence()
 		return (::VSLib.EasyLogic.QueryContextData.LowViolence > 0) ? true : false;
 	
 	return false;
+}
+
+/**
+ * Gets the number of survivors that are currently in the starting area.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsInStartArea()
+{
+	local inStart = 0;
+	
+	foreach( survivor in ::VSLib.EasyLogic.Players.AliveSurvivors() )
+	{
+		if ( survivor.IsInStartArea() )
+			inStart++;
+	}
+	
+	return inStart;
+}
+
+/**
+ * Gets the number of survivors that are currently in the checkpoint.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsInCheckpoint()
+{
+	local inCheckpoint = 0;
+	
+	foreach( survivor in ::VSLib.EasyLogic.Players.AliveSurvivors() )
+	{
+		if ( survivor.IsInCheckpoint() )
+			inCheckpoint++;
+	}
+	
+	return inCheckpoint;
+}
+
+/**
+ * Gets the number of survivors that are currently in a safe spot.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsInSafeSpot()
+{
+	local inSafeSpot = 0;
+	
+	foreach( survivor in ::VSLib.EasyLogic.Players.AliveSurvivors() )
+	{
+		if ( survivor.IsInSafeSpot() )
+			inSafeSpot++;
+	}
+	
+	return inSafeSpot;
+}
+
+/**
+ * Gets the number of survivors that are currently in a battlefield.
+ */
+function VSLib::Utils::GetNumberOfSurvivorsInBattlefield()
+{
+	local inBattlefield = 0;
+	
+	foreach( survivor in ::VSLib.EasyLogic.Players.AliveSurvivors() )
+	{
+		if ( survivor.IsInBattlefield() )
+			inBattlefield++;
+	}
+	
+	return inBattlefield;
 }
 
 

@@ -811,6 +811,10 @@ class ::VSLib.ResponseRules.Then
 				EntFire(::VSLib.Player(speaker).GetTargetname(), "SpeakResponseConcept", query.concept, 0)
 				//rr_CommitAIResponse( speaker, q )*/
 		}
+		else if ( target.tolower() == "subject" )
+		{
+			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, ::VSLib.Utils.GetSurvivorFromActor( query.subject ).GetBaseEntity())
+		}
 		else if ( target.tolower() == "orator" )
 		{
 			if ( Entities.FindByClassname( null, "func_orator" ) )
@@ -912,13 +916,145 @@ function VSLib::ResponseRules::ProcessCriterion( crit )
 }
 
 
+function VSLib::ResponseRules::ThenDelay( speaker, query, target, concept, contexts, delay )
+{
+	if ( target.tolower() == "namvet" )
+		target = "NamVet"
+	else if ( target.tolower() == "teengirl" )
+		target = "TeenGirl"
+	else
+	{
+		local firstletter = target.slice(0,1)
+		target = firstletter.toupper() + target.slice(1)
+	}
+	
+	if ( target.tolower() == "all" )
+	{
+		local expressers = ::rr_GetResponseTargets()
+		foreach (name, recipient in expressers)
+		{
+			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, recipient)
+		}
+	}
+	else if ( target.tolower() == "any" )
+	{
+		if ( Entities.FindByClassname( null, "info_director" ) )
+		{
+			EntFire("info_director", "FireConceptToAny", concept, delay)
+		}
+		else
+		{
+			::VSLib.Utils.CreateEntity("info_director")
+			EntFire("info_director", "FireConceptToAny", concept, delay)
+			EntFire("info_director", "Kill")
+		}
+	}
+	else if ( target.tolower() == "self" )
+	{
+		DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, speaker)
+	}
+	else if ( target.tolower() == "subject" )
+	{
+		DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, ::VSLib.Utils.GetSurvivorFromActor( query.subject ).GetBaseEntity())
+	}
+	else if ( target.tolower() == "orator" )
+	{
+		if ( Entities.FindByClassname( null, "func_orator" ) )
+			EntFire("func_orator", "SpeakResponseConcept", concept, delay)
+	}
+	else
+	{
+		local expressers = ::rr_GetResponseTargets()
+		if ( target in expressers )
+		{
+			EntFire(::VSLib.ResponseRules.ExpTargetName[target], "SpeakResponseConcept", concept, delay)
+		}
+	}
+}
+
+function VSLib::ResponseRules::EmitSound( args )
+{
+	EmitSoundOn( args.soundname, args.speaker )
+	if ( args.func )
+		args.func( args.speaker, args.query )
+	if ( args.applycontext )
+		::VSLib.ResponseRules.ApplyContext( args.speaker, args.query, args.applycontext, args.applycontexttoworld, null )
+	if ( args.then != null )
+		::VSLib.ResponseRules.ThenDelay( args.speaker, args.query, args.then.target, args.then.concept, args.then.contexts, args.then.delay )
+}
+
+function VSLib::ResponseRules::SceneDelay( args )
+{
+	Player(args.speaker.GetEntityIndex()).Speak( args.scenename )
+	if ( args.func )
+		args.func( args.speaker, args.query )
+	if ( args.applycontext )
+		::VSLib.ResponseRules.ApplyContext( args.speaker, args.query, args.applycontext, args.applycontexttoworld, null )
+	if ( args.then != null )
+		::VSLib.ResponseRules.ThenDelay( args.speaker, args.query, args.then.target, args.then.concept, args.then.contexts, args.then.delay )
+}
+
+function VSLib::ResponseRules::ApplyContext( speaker, query, context, contexttoworld, func )
+{
+	local contexts = context
+	
+	if ( typeof context == "array" )
+	{
+		if ( contexttoworld )
+		{
+			while ( contexts.len() > 0 )
+			{
+				local contextArray = contexts.pop()
+				foreach( player in ::VSLib.EasyLogic.Players.All() )
+					player.SetContext( "world" + contextArray.context, contextArray.value, contextArray.duration )
+				foreach( orator in ::VSLib.EasyLogic.Objects.OfClassname("func_orator") )
+					orator.SetContext( "world" + contextArray.context, contextArray.value, contextArray.duration )
+			}
+		}
+		else
+		{
+			while ( contexts.len() > 0 )
+			{
+				local contextArray = contexts.pop()
+				local duration = contextArray.duration
+				if ( duration == 0 )
+					duration = 999999
+				speaker.SetContext( contextArray.context, contextArray.value.tostring(), duration )
+			}
+		}
+	}
+	if ( func )
+		func( speaker, query )
+}
+
 // Given a single array representing the responses,
 // do the ugly work to normalize them into ResponseSingle objects.
 // right now the decision of type is made by whether there is a func param or a scenename param.
 function VSLib::ResponseRules::ProcessResponse( resp )
 {
+	local delay = 0.0
 	local func = null
 	local scene = null
+	local then = null
+	local applycontext = null
+	local applycontexttoworld = false
+	
+	if ( "delay" in resp )
+	{
+		delay = resp.delay
+	}
+	if ( "then" in resp )
+	{
+		then = resp.then
+	}
+	if ( "applycontext" in resp )
+	{
+		applycontext = resp.applycontext
+	}
+	if ( "applycontexttoworld" in resp )
+	{
+		applycontexttoworld = resp.applycontexttoworld
+	}
 	if ( "func" in resp )
 	{
 		func = resp.func
@@ -929,11 +1065,23 @@ function VSLib::ResponseRules::ProcessResponse( resp )
 	}
 	if ( "scenename" in resp )
 	{
-		scene = resp.scenename
+		local Func = func
+		if ( delay > 0.0 )
+		{
+			func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.SceneDelay, { speaker = speaker, query = query, scenename = resp.scenename, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
+		}
+		else
+		{
+			scene = resp.scenename
+			
+			if ( applycontext )
+				func = @( speaker, query ) ::VSLib.ResponseRules.ApplyContext( speaker, query, applycontext, applycontexttoworld, Func )
+		}
 	}
 	if ( "soundname" in resp )
 	{
-		func = @( speaker, query ) EmitSoundOn( resp.soundname, speaker )
+		local Func = func
+		func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.EmitSound, { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
 	}
 	
 	local kind = ResponseKind.none

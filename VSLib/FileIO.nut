@@ -104,7 +104,7 @@ function VSLib::FileIO::SerializeTable(object, predicateStart = "{\n", predicate
 function VSLib::FileIO::SaveTable(fileName, table)
 {
 	fileName += ".tbl";
-	StringToFile(fileName, ::VSLib.FileIO.SerializeTable(table));
+	return StringToFile(fileName, ::VSLib.FileIO.SerializeTable(table));
 }
 
 /**
@@ -160,7 +160,7 @@ function VSLib::FileIO::LoadTable(fileName)
  */
 function VSLib::FileIO::MakeFileName( mapname, modename )
 {
-	return  "VSLib_" + mapname + "_" + modename;
+	return "VSLib_" + mapname + "_" + modename;
 }
 
 /**
@@ -170,7 +170,7 @@ function VSLib::FileIO::MakeFileName( mapname, modename )
  */
 function VSLib::FileIO::SaveTableFileName(mapname, modename, table)
 {
-	::VSLib.FileIO.SaveTable(::VSLib.FileIO.MakeFileName( mapname, modename ), table);
+	return ::VSLib.FileIO.SaveTable(::VSLib.FileIO.MakeFileName( mapname, modename ), table);
 }
 
 /**
