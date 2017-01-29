@@ -1227,7 +1227,7 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 ::VSLib_RemoveDeadTimers <- function ()
 {
 	// Clear timer cache
-	if ("Timers" in VSLib)
+	if ("Timers" in ::VSLib)
 	{
 		if ("TimersList" in ::VSLib.Timers)
 		{

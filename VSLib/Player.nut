@@ -63,11 +63,6 @@ function VSLib::Player::IsPlayerEntityValid()
 	if (!_ent.IsValid())
 		return false;
 	
-	// LukeM 6/1/2013
-	// Commented out the below since IsPlayer should exist for players anyway
-	//if ("player" != _ent.GetClassname().tolower())
-	//	return false;
-	
 	if ("IsPlayer" in _ent)
 		return _ent.IsPlayer();
 	
@@ -1230,7 +1225,7 @@ function VSLib::Player::EnableButton( button )
 /**
  * Incaps the player
  */
-function VSLib::Player::Incapacitate( attacker = null )
+function VSLib::Player::Incapacitate( dmgtype = 0, attacker = null )
 {
 	if (!IsPlayerEntityValid())
 	{
@@ -1241,22 +1236,25 @@ function VSLib::Player::Incapacitate( attacker = null )
 	if (IsIncapacitated())
 		return;
 	
-	Damage(GetHealth(), 0, attacker);
+	Damage(GetHealth(), dmgtype, attacker);
+	
+	if ( !IsIncapacitated() && Entities.FindByClassname( null, "worldspawn" ) )
+		Damage(GetHealth(), dmgtype, ::VSLib.Entity("worldspawn"));
 }
 
 /**
  * Kills the player.
  */
-function VSLib::Player::Kill( attacker = null )
+function VSLib::Player::Kill( dmgtype = 0, attacker = null )
 {
 	if (IsPlayerEntityValid())
 	{
 		if ( _ent.IsSurvivor() )
 			SetLastStrike();
-		Damage(GetHealth(), 0, attacker);
+		Damage(GetHealth(), dmgtype, attacker);
 		
 		if ( IsAlive() && Entities.FindByClassname( null, "worldspawn" ) )
-			Damage(GetHealth(), 0, ::VSLib.Entity("worldspawn"));
+			Damage(GetHealth(), dmgtype, ::VSLib.Entity("worldspawn"));
 	}
 	else
 		base.Kill();
@@ -1786,7 +1784,7 @@ function VSLib::Player::IsInCloset()
 	if (GetPlayerType() != Z_SURVIVOR)
 		return false;
 	
-	foreach( rescue in Objects.OfClassname("info_survivor_rescue") )
+	foreach( rescue in ::VSLib.EasyLogic.Objects.OfClassname("info_survivor_rescue") )
 	{
 		local survivor = rescue.GetNetPropEntity( "m_survivor" );
 		
@@ -1815,7 +1813,7 @@ function VSLib::Player::Rescue()
 	if (GetPlayerType() != Z_SURVIVOR)
 		return false;
 	
-	foreach( rescue in Objects.OfClassname("info_survivor_rescue") )
+	foreach( rescue in ::VSLib.EasyLogic.Objects.OfClassname("info_survivor_rescue") )
 	{
 		local survivor = rescue.GetNetPropEntity( "m_survivor" );
 		
@@ -2210,6 +2208,139 @@ function VSLib::Player::SetPrimaryAmmo( amount )
 }
 
 /**
+ * Gets the player's primary ammo
+ */
+function VSLib::Player::GetPrimaryClip()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		return t["slot0"].GetClip();
+	}
+}
+
+/**
+ * Sets the player's primary ammo
+ */
+function VSLib::Player::SetPrimaryClip( amount )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		t["slot0"].SetNetProp( "m_iClip1", amount.tointeger() );
+	}
+}
+
+/**
+ * Gets the player's current primary upgrades
+ */
+function VSLib::Player::GetPrimaryUpgrades()
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		return t["slot0"].GetUpgrades();
+	}
+}
+
+/**
+ * Sets the player's current primary upgrades
+ */
+function VSLib::Player::SetPrimaryUpgrades( amount )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		t["slot0"].SetUpgrades( amount );
+	}
+}
+
+/**
+ * Returns true if the upgrade exists in the player's current primary upgrades
+ */
+function VSLib::Player::HasPrimaryUpgrade( upgrade )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		return t["slot0"].HasUpgrade( upgrade );
+	}
+}
+
+/**
+ * Adds the upgrade to the player's current primary upgrades
+ */
+function VSLib::Player::AddPrimaryUpgrade( upgrade )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		t["slot0"].AddUpgrade( upgrade );
+	}
+}
+
+/**
+ * Removes the upgrade from the player's current primary upgrades
+ */
+function VSLib::Player::RemovePrimaryUpgrade( upgrade )
+{
+	if (!IsPlayerEntityValid())
+	{
+		printl("VSLib Warning: Player " + _idx + " is invalid.");
+		return;
+	}
+	
+	local t = GetHeldItems();
+	
+	if (t && "slot0" in t)
+	{
+		t["slot0"].RemoveUpgrade( upgrade );
+	}
+}
+
+/**
  * Get the amount of zombies the survivor has killed
  */
 function VSLib::Player::GetZombiesKilled()
@@ -2530,7 +2661,7 @@ function VSLib::Player::Speak( scene, delay = 0 )
 						scenename = Scene,
 					}
 				],
-				group_params = ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
+				group_params = ::VSLib.ResponseRules.GroupParams({ permitrepeats = true, sequential = false, norepeat = false })
 			},
 		]
 		ResponseRules.ProcessRules( vsl_speak );

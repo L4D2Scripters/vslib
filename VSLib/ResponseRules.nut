@@ -813,7 +813,9 @@ class ::VSLib.ResponseRules.Then
 		}
 		else if ( target.tolower() == "subject" )
 		{
-			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, ::VSLib.Utils.GetSurvivorFromActor( query.subject ).GetBaseEntity())
+			local expressers = ::rr_GetResponseTargets()
+			if ( query.subject in expressers )
+				DoEntFire("!self", "SpeakResponseConcept", query.concept, delay, null, expressers[query.subject])
 		}
 		else if ( target.tolower() == "orator" )
 		{
@@ -825,7 +827,7 @@ class ::VSLib.ResponseRules.Then
 			local expressers = ::rr_GetResponseTargets()
 			if ( target in expressers )
 			{
-				EntFire(::VSLib.ResponseRules.ExpTargetName[target], "SpeakResponseConcept", query.concept, 0)
+				DoEntFire("!self", "SpeakResponseConcept", query.concept, delay, null, expressers[target])
 				/*local q = rr_QueryBestResponse( expressers[target], query )
 				if ( q )
 				{
@@ -955,7 +957,9 @@ function VSLib::ResponseRules::ThenDelay( speaker, query, target, concept, conte
 	}
 	else if ( target.tolower() == "subject" )
 	{
-		DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, ::VSLib.Utils.GetSurvivorFromActor( query.subject ).GetBaseEntity())
+		local expressers = ::rr_GetResponseTargets()
+		if ( query.subject in expressers )
+			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, expressers[query.subject])
 	}
 	else if ( target.tolower() == "orator" )
 	{
@@ -967,7 +971,7 @@ function VSLib::ResponseRules::ThenDelay( speaker, query, target, concept, conte
 		local expressers = ::rr_GetResponseTargets()
 		if ( target in expressers )
 		{
-			EntFire(::VSLib.ResponseRules.ExpTargetName[target], "SpeakResponseConcept", concept, delay)
+			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, expressers[target])
 		}
 	}
 }

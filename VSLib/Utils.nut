@@ -3029,63 +3029,21 @@ function VSLib::Utils::RemoveFootLockers()
  */
 function VSLib::Utils::DisableCarAlarms()
 {
-    foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
-        glass.Kill();
-    
-    foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
-        glass.Input("Enable");
-    
-    EntFire( "prop_car_alarm", "Disable" );
-    EntFire( "instructor_impound", "Kill" );
-    EntFire( "InstanceAuto5-remark_caralarm", "Kill" );
-    EntFire( "alarm1-remark_caralarm", "Kill" );
-    EntFire( "alarm2-remark_caralarm", "Kill" );
-    EntFire( "alarm3-remark_caralarm", "Kill" );
-    EntFire( "alarm4-remark_caralarm", "Kill" );
-    EntFire( "alarm5-remark_caralarm", "Kill" );
-    EntFire( "alarm6-remark_caralarm", "Kill" );
-    EntFire( "alarm7-remark_caralarm", "Kill" );
-    EntFire( "alarm8-remark_caralarm", "Kill" );
-    EntFire( "remark_caralarm-car1_alarm", "Kill" );
-    EntFire( "remark_caralarm-car2_alarm", "Kill" );
-    EntFire( "remark_caralarm-car3_alarm", "Kill" );
-    EntFire( "car_alarm-remark_caralarm", "Kill" );
-    EntFire( "remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto1-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto2-remark_caralarm", "Kill" );
-    EntFire( "car_alarm1-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto12-remark_caralarm", "Kill" );
-    EntFire( "remark_caralarm-car1", "Kill" );
-    EntFire( "remark_caralarm-car2", "Kill" );
-    EntFire( "remark_caralarm-car3", "Kill" );
-    EntFire( "remark_caralarm-car4", "Kill" );
-    EntFire( "remark_caralarm-car5", "Kill" );
-    EntFire( "caralarm_1-remark_caralarm", "Kill" );
-    EntFire( "caralarm_2-remark_caralarm", "Kill" );
-    EntFire( "caralarm_3-remark_caralarm", "Kill" );
-    EntFire( "caralarm_4-remark_caralarm", "Kill" );
-    EntFire( "caralarm_6-remark_caralarm", "Kill" );
-    EntFire( "caralarm_7-remark_caralarm", "Kill" );
-    EntFire( "caralarm_8-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto24-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto44-remark_caralarm", "Kill" );
-    EntFire( "car1-remark_caralarm", "Kill" );
-    EntFire( "car2-remark_caralarm", "Kill" );
-    EntFire( "car3-remark_caralarm", "Kill" );
-    EntFire( "car4-remark_caralarm", "Kill" );
-    EntFire( "car5-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto128-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto4-remark_caralarm", "Kill" );
-    EntFire( "InstanceAuto5-remark_caralarm", "Kill" );
-    EntFire( "alarma1-remark_caralarm", "Kill" );
-    EntFire( "alarma2-remark_caralarm", "Kill" );
-    EntFire( "alarma3-remark_caralarm", "Kill" );
-    EntFire( "alarma4-remark_caralarm", "Kill" );
-    EntFire( "alarma5-remark_caralarm", "Kill" );
-    EntFire( "alarma6-remark_caralarm", "Kill" );
-    EntFire( "alarma7-remark_caralarm", "Kill" );
-    EntFire( "alarma8-remark_caralarm", "Kill" );
-    EntFire( "alarma9-remark_caralarm", "Kill" );
+	foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass_alarm.mdl"))
+		glass.Kill();
+	
+	foreach (glass in ::VSLib.EasyLogic.Objects.OfModel("models/props_vehicles/cara_95sedan_glass.mdl"))
+		glass.Input("Enable");
+	
+	foreach (remark in ::VSLib.EasyLogic.Objects.OfClassname("info_remarkable"))
+	{
+		local contextsubject = remark.GetNetPropString( "m_szRemarkContext" );
+		if ( contextsubject == "remark_caralarm" )
+			remark.Input( "Kill" );
+	}
+	
+	EntFire( "prop_car_alarm", "Disable" );
+	EntFire( "instructor_impound", "Kill" );
 }
 
 

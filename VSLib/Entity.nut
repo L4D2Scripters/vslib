@@ -191,6 +191,7 @@ getconsttable()["BILL"] <- 4;
 getconsttable()["ZOEY"] <- 5;
 getconsttable()["FRANCIS"] <- 6;
 getconsttable()["LOUIS"] <- 7;
+getconsttable()["SURVIVOR"] <- 9;
 
 // "Ammo" types, to be used with network properties
 getconsttable()["AMMOTYPE_PISTOL"] <- 1;
@@ -1126,10 +1127,8 @@ function VSLib::Entity::SetMaxHealth(value)
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return;
 	}
-		
-	value = value.tointeger();
 	
-	_ent.__KeyValueFromInt("max_health", value);
+	_ent.__KeyValueFromInt("max_health", value.tointeger());
 }
 
 /**
@@ -1216,9 +1215,7 @@ function VSLib::Entity::SetGlobalName(name)
 		return;
 	}
 	
-	name = name.tostring();
-	
-	_ent.__KeyValueFromString("globalname", name);
+	_ent.__KeyValueFromString("globalname", name.tostring());
 }
 
 /**
@@ -1235,9 +1232,7 @@ function VSLib::Entity::SetParentName(name)
 		return;
 	}
 	
-	name = name.tostring();
-	
-	_ent.__KeyValueFromString("parentname", name);
+	_ent.__KeyValueFromString("parentname", name.tostring());
 }
 
 /**
@@ -1251,23 +1246,7 @@ function VSLib::Entity::SetName(name)
 		return;
 	}
 	
-	name = name.tostring();
-	
-	_ent.__KeyValueFromString("targetname", name);
-}
-
-/**
- * Sets the global name of the entity.
- */
-function VSLib::Entity::SetGlobalName( name )
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	SetNetProp( "m_iGlobalname", name );
+	_ent.__KeyValueFromString("targetname", name.tostring());
 }
 
 /**
@@ -1283,8 +1262,7 @@ function VSLib::Entity::SetSpeed(value)
 		return;
 	}
 	
-	value = value.tostring();
-	_ent.__KeyValueFromString("speed", value);
+	_ent.__KeyValueFromString("speed", value.tostring());
 }
 
 /**
@@ -1324,10 +1302,8 @@ function VSLib::Entity::SetRenderEffects(value)
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
 		return;
 	}
-		
-	value = value.tointeger();
 	
-	_ent.__KeyValueFromInt("renderfx", value);
+	_ent.__KeyValueFromInt("renderfx", value.tointeger());
 }
 
 /**
@@ -1355,9 +1331,7 @@ function VSLib::Entity::SetRenderMode(value)
 		return;
 	}
 	
-	value = value.tointeger();
-	
-	_ent.__KeyValueFromInt("rendermode", value);
+	_ent.__KeyValueFromInt("rendermode", value.tointeger());
 }
 
 /**
@@ -1374,9 +1348,7 @@ function VSLib::Entity::SetNextThinkTime(value)
 		return;
 	}
 	
-	value = value.tointeger();
-	
-	_ent.__KeyValueFromInt("nextthink", value);
+	_ent.__KeyValueFromInt("nextthink", value.tointeger());
 }
 
 /**
@@ -1393,9 +1365,7 @@ function VSLib::Entity::SetEffects(value)
 		return;
 	}
 	
-	value = value.tointeger();
-	
-	_ent.__KeyValueFromInt("effects", value);
+	_ent.__KeyValueFromInt("effects", value.tointeger());
 }
 
 /**
@@ -1458,9 +1428,7 @@ function VSLib::Entity::SetModelIndex(value)
 		return;
 	}
 	
-	value = value.tointeger();
-	
-	_ent.__KeyValueFromInt("modelindex", value);
+	_ent.__KeyValueFromInt("modelindex", value.tointeger());
 }
 
 /**
@@ -1508,9 +1476,24 @@ function VSLib::Entity::SetResponseContext(value)
 		return;
 	}
 	
-	value = value.tostring();
+	_ent.__KeyValueFromString("ResponseContext", value.tostring());
+}
+
+/**
+ * Sets the survivor character ID
+ */
+function VSLib::Entity::SetSurvivorCharacter(character)
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
 	
-	_ent.__KeyValueFromString("ResponseContext", value);
+	if (GetType() != Z_SURVIVOR)
+		return;
+	
+	SetNetProp( "m_survivorCharacter", character.tointeger() );
 }
 
 /**
@@ -1526,9 +1509,7 @@ function VSLib::Entity::SetTarget(value)
 		return;
 	}
 	
-	value = value.tostring();
-	
-	_ent.__KeyValueFromString("target", value);
+	_ent.__KeyValueFromString("target", value.tostring());
 }
 
 /**
@@ -1547,9 +1528,7 @@ function VSLib::Entity::SetDamageFilter(value)
 		return;
 	}
 	
-	value = value.tostring();
-	
-	_ent.__KeyValueFromString("damagefilter", value);
+	_ent.__KeyValueFromString("damagefilter", value.tostring());
 }
 
 /**
@@ -1566,9 +1545,7 @@ function VSLib::Entity::SetShadowCastDistance(value)
 		return;
 	}
 	
-	value = value.tostring();
-	
-	_ent.__KeyValueFromString("shadowcastdist", value);
+	_ent.__KeyValueFromString("shadowcastdist", value.tostring());
 }
 
 /**
@@ -1616,9 +1593,7 @@ function VSLib::Entity::SetGravity(value)
 		return;
 	}
 	
-	value = value.tostring();
-	
-	_ent.__KeyValueFromString("gravity", value);
+	_ent.__KeyValueFromString("gravity", value.tostring());
 }
 
 /**
@@ -1632,9 +1607,7 @@ function VSLib::Entity::SetFriction(value)
 		return;
 	}
 	
-	value = value.tostring();
-	
-	_ent.__KeyValueFromString("friction", value);
+	_ent.__KeyValueFromString("friction", value.tostring());
 }
 
 /**
@@ -2206,6 +2179,9 @@ function VSLib::Entity::GetWeaponSlot()
 		return;
 	}
 	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
 	local WeaponNames =
 	{
 		weapon_smg = SLOT_PRIMARY,
@@ -2246,19 +2222,14 @@ function VSLib::Entity::GetWeaponSlot()
 		weapon_fireworkcrate = SLOT_CARRIED,
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") != null )
+	foreach( weapon, slot in WeaponNames )
 	{
-		foreach( weapon, slot in WeaponNames )
+		foreach( wep in ::VSLib.EasyLogic.Objects.OfClassname(weapon) )
 		{
-			foreach( wep in ::VSLib.EasyLogic.Objects.OfClassname(weapon) )
-			{
-				if ( wep.GetClassname() == _ent.GetClassname() )
-					return slot;
-			}
+			if ( wep.GetClassname() == _ent.GetClassname() )
+				return slot;
 		}
-		return;
 	}
-	
 	return;
 }
 
@@ -2273,47 +2244,45 @@ function VSLib::Entity::GetDefaultAmmoType()
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") != null )
-	{
-		if ( _ent.GetClassname() == "weapon_pistol" )
-			return 1;
-		else if ( _ent.GetClassname() == "weapon_pistol_magnum" )
-			return 2;
-		else if ( _ent.GetClassname() == "weapon_rifle" || _ent.GetClassname() == "weapon_rifle_ak47" || _ent.GetClassname() == "weapon_rifle_desert" || _ent.GetClassname() == "weapon_rifle_sg552" )
-			return 3;
-		else if ( _ent.GetClassname() == "weapon_smg" || _ent.GetClassname() == "weapon_smg_silenced" || _ent.GetClassname() == "weapon_smg_mp5" )
-			return 5;
-		else if ( _ent.GetClassname() == "weapon_rifle_m60" )
-			return 6;
-		else if ( _ent.GetClassname() == "weapon_pumpshotgun" || _ent.GetClassname() == "weapon_shotgun_chrome" )
-			return 7;
-		else if ( _ent.GetClassname() == "weapon_autoshotgun" || _ent.GetClassname() == "weapon_shotgun_spas" )
-			return 8;
-		else if ( _ent.GetClassname() == "weapon_hunting_rifle" )
-			return 9;
-		else if ( _ent.GetClassname() == "weapon_sniper_military" || _ent.GetClassname() == "weapon_sniper_awp" || _ent.GetClassname() == "weapon_sniper_scout" )
-			return 10;
-		else if ( _ent.GetClassname() == "weapon_pipe_bomb" )
-			return 12;
-		else if ( _ent.GetClassname() == "weapon_molotov" )
-			return 13;
-		else if ( _ent.GetClassname() == "weapon_vomitjar" )
-			return 14;
-		else if ( _ent.GetClassname() == "weapon_pain_pills" )
-			return 15;
-		else if ( _ent.GetClassname() == "weapon_first_aid_kit" || _ent.GetClassname() == "weapon_defibrillator" || _ent.GetClassname() == "weapon_upgradepack_incendiary" || _ent.GetClassname() == "weapon_upgradepack_explosive" )
-			return 16;
-		else if ( _ent.GetClassname() == "weapon_grenade_launcher" )
-			return 17;
-		else if ( _ent.GetClassname() == "weapon_adrenaline" )
-			return 18;
-		else if ( _ent.GetClassname() == "weapon_chainsaw" )
-			return 19;
-		else
-			return;
-	}
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
 	
-	return;
+	if ( _ent.GetClassname() == "weapon_pistol" )
+		return 1;
+	else if ( _ent.GetClassname() == "weapon_pistol_magnum" )
+		return 2;
+	else if ( _ent.GetClassname() == "weapon_rifle" || _ent.GetClassname() == "weapon_rifle_ak47" || _ent.GetClassname() == "weapon_rifle_desert" || _ent.GetClassname() == "weapon_rifle_sg552" )
+		return 3;
+	else if ( _ent.GetClassname() == "weapon_smg" || _ent.GetClassname() == "weapon_smg_silenced" || _ent.GetClassname() == "weapon_smg_mp5" )
+		return 5;
+	else if ( _ent.GetClassname() == "weapon_rifle_m60" )
+		return 6;
+	else if ( _ent.GetClassname() == "weapon_pumpshotgun" || _ent.GetClassname() == "weapon_shotgun_chrome" )
+		return 7;
+	else if ( _ent.GetClassname() == "weapon_autoshotgun" || _ent.GetClassname() == "weapon_shotgun_spas" )
+		return 8;
+	else if ( _ent.GetClassname() == "weapon_hunting_rifle" )
+		return 9;
+	else if ( _ent.GetClassname() == "weapon_sniper_military" || _ent.GetClassname() == "weapon_sniper_awp" || _ent.GetClassname() == "weapon_sniper_scout" )
+		return 10;
+	else if ( _ent.GetClassname() == "weapon_pipe_bomb" )
+		return 12;
+	else if ( _ent.GetClassname() == "weapon_molotov" )
+		return 13;
+	else if ( _ent.GetClassname() == "weapon_vomitjar" )
+		return 14;
+	else if ( _ent.GetClassname() == "weapon_pain_pills" )
+		return 15;
+	else if ( _ent.GetClassname() == "weapon_first_aid_kit" || _ent.GetClassname() == "weapon_defibrillator" || _ent.GetClassname() == "weapon_upgradepack_incendiary" || _ent.GetClassname() == "weapon_upgradepack_explosive" )
+		return 16;
+	else if ( _ent.GetClassname() == "weapon_grenade_launcher" )
+		return 17;
+	else if ( _ent.GetClassname() == "weapon_adrenaline" )
+		return 18;
+	else if ( _ent.GetClassname() == "weapon_chainsaw" )
+		return 19;
+	else
+		return;
 }
 
 /**
@@ -2327,47 +2296,45 @@ function VSLib::Entity::GetMaxAmmo()
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") != null )
-	{
-		local AmmoType = GetNetPropInt( "m_iPrimaryAmmoType" );
-		
-		if ( AmmoType == 1 || AmmoType == 2 )
-			return Convars.GetFloat( "ammo_pistol_max" ).tointeger();
-		else if ( AmmoType == 3 )
-			return Convars.GetFloat( "ammo_assaultrifle_max" ).tointeger();
-		else if ( AmmoType == 5 )
-			return Convars.GetFloat( "ammo_smg_max" ).tointeger();
-		else if ( AmmoType == 6 )
-			return Convars.GetFloat( "ammo_m60_max" ).tointeger();
-		else if ( AmmoType == 7 )
-			return Convars.GetFloat( "ammo_shotgun_max" ).tointeger();
-		else if ( AmmoType == 8 )
-			return Convars.GetFloat( "ammo_autoshotgun_max" ).tointeger();
-		else if ( AmmoType == 9 )
-			return Convars.GetFloat( "ammo_huntingrifle_max" ).tointeger();
-		else if ( AmmoType == 10 )
-			return Convars.GetFloat( "ammo_sniperrifle_max" ).tointeger();
-		else if ( AmmoType == 12 )
-			return Convars.GetFloat( "ammo_pipebomb_max" ).tointeger();
-		else if ( AmmoType == 13 )
-			return Convars.GetFloat( "ammo_molotov_max" ).tointeger();
-		else if ( AmmoType == 14 )
-			return Convars.GetFloat( "ammo_vomitjar_max" ).tointeger();
-		else if ( AmmoType == 15 )
-			return Convars.GetFloat( "ammo_painpills_max" ).tointeger();
-		else if ( AmmoType == 16 )
-			return Convars.GetFloat( "ammo_firstaid_max" ).tointeger();
-		else if ( AmmoType == 17 )
-			return Convars.GetFloat( "ammo_grenadelauncher_max" ).tointeger();
-		else if ( AmmoType == 18 )
-			return Convars.GetFloat( "ammo_adrenaline_max" ).tointeger();
-		else if ( AmmoType == 19 )
-			return Convars.GetFloat( "ammo_chainsaw_max" ).tointeger();
-		else
-			return;
-	}
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
 	
-	return;
+	local AmmoType = GetNetPropInt( "m_iPrimaryAmmoType" );
+	
+	if ( AmmoType == 1 || AmmoType == 2 )
+		return Convars.GetFloat( "ammo_pistol_max" ).tointeger();
+	else if ( AmmoType == 3 )
+		return Convars.GetFloat( "ammo_assaultrifle_max" ).tointeger();
+	else if ( AmmoType == 5 )
+		return Convars.GetFloat( "ammo_smg_max" ).tointeger();
+	else if ( AmmoType == 6 )
+		return Convars.GetFloat( "ammo_m60_max" ).tointeger();
+	else if ( AmmoType == 7 )
+		return Convars.GetFloat( "ammo_shotgun_max" ).tointeger();
+	else if ( AmmoType == 8 )
+		return Convars.GetFloat( "ammo_autoshotgun_max" ).tointeger();
+	else if ( AmmoType == 9 )
+		return Convars.GetFloat( "ammo_huntingrifle_max" ).tointeger();
+	else if ( AmmoType == 10 )
+		return Convars.GetFloat( "ammo_sniperrifle_max" ).tointeger();
+	else if ( AmmoType == 12 )
+		return Convars.GetFloat( "ammo_pipebomb_max" ).tointeger();
+	else if ( AmmoType == 13 )
+		return Convars.GetFloat( "ammo_molotov_max" ).tointeger();
+	else if ( AmmoType == 14 )
+		return Convars.GetFloat( "ammo_vomitjar_max" ).tointeger();
+	else if ( AmmoType == 15 )
+		return Convars.GetFloat( "ammo_painpills_max" ).tointeger();
+	else if ( AmmoType == 16 )
+		return Convars.GetFloat( "ammo_firstaid_max" ).tointeger();
+	else if ( AmmoType == 17 )
+		return Convars.GetFloat( "ammo_grenadelauncher_max" ).tointeger();
+	else if ( AmmoType == 18 )
+		return Convars.GetFloat( "ammo_adrenaline_max" ).tointeger();
+	else if ( AmmoType == 19 )
+		return Convars.GetFloat( "ammo_chainsaw_max" ).tointeger();
+	else
+		return;
 }
 
 /**
@@ -2381,17 +2348,15 @@ function VSLib::Entity::GetAmmo()
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") != null )
-	{
-		local owner = GetNetPropEntity( "m_hOwner" );
-		
-		if ( (!owner) || (!owner.IsPlayer()) )
-			return;
-		
-		return owner.GetNetPropInt( "m_iAmmo", GetNetPropInt( "m_iPrimaryAmmoType" ) );
-	}
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
 	
-	return;
+	local owner = GetNetPropEntity( "m_hOwner" );
+	
+	if ( (!owner) || (!owner.IsPlayer()) )
+		return;
+	
+	return owner.GetNetPropInt( "m_iAmmo", GetNetPropInt( "m_iPrimaryAmmoType" ) );
 }
 
 /**
@@ -2405,15 +2370,156 @@ function VSLib::Entity::SetAmmo( amount )
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") != null )
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	local owner = GetNetPropEntity( "m_hOwner" );
+	
+	if ( (!owner) || (!owner.IsPlayer()) )
+		return;
+	
+	owner.SetNetProp( "m_iAmmo", amount.tointeger(), GetNetPropInt( "m_iPrimaryAmmoType" ) );
+}
+
+/**
+ * Gets the ammo in the clip for the weapon.
+ */
+function VSLib::Entity::GetClip()
+{
+	if (!IsEntityValid())
 	{
-		local owner = GetNetPropEntity( "m_hOwner" );
-		
-		if ( (!owner) || (!owner.IsPlayer()) )
-			return;
-		
-		owner.SetNetProp( "m_iAmmo", amount.tointeger(), GetNetPropInt( "m_iPrimaryAmmoType" ) );
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
 	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	return GetNetPropInt( "m_iClip1" );
+}
+
+/**
+ * Sets the ammo in the clip for the weapon.
+ */
+function VSLib::Entity::SetClip( amount )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	SetNetProp( "m_iClip1", amount.tointeger() );
+}
+
+/**
+ * Gets the current upgrades for the weapon.
+ */
+function VSLib::Entity::GetUpgrades()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	return GetNetPropInt( "m_upgradeBitVec" );
+}
+
+/**
+ * Sets the current upgrades for the weapon.
+ */
+function VSLib::Entity::SetUpgrades( upgrades )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	if ( upgrades == 1 || upgrades == 2 || upgrades == 3 || upgrades == 5 || upgrades == 6 || upgrades == 7 )
+		SetNetProp( "m_nUpgradedPrimaryAmmoLoaded", GetNetPropInt( "m_iClip1" ) );
+	
+	SetNetProp( "m_nUpgradedPrimaryAmmoLoaded", GetNetPropInt( "m_iClip1" ) );
+	SetNetProp( "m_upgradeBitVec", upgrades.tointeger() );
+}
+
+/**
+ * Returns true if the upgrade exists in the weapon's current upgrades.
+ */
+function VSLib::Entity::HasUpgrade( upgrade )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	local upgrades = GetNetPropInt( "m_upgradeBitVec" );
+	
+	return upgrades == ( upgrades | upgrade );
+}
+
+/**
+ * Adds the upgrade to the weapon's current upgrades.
+ */
+function VSLib::Entity::AddUpgrade( upgrade )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	local upgrades = GetNetPropInt( "m_upgradeBitVec" );
+	
+	if ( HasUpgrade(upgrade) )
+		return;
+	
+	if ( upgrade == 1 || upgrade == 2 )
+		SetNetProp( "m_nUpgradedPrimaryAmmoLoaded", GetNetPropInt( "m_iClip1" ) );
+	
+	SetNetProp( "m_upgradeBitVec", ( upgrades | upgrade ) );
+}
+
+/**
+ * Removes the upgrade from the weapon's current upgrades.
+ */
+function VSLib::Entity::RemoveUpgrade( upgrade )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( _ent.GetClassname().find("weapon_") == null )
+		return;
+	
+	local flags = GetNetPropInt( "m_upgradeBitVec" );
+	
+	if ( !HasUpgrade(upgrade) )
+		return;
+	
+	if ( upgrade == 1 || upgrade == 2 )
+		SetNetProp( "m_nUpgradedPrimaryAmmoLoaded", 0 );
+	
+	SetNetProp( "m_upgradeBitVec", ( flags & ~upgrade ) );
 }
 
 /**
@@ -2509,7 +2615,7 @@ function VSLib::Entity::GetEFlags()
 		return;
 	}
 	
-	return GetNetPropInt( "m_fFlags" );
+	return GetNetPropInt( "m_iEFlags" );
 }
 
 /**
@@ -2523,7 +2629,7 @@ function VSLib::Entity::SetEFlags( flags )
 		return;
 	}
 	
-	SetNetProp( "m_fFlags", flags.tointeger() );
+	SetNetProp( "m_iEFlags", flags.tointeger() );
 }
 
 /**
@@ -2665,7 +2771,7 @@ function VSLib::Entity::GetZombieName()
 /**
  * Kills common infected and witches, and removes other entities from the map.
  */
-function VSLib::Entity::Kill( attacker = null )
+function VSLib::Entity::Kill( dmgtype = 0, attacker = null )
 {
 	if (!IsEntityValid())
 	{
@@ -2675,10 +2781,10 @@ function VSLib::Entity::Kill( attacker = null )
 	
 	if ( _ent.GetClassname() == "infected" || _ent.GetClassname() == "witch" )
 	{
-		Damage(GetHealth(), 0, attacker);
+		Damage(GetHealth(), dmgtype, attacker);
 		
 		if ( IsAlive() && Entities.FindByClassname( null, "worldspawn" ) )
-			Damage(GetHealth(), 0, ::VSLib.Entity("worldspawn"));
+			Damage(GetHealth(), dmgtype, ::VSLib.Entity("worldspawn"));
 	}
 	else
 		Input("Kill");
@@ -3019,9 +3125,7 @@ function VSLib::Entity::KillDelayed(seconds)
 		return;
 	}
 	
-	seconds = seconds.tofloat();
-	
-	DoEntFire("!self", "Kill", "", seconds, null, _ent);
+	DoEntFire("!self", "Kill", "", seconds.tofloat(), null, _ent);
 }
 
 /**
@@ -4664,7 +4768,7 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 	}
 	
 	// Process hooks
-	if ("EasyLogic" in VSLib)
+	if ("EasyLogic" in ::VSLib)
 	{
 		if (damageTable.Victim != null)
 		{
