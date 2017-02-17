@@ -114,6 +114,7 @@
 	RoundStartPostNavFired = false
 	SurvivorsLeftStart = false
 	SurvivorsSpawned = {}
+	PlayerSpawnedOnce = {}
 	
 	// This is used to store the base mode name
 	BaseModeName = ""
@@ -239,6 +240,7 @@
 	OnPlayerActivate = {}
 	OnSpawn = {}
 	OnPostSpawn = {}
+	OnStartSpawn = {}
 	OnFirstSpawn = {}
 	OnTransitioned = {}
 	OnEntityShoved = {}
@@ -287,6 +289,7 @@
 	OnDefibInterrupted = {}
 	OnDefibSuccess = {}
 	OnDefibFailed = {}
+	OnRevived = {} // Called when a player is revived using Defib().
 	OnAdrenalineUsed = {}
 	OnHealStart = {}
 	OnHealEnd = {}
@@ -1359,12 +1362,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		player.Input("SpeakResponseConcept", "VSLibQueryData_" + player.GetIndex().tostring());
 }
 
-::vslib_survivors_spawned <- function (amount)
-{
-	foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
-		func(amount);
-}
-
 ::vslib_map_first_start <- function ()
 {
 	foreach (func in ::VSLib.EasyLogic.OnProcessResponse)
@@ -1377,6 +1374,9 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 {
 	if ( ::VSLib.EasyLogic.RoundStartPostNavFired )
 		return;
+	
+	if ( !::VSLib.EasyLogic.ScriptStarted )
+		VSLibScriptStart();
 	
 	::VSLib.EasyLogic.RoundStartPostNavFired <- true;
 	
@@ -1842,6 +1842,22 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if (ents.entity == null || !("IsPlayerEntityValid" in ents.entity))
 		return false;
 	
+	local name = ents.entity.GetCharacterName();
+	
+	if ( (name != "") && !(name in ::VSLib.EasyLogic.PlayerSpawnedOnce) )
+	{
+		::VSLib.EasyLogic.PlayerSpawnedOnce[name] <- true;
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnStartSpawn)
+			func(ents.entity, params);
+		
+		if ( ents.entity.GetTeam() == SURVIVORS )
+		{
+			::VSLib.EasyLogic.SurvivorsSpawned[name] <- true;
+			foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsSpawned)
+				func(::VSLib.EasyLogic.SurvivorsSpawned.len());
+		}
+	}
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnPostSpawn)
 		func(ents.entity, params);
 }
@@ -1933,12 +1949,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	if ("_isBoomette" in ::VSLib.EasyLogic.Cache[_id])
 		delete ::VSLib.EasyLogic.Cache[_id]["_isBoomette"];
 	
-	if ( ents.entity.GetTeam() == SURVIVORS && !(_id in ::VSLib.EasyLogic.SurvivorsSpawned) )
-	{
-		::VSLib.EasyLogic.SurvivorsSpawned[_id] <- true;
-		::VSLib.Timers.AddTimer(0.1, false, vslib_survivors_spawned, ::VSLib.EasyLogic.SurvivorsSpawned.len());
-	}
-	
 	if ( ents.entity.GetType() == Z_BOOMER )
 	{
 		if ( ::VSLib.EasyLogic.SpawnLeaker > 0 )
@@ -2001,13 +2011,16 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnSpawn)
 		func(ents.entity, params);
 	
-	::VSLib.Timers.AddTimer(1.0, false, _OnPostSpawnEv, params);
+	::VSLib.Timers.AddTimer(0.1, false, _OnPostSpawnEv, params);
 }
 
 ::VSLib.EasyLogic.Events.OnGameEvent_player_first_spawn <- function (params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
 	local _id = ents.entity.GetIndex();
+	
+	if ( !::VSLib.EasyLogic.ScriptStarted )
+		VSLibScriptStart();
 	
 	// Remove any bots off the global cache
 	if (ents.entity.IsBot() && ents.entity.GetTeam() == SURVIVORS && _id in ::VSLib.GlobalCache)

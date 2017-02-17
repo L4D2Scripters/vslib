@@ -1543,7 +1543,9 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 	if ( weapon == "weapon_smg_mp5_spawn" )
 	{
 		local t = { spawn_without_director = 1, weapon_selection = "weapon_smg", count = Count, spawnflags = SpawnFlags, };
-		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, t);
+		foreach (idx, val in t)
+			keyvalues[idx] <- val;
+		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, keyvalues);
 		wep.SetModel("models/w_models/weapons/w_smg_mp5.mdl");
 		wep.SetNetProp("m_weaponID", 33);
 		return wep;
@@ -1551,7 +1553,9 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 	else if ( weapon == "weapon_rifle_sg552_spawn" )
 	{
 		local t = { spawn_without_director = 1, weapon_selection = "weapon_rifle", count = Count, spawnflags = SpawnFlags, };
-		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, t);
+		foreach (idx, val in t)
+			keyvalues[idx] <- val;
+		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, keyvalues);
 		wep.SetModel("models/w_models/weapons/w_rifle_sg552.mdl");
 		wep.SetNetProp("m_weaponID", 34);
 		return wep;
@@ -1559,7 +1563,9 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 	else if ( weapon == "weapon_sniper_awp_spawn" )
 	{
 		local t = { spawn_without_director = 1, weapon_selection = "weapon_sniper_military", count = Count, spawnflags = SpawnFlags, };
-		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, t);
+		foreach (idx, val in t)
+			keyvalues[idx] <- val;
+		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, keyvalues);
 		wep.SetModel("models/w_models/weapons/w_sniper_awp.mdl");
 		wep.SetNetProp("m_weaponID", 35);
 		return wep;
@@ -1567,7 +1573,9 @@ function VSLib::Utils::SpawnWeapon( weapon, Count = 5, Ammo = 999, pos = Vector(
 	else if ( weapon == "weapon_sniper_scout_spawn" )
 	{
 		local t = { spawn_without_director = 1, weapon_selection = "weapon_sniper_military", count = Count, spawnflags = SpawnFlags, };
-		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, t);
+		foreach (idx, val in t)
+			keyvalues[idx] <- val;
+		local wep = ::VSLib.Utils.CreateEntity("weapon_spawn", pos, ang, keyvalues);
 		wep.SetModel("models/w_models/weapons/w_sniper_scout.mdl");
 		wep.SetNetProp("m_weaponID", 36);
 		return wep;

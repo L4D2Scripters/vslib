@@ -163,6 +163,7 @@
 	FromIsManager = [ "From", "Manager" ]
 	FromIsNamVet = [ "From", "NamVet" ]
 	FromIsTeenGirl = [ "From", "TeenGirl" ]
+	FromIsUnknown = [ "From", "Unknown" ]
 	
 	SubjectIsCoach = [ "Subject", "Coach" ]
 	SubjectIsGambler = [ "Subject", "Gambler" ]
@@ -817,6 +818,12 @@ class ::VSLib.ResponseRules.Then
 			if ( query.subject in expressers )
 				DoEntFire("!self", "SpeakResponseConcept", query.concept, delay, null, expressers[query.subject])
 		}
+		else if ( target.tolower() == "from" )
+		{
+			local expressers = ::rr_GetResponseTargets()
+			if ( query.from in expressers )
+				DoEntFire("!self", "SpeakResponseConcept", query.concept, delay, null, expressers[query.from])
+		}
 		else if ( target.tolower() == "orator" )
 		{
 			if ( Entities.FindByClassname( null, "func_orator" ) )
@@ -960,6 +967,12 @@ function VSLib::ResponseRules::ThenDelay( speaker, query, target, concept, conte
 		local expressers = ::rr_GetResponseTargets()
 		if ( query.subject in expressers )
 			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, expressers[query.subject])
+	}
+	else if ( target.tolower() == "from" )
+	{
+		local expressers = ::rr_GetResponseTargets()
+		if ( query.from in expressers )
+			DoEntFire("!self", "SpeakResponseConcept", concept, delay, null, expressers[query.from])
 	}
 	else if ( target.tolower() == "orator" )
 	{

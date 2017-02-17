@@ -88,6 +88,8 @@ function VSLib::Player::GetCharacterName()
 		return "Francis";
 	else if ( GetSurvivorCharacter() == 7 )
 		return "Louis";
+	else if ( GetSurvivorCharacter() > 7 && GetTeam() == 4 )
+		return "Survivor";
 	
 	return g_MapScript.GetCharacterDisplayName(_ent);
 }
@@ -1764,6 +1766,9 @@ function VSLib::Player::Defib()
 	if (IsDead() || IsDying())
 	{
 		_ent.ReviveByDefib();
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnRevived)
+			func(this);
+		
 		return true;
 	}
 	
