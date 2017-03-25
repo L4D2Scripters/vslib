@@ -1766,7 +1766,15 @@ function VSLib::Player::Defib()
 	if (IsDead() || IsDying())
 	{
 		_ent.ReviveByDefib();
-		foreach (func in ::VSLib.EasyLogic.Notifications.OnRevived)
+		
+		local idx = GetIndex();
+		if ( idx in ::VSLib.EasyLogic.SurvivorRagdolls )
+		{
+			::VSLib.EasyLogic.SurvivorRagdolls[idx]["Ragdoll"].Kill();
+			::VSLib.EasyLogic.SurvivorRagdolls.rawdelete(idx);
+		}
+		
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnScriptDefib)
 			func(this);
 		
 		return true;

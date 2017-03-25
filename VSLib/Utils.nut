@@ -1130,7 +1130,7 @@ function VSLib::Utils::GetSurvivorFromActor( actor )
 }
 
 /**
- * Returns a player from its name
+ * Returns a player from name
  */
 function VSLib::Utils::GetPlayerFromName( name )
 {
@@ -1140,6 +1140,20 @@ function VSLib::Utils::GetPlayerFromName( name )
 	foreach (player in ::VSLib.EasyLogic.Players.All())
 	{
 		if ( (player.GetName() == name) || (player.GetName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetCharacterName().tolower() == name.tolower()) || (player.IsSurvivor() && player.GetBaseCharacterName().tolower() == name.tolower()) || (player.GetName().tolower().find(name.tolower()) != null) )
+			return player;
+	}
+	
+	return null;
+}
+
+/**
+ * Returns a player from Steam ID
+ */
+function VSLib::Utils::GetPlayerFromSteamID( id )
+{
+	foreach (player in ::VSLib.EasyLogic.Players.All())
+	{
+		if ( player.GetSteamID() == id )
 			return player;
 	}
 	

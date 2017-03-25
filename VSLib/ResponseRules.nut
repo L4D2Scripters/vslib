@@ -1084,9 +1084,7 @@ function VSLib::ResponseRules::ProcessResponse( resp )
 	{
 		local Func = func
 		if ( delay > 0.0 )
-		{
 			func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.SceneDelay, { speaker = speaker, query = query, scenename = resp.scenename, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
-		}
 		else
 		{
 			scene = resp.scenename
@@ -1098,7 +1096,10 @@ function VSLib::ResponseRules::ProcessResponse( resp )
 	if ( "soundname" in resp )
 	{
 		local Func = func
-		func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.EmitSound, { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
+		if ( delay > 0.0 )
+			func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.EmitSound, { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
+		else
+			func = @( speaker, query ) ::VSLib.ResponseRules.EmitSound( { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
 	}
 	
 	local kind = ResponseKind.none

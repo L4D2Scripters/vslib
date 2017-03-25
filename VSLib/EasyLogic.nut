@@ -289,7 +289,7 @@
 	OnDefibInterrupted = {}
 	OnDefibSuccess = {}
 	OnDefibFailed = {}
-	OnRevived = {} // Called when a player is revived using Defib().
+	OnScriptDefib = {} // Called when a player is revived using Defib().
 	OnAdrenalineUsed = {}
 	OnHealStart = {}
 	OnHealEnd = {}
@@ -4619,12 +4619,15 @@ function VSLib::EasyLogic::GetArgument(idx)
 	// Store it.
 	::VSLib.EasyLogic.LastArgs <- args;
 	
+	local argArray = clone args;
+	argArray.rawdelete(-1);
+	
 	local player = ::VSLib.Player(playerScript);
 	
 	foreach(v in ::VSLib.EasyLogic.OnUserCommand)
 	{
 		if (v != null)
-			v(player, arg);
+			v(player, argArray, arg);
 	}
 	
 	if ( "ModeUserConsoleCommand" in g_ModeScript )
