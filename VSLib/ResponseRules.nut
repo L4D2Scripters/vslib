@@ -989,6 +989,17 @@ function VSLib::ResponseRules::ThenDelay( speaker, query, target, concept, conte
 	}
 }
 
+function VSLib::ResponseRules::PlaySoundFile( args )
+{
+	::VSLib.Entity(args.speaker.GetEntityIndex()).EmitAmbientSound( args.soundfile, args.volume, 350, 100 )
+	if ( args.func )
+		args.func( args.speaker, args.query )
+	if ( args.applycontext )
+		::VSLib.ResponseRules.ApplyContext( args.speaker, args.query, args.applycontext, args.applycontexttoworld, null )
+	if ( args.then != null )
+		::VSLib.ResponseRules.ThenDelay( args.speaker, args.query, args.then.target, args.then.concept, args.then.contexts, args.then.delay )
+}
+
 function VSLib::ResponseRules::EmitSound( args )
 {
 	EmitSoundOn( args.soundname, args.speaker )
@@ -1002,7 +1013,7 @@ function VSLib::ResponseRules::EmitSound( args )
 
 function VSLib::ResponseRules::SceneDelay( args )
 {
-	Player(args.speaker.GetEntityIndex()).Speak( args.scenename )
+	::VSLib.Player(args.speaker.GetEntityIndex()).Speak( args.scenename )
 	if ( args.func )
 		args.func( args.speaker, args.query )
 	if ( args.applycontext )
@@ -1011,32 +1022,39 @@ function VSLib::ResponseRules::SceneDelay( args )
 		::VSLib.ResponseRules.ThenDelay( args.speaker, args.query, args.then.target, args.then.concept, args.then.contexts, args.then.delay )
 }
 
-function VSLib::ResponseRules::ApplyContext( speaker, query, context, contexttoworld, func )
+function VSLib::ResponseRules::ApplyContext( speaker, query, contextData, contexttoworld, func )
 {
-	local contexts = context
-	
-	if ( typeof context == "array" )
+	if ( typeof contextData == "table" )
 	{
-		if ( contexttoworld )
+		if ( ( "context" in contextData ) && ( typeof contextData.context != "table" ) )
 		{
-			while ( contexts.len() > 0 )
+			if ( contexttoworld )
 			{
-				local contextArray = contexts.pop()
-				foreach( player in ::VSLib.EasyLogic.Players.All() )
-					player.SetContext( "world" + contextArray.context, contextArray.value, contextArray.duration )
-				foreach( orator in ::VSLib.EasyLogic.Objects.OfClassname("func_orator") )
-					orator.SetContext( "world" + contextArray.context, contextArray.value, contextArray.duration )
+				::VSLib.Entity("worldspawn").SetContext( contextData.context, contextData.value.tostring(), contextData.duration )
+			}
+			else
+			{
+				local duration = contextData.duration
+				if ( duration == 0 )
+					duration = -1
+				speaker.SetContext( contextData.context, contextData.value.tostring(), duration )
 			}
 		}
 		else
 		{
-			while ( contexts.len() > 0 )
+			foreach( contexts in contextData )
 			{
-				local contextArray = contexts.pop()
-				local duration = contextArray.duration
-				if ( duration == 0 )
-					duration = 999999
-				speaker.SetContext( contextArray.context, contextArray.value.tostring(), duration )
+				if ( contexttoworld )
+				{
+					::VSLib.Entity("worldspawn").SetContext( contexts.context, contexts.value.tostring(), contexts.duration )
+				}
+				else
+				{
+					local duration = contexts.duration
+					if ( duration == 0 )
+						duration = -1
+					speaker.SetContext( contexts.context, contexts.value.tostring(), duration )
+				}
 			}
 		}
 	}
@@ -1100,6 +1118,18 @@ function VSLib::ResponseRules::ProcessResponse( resp )
 			func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.EmitSound, { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
 		else
 			func = @( speaker, query ) ::VSLib.ResponseRules.EmitSound( { speaker = speaker, query = query, soundname = resp.soundname, applycontext = applycontext, applycontexttoworld = applycontexttoworld, func = Func, then = then })
+	}
+	if ( "soundfile" in resp )
+	{
+		local volume = 10
+		if ( "volume" in resp )
+			volume = resp.volume
+		
+		local Func = func
+		if ( delay > 0.0 )
+			func = @( speaker, query ) ::VSLib.Timers.AddTimer(delay, false, ::VSLib.ResponseRules.PlaySoundFile, { speaker = speaker, query = query, soundfile = resp.soundfile, applycontext = applycontext, applycontexttoworld = applycontexttoworld, volume = volume, func = Func, then = then })
+		else
+			func = @( speaker, query ) ::VSLib.ResponseRules.PlaySoundFile( { speaker = speaker, query = query, soundfile = resp.soundfile, applycontext = applycontext, applycontexttoworld = applycontexttoworld, volume = volume, func = Func, then = then })
 	}
 	
 	local kind = ResponseKind.none

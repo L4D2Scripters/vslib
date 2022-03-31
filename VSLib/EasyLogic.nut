@@ -24,499 +24,516 @@
  *
  * \todo @TODO some of these can be moved to Utils table
  */
-::VSLib.EasyLogic <-
+if (!("EasyLogic" in ::VSLib))
 {
-	// Chat triggers
-	_itChatFunction = {}
-	_itChatTextIndex = {}
-	_itChatCount = 0
-	_triggerStart = "!"
-	
-	// Intercept chat hooks
-	_interceptCount = 0
-	_interceptList = {}
-	OnInterceptChat = {}
-	
-	// Update() hooks
-	Update = {}
-	
-	// SlowPoll hooks
-	SlowPoll = {}
-	
-	// Easier chat triggers
-	Triggers = {}
-	
-	// Easier damage hooks
-	OnDamage = {}
-	OnTakeDamage = {}
-	
-	// User defined data storage
-	UserDefinedVars = {}
-	
-	// Player/Zombie/Object helpers
-	Players = {}
-	Zombies = {}
-	Objects = {}
-	
-	// Bash hooks
-	OnBash = {}
-	
-	// BotQuery hooks
-	OnBotQuery = {}
-	
-	// User command hooks
-	OnUserCommand = {}
-	
-	// Stores VSLib's OnGameEvent_ functions
-	Events = {}
-	
-	// Hook for when the script starts
-	OnScriptStart = {}
-	ScriptStarted = false
-	
-	// Hooks from scriptedmode.nut
-	OnGameplayStart = {}
-	OnActivate = {}
-	OnShutdown = {}
-	OnSystemCall = {}
-	OnAddCriteria = {}
-	OnPrecache = {}
-	
-	// Round variables
-	RoundVars =
+	::VSLib.EasyLogic <-
 	{
-		function _newslot(key,value)
+		// Chat triggers
+		_itChatFunction = {}
+		_itChatTextIndex = {}
+		_itChatCount = 0
+		_triggerStart = "!"
+		_triggerHide = "/"
+		
+		// Intercept chat hooks
+		_interceptCount = 0
+		_interceptList = {}
+		OnInterceptChat = {}
+		
+		// Update() hooks
+		Update = {}
+		
+		// SlowPoll hooks
+		SlowPoll = {}
+		
+		// Easier chat triggers
+		Triggers = {}
+		
+		// Easier damage hooks
+		OnDamage = {}
+		OnTakeDamage = {}
+		
+		// User defined data storage
+		UserDefinedVars = {}
+		
+		// Player/Zombie/Object helpers
+		Players = {}
+		Zombies = {}
+		Objects = {}
+		
+		// Bash hooks
+		OnBash = {}
+		
+		// BotQuery hooks
+		OnBotQuery = {}
+		
+		// User command hooks
+		OnUserCommand = {}
+		
+		// Stores VSLib's OnGameEvent_ functions
+		Events = {}
+		
+		// Hook for when the script starts
+		OnScriptStart = {}
+		ScriptStarted = false
+		
+		// Hooks from scriptedmode.nut
+		OnGameplayStart = {}
+		OnActivate = {}
+		OnShutdown = {}
+		OnSystemCall = {}
+		OnAddCriteria = {}
+		OnPrecache = {}
+		
+		// Round variables
+		RoundVars =
 		{
-			::VSLib.EasyLogic.OrigRoundVars[key] <- value;
-			return value;
+			function _newslot(key,value)
+			{
+				::VSLib.EasyLogic.OrigRoundVars[key] <- value;
+				return value;
+			}
 		}
-	}
-	
-	OrigRoundVars = {}
-	
-	// Session variables that remain through map transitions
-	SessionVars = {}
-	SessionVarsBackup = {}
-	
-	// Used to determine if the next map is a continuation of the same campaign
-	NextMapContinues = false
-	
-	// Holds precached sounds
-	PrecachedSounds = {}
-	
-	// Holds precached models
-	PrecachedModels = {}
-	
-	// Holds model indexes for SetModel()
-	SetModelIndexes = {}
-	
-	// These are used for custom event notifications
-	RoundStartPostNavFired = false
-	SurvivorsLeftStart = false
-	SurvivorsSpawned = {}
-	PlayerSpawnedOnce = {}
-	
-	// This is used to store the base mode name
-	BaseModeName = ""
-	CheckedMode = false
-	
-	// Used to store the rescue trigger entity
-	RescueTrigger = null
-	
-	// Used to determine if rescue is incoming or leaving
-	RescueVehicleIncoming = false
-	RescueVehicleLeaving = false
-	
-	// Used for Player.Ragdoll()
-	SurvivorRagdolls = {}
-	
-	// Used for Utils.SpawnSurvivor()
-	ExtraBills = []
-	ExtraBillsData = {}
-	ExtraSurvivorData = {}
-	L4D1Behavior = 1
-	SpawnExtraSurvivor = 0
-	ExtraSurvivorsSpawned = 0
-	SpawnL4D1Bill = false
-	SpawnL4D1Zoey = false
-	SpawnL4D1Francis = false
-	SpawnL4D1Louis = false
-	SpawnL4D1Bot = null
-	
-	// Used for Utils.SpawnLeaker()
-	LeakerChance = 0
-	SpawnLeaker = 0
-	
-	// Stores query context data retrieved from ResponseRules
-	QueryContextData = {}
-	
-	// ResponseRules hooks that get fired when loading a map for the first time
-	OnProcessResponse = {}
-	
-	// Saves misc data
-	MiscData =
-	{
-		maprestarted = 0
-		maprestarts = 0
-		previousmap = ""
+		
+		OrigRoundVars = {}
+		
+		// Session variables that remain through map transitions
+		SessionVars = {}
+		SessionVarsBackup = {}
+		
+		// Create entity data cache system
+		Cache = {}
+		
+		// Create user data cache system
+		UserCache = {}
+		
+		// Used to determine if the next map is a continuation of the same campaign
+		NextMapContinues = false
+		
+		// Holds precached sounds
+		PrecachedSounds = {}
+		
+		// These are used for custom event notifications
+		RoundStartPostNavFired = false
+		SurvivorsSpawned = {}
+		PlayerSpawnedOnce = {}
+		
+		// Used to store the rescue trigger entity
+		RescueTrigger = null
+		
+		// Used to determine if rescue is incoming or leaving
+		RescueVehicleIncoming = false
+		RescueVehicleLeaving = false
+		
+		// Used for Player.Ragdoll()
+		SurvivorRagdolls = {}
+		
+		// Used for Utils.SpawnSurvivor()
+		ExtraBills = []
+		ExtraBillsData = {}
+		ExtraSurvivorData = {}
+		L4D1Behavior = 1
+		SpawnExtraSurvivor = 0
+		ExtraSurvivorsSpawned = 0
+		SpawnL4D1Bill = false
+		SpawnL4D1Zoey = false
+		SpawnL4D1Francis = false
+		SpawnL4D1Louis = false
+		SpawnL4D1BotBill = null
+		SpawnL4D1BotZoey = null
+		SpawnL4D1BotFrancis = null
+		SpawnL4D1BotLouis = null
+		
+		// Used for Utils.SpawnLeaker()
+		LeakerChance = 0
+		SpawnLeaker = 0
+		
+		// ResponseRules hooks that get fired when loading a map for the first time
+		OnProcessResponse = {}
+		
+		// Saves misc data
+		MiscData =
+		{
+			maprestarted = 0
+			maprestarts = 0
+			previousmap = ""
+		}
 	}
 }
 
 // Game event wrapper.
 // Just add any events that you want here. The actual event information follows this table.
-::VSLib.EasyLogic.Notifications <-
+if (!("Notifications" in ::VSLib.EasyLogic))
 {
-	// General events
-	OnAchievementEarned = {}
-	OnAchievementEvent = {}
-	OnAwarded = {}
-	OnInstructorDraw = {}
-	OnInstructorNoDraw = {}
-	OnServerHintCreated = {}
-	OnServerHintStopped = {}
-	OnBulletImpact = {}
-	OnDoorMoving = {}
-	OnDoorClosed = {}
-	OnDoorOpened = {}
-	OnDoorUnlocked = {}
-	OnRescueVehicleIncoming = {}
-	OnRescueVehicleReady = {}
-	OnRescueVehicleLeaving = {}
-	OnGauntletFinaleStart = {}
-	OnFinaleStart = {}
-	OnFinaleRadioStart = {}
-	OnFinaleWin = {}
-	OnEscapeStarted = {}
-	OnPreRadioStart = {}
-	OnGeneratorStart = {}
-	OnBeginSacrificeRun = {}
-	OnCompleteSacrifice = {}
-	OnReloadedScriptedHud = {}
-	OnRoundStartPreEntity = {}
-	OnRoundStart = {}
-	OnRoundBegin = {}
-	OnRoundFreezeEnd = {}
-	OnRoundEnd = {}
-	OnMapEnd = {}
-	OnNavBlocked = {}
-	OnSurvivalAt30Min = {}
-	OnSurvivalStart = {}
-	OnVersusStart = {}
-	OnScavengeStart = {}
-	OnScavengeHalftime = {}
-	OnScavengeOvertime = {}
-	OnScavengeRoundFinished = {}
-	OnScavengeTied = {}
-	OnScavengeMatchFinished = {}
-	OnScavengeGascanDestroyed = {}
-	OnVersusMarkerReached = {}
-	OnVersusMatchFinished = {}
-	OnGhostSpawnTime = {}
-	OnServerCvarChanged = {}
-	OnServerAddBan = {}
-	OnServerRemoveBan = {}
-	OnServerPreShutdown = {}
-	OnServerShutdown = {}
-	OnTriggeredCarAlarm = {}
-	OnPanicEventFinished = {}
-	OnStartScoreAnimation = {}
-	OnHostNameChanged = {}
-	
-	// General player events (both infected and survivors)
-	OnPlayerJoined = {}
-	OnPlayerConnected = {}
-	OnPlayerLeft = {}
-	OnDeath = {}
-	OnInfectedDeath = {}
-	OnZombieDeath = {}
-	OnPlayerKilled = {}
-	OnMeleeKill = {}
-	OnEnterStartArea = {}
-	OnEnterSaferoom = {}
-	OnLeaveSaferoom = {}
-	OnHurt = {}
-	OnHurtConcise = {}
-	OnFallDamage = {}
-	OnPlayerActivate = {}
-	OnSpawn = {}
-	OnPostSpawn = {}
-	OnStartSpawn = {}
-	OnFirstSpawn = {}
-	OnTransitioned = {}
-	OnEntityShoved = {}
-	OnPlayerShoved = {}
-	OnEntityVisible = {}
-	OnWeaponSpawnVisible = {}
-	OnDeadSurvivorVisible = {}
-	OnCheckpointButtonWaiting = {}
-	OnCheckpointButtonUsed = {}
-	OnCheckpointDoorWaiting = {}
-	OnCheckpointDoorWaitingVersus = {}
-	OnHitSafeRoom = {}
-	OnRescueDoorOpened = {}
-	OnFootLockerOpened = {}
-	OnMountedGunUsed = {}
-	OnMountedGunOverheated = {}
-	OnUse = {}
-	OnTeamChanged = {}
-	OnNameChanged = {}
-	OnGrabbedLedge = {}
-	OnReleasedLedge = {}
-	OnPourCompleted = {}
-	OnPourBlocked = {}
-	OnPourInterrupted = {}
-	OnAFK = {}
-	OnPlayerReplacedBot = {}
-	OnBotReplacedPlayer = {}
-	OnSay = {}
-	OnVoteCastYes = {}
-	OnVoteCastNo = {}
-	OnRelocated = {}
-	OnRespawning = {}
-	
-	// General infected events
-	OnAbilityUsed = {}
-	OnAbilityOutOfRange = {}
-	OnPanicEvent = {}
-	OnInfectedHurt = {}
-	OnWitchSpawned = {}
-	OnWitchStartled = {}
-	OnWitchKilled = {}
-	OnZombieIgnited = {}
-	
-	// Survivor events
-	OnDefibBegin = {}
-	OnDefibInterrupted = {}
-	OnDefibSuccess = {}
-	OnDefibFailed = {}
-	OnScriptDefib = {} // Called when a player is revived using Defib().
-	OnAdrenalineUsed = {}
-	OnHealStart = {}
-	OnHealEnd = {}
-	OnHealInterrupted = {}
-	OnHealSuccess = {}
-	OnPillsUsed = {}
-	OnPillsFailed = {}
-	OnIncapacitated = {}
-	OnIncapacitatedStart = {}
-	OnJump = {}
-	OnJumpApex = {}
-	FirstSurvLeftStartArea = {}
-	OnReviveBegin = {}
-	OnReviveEnd = {}
-	OnReviveSuccess = {}
-	OnFriendlyFire = {}
-	OnGascanDropped = {}
-	OnWeaponDropped = {}
-	OnWeaponGiven = {}
-	OnWeaponFire = {}
-	OnWeaponFireAt40 = {}
-	OnWeaponFireEmpty = {}
-	OnWeaponReload = {}
-	OnWeaponZoom = {}
-	OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
-	OnAmmoPickup = {}
-	OnAmmoCantUse = {}
-	OnPipeBombBounced = {}
-	OnPipeBombDetonated = {}
-	OnNonPistolFired = {}
-	OnTotalAmmoBelow40 = {}
-	OnExplosiveBarrelKill = {}
-	OnSpawnerGaveItem = {}
-	OnSurvivorCallForHelp = {}
-	OnSurvivorRescueAbandoned = {}
-	OnSurvivorRescued = {}
-	OnUpgradeDeploying = {}
-	OnUpgradeDeployed = {}
-	OnUpgradeReceived = {}
-	OnUpgradeAlreadyUsed = {}
-	OnUpgradeFailed = {}
-	
-	// Charger events
-	OnChargerCharged = {}
-	OnChargerCarryVictim = {}
-	OnChargerCarryVictimEnd = {}
-	OnChargerImpact = {}
-	OnChargerPummelBegin = {}
-	OnChargerPummelEnd = {}
-	
-	// Smoker events
-	OnSmokerChokeBegin = {}
-	OnSmokerChokeEnd = {}
-	OnSmokerChokeStopped = {}
-	OnSmokerPullStopped = {}
-	OnSmokerTongueReleased = {}
-	OnSmokerTongueGrab = {}
-	OnSmokerTongueBent = {}
-	
-	// Spitter events
-	OnSpitLanded = {}
-	OnEnterSpit = {}
-	
-	// Jockey
-	OnJockeyRideStart = {}
-	OnJockeyRideEnd = {}
-	
-	// Hunter
-	OnHunterHeadshot = {}
-	OnHunterPounceFailed = {}
-	OnHunterPounceShoved = {}
-	OnHunterPouncedVictim = {}
-	OnHunterPounceStopped = {}
-	OnHunterPunched = {}
-	OnHunterReleasedVictim = {}
-	
-	// Boomer
-	OnPlayerVomited = {}
-	OnPlayerVomitEnd = {}
-	OnFatalVomit = {}
-	OnBoomerExploded = {}
-	OnBoomerNear = {}
-	
-	// Tank
-	OnTankFrustrated = {}
-	OnTankKilled = {}
-	OnTankSpawned = {}
-	OnSpawnedAsTank = {}
-	
-	// Achievements
-	OnPunchedClown = {}
-	OnInfectedDecapitated = {}
-	OnNonMeleeFired = {}
-	OnMolotovThrown = {}
-	OnForcedGasCanDrop = {}
-	OnStrongmanBellKnockedOff = {}
-	OnStashwhackerGameWon = {}
-	OnChargerKilled = {}
-	OnSpitterKilled = {}
-	OnJockeyKilled = {}
-	OnVomitBombTank = {}
-	OnUpgradePackAdded = {}
-	OnChargerChargeEnd = {}
-	OnChairCharged = {}
-	OnM60StreakEnded = {}
-	OnSongPlayed = {}
-	OnChristmasGiftGrab = {}
-	
-	// Misc
-	OnDifficulty = {}
-	OnDifficultyChanged = {}
-	OnSurvivorsDead = {}
-	OnBrokeProp = {}
-	OnBrokeBreakable = {}
-	OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
-	CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
-	OnModeStart = {}
-	OnMapFirstStart = {}
-	OnNextMap = {}
-	OnSurvivorsSpawned = {}
-	OnSurvivorsLeftStartArea = {}
-	OnEnterRescueVehicle = {}
-	OnLeaveRescueVehicle = {}
-	
-	// SourceTV events
-	OnSourceTVStatus = {}
-	OnSourceTVRankEntity = {}
-	
-	// Hint events from info_game_event_proxy
-	OnExplainSurvivorGlowsDisabled = {}
-	OnExplainItemGlowsDisabled = {}
-	OnExplainRescueDisabled = {}
-	OnExplainBodyshotsReduced = {}
-	OnExplainWitchInstantKill = {}
-	OnExplainNeedGnomeToContinue = {}
-	OnExplainPills = {}
-	OnExplainWeapons = {}
-	OnExplainPreRadio = {}
-	OnExplainRadio = {}
-	OnExplainGasTruck = {}
-	OnExplainPanicButton = {}
-	OnExplainElevatorButton = {}
-	OnExplainLiftButton = {}
-	OnExplainChurchDoor = {}
-	OnExplainEmergencyDoor = {}
-	OnExplainCrane = {}
-	OnExplainBridge = {}
-	OnExplainGasCanPanic = {}
-	OnExplainVanPanic = {}
-	OnExplainMainstreet = {}
-	OnExplainTrainLever = {}
-	OnExplainDisturbance = {}
-	OnExplainScavengeGoal = {}
-	OnExplainScavengeLeaveArea = {}
-	OnExplainPreDrawbridge = {}
-	OnExplainDrawbridge = {}
-	OnExplainPerimeter = {}
-	OnExplainDeactivateAlarm = {}
-	OnExplainImpoundLot = {}
-	OnExplainDecon = {}
-	OnExplainDeconWait = {}
-	OnExplainMallWindow = {}
-	OnExplainMallAlarm = {}
-	OnExplainCoaster = {}
-	OnExplainCoasterStop = {}
-	OnExplainFloat = {}
-	OnExplainFerryButton = {}
-	OnExplainHatchButton = {}
-	OnExplainShackButton = {}
-	OnExplainVehicleArrival = {}
-	OnExplainBurgerSign = {}
-	OnExplainCarouselButton = {}
-	OnExplainCarouselDestination = {}
-	OnExplainStageLighting = {}
-	OnExplainStageFinaleStart = {}
-	OnExplainStageSurvivalStart = {}
-	OnExplainStagePyrotechnics = {}
-	OnExplainC3M4Radio1 = {}
-	OnExplainC3M4Radio2 = {}
-	OnExplainGatesAreOpen = {}
-	OnExplainC2M4Ticketbooth = {}
-	OnExplainC3M4Rescue = {}
-	OnExplainHotelElevatorDoors = {}
-	OnExplainGunShopTanker = {}
-	OnExplainGunShop = {}
-	OnExplainStoreAlarm = {}
-	OnExplainStoreItem = {}
-	OnExplainStoreItemStop = {}
-	OnExplainSurvivalGeneric = {}
-	OnExplainSurvivalAlarm = {}
-	OnExplainSurvivalRadio = {}
-	OnExplainSurvivalCarousel = {}
-	OnExplainReturnItem = {}
-	OnExplainSaveItems = {}
-	OnExplainC4M1GetGas = {}
-	OnExplainC4M3ReturnToBoat = {}
-	OnExplainC1M4Finale = {}
-	OnExplainC1M4ScavengeInstructions = {}
-	OnExplainSewerGate = {}
-	OnExplainSewerRun = {}
-	OnExplainC6M3Finale = {}
-	OnExplainFinaleBridgeLowering = {}
-	OnExplainTrainBoss = {}
-	OnExplainTrainExit = {}
-	OnExplainFreighter = {}
-	OnExplainHighriseFinale2 = {}
-	OnExplainStartGenerator = {}
-	OnExplainRestartGenerator = {}
-	OnExplainBridgeButton = {}
-	OnExplainDLC3Howitzer = {}
-	OnExplainDLC3GeneratorButton = {}
-	OnExplainDLC3LiftLever = {}
-	OnExplainDLC3Barrels = {}
-	OnExplainDLC3Radio = {}
-	OnExplainDLC3Door = {}
-	OnExplainOnslaught = {}
-	
-	// OnScriptEvent_ functions
-	OnHoldoutStart = {}
-	OnResourcesChanged = {}
-	OnHelicopterBegin = {}
-	OnHelicopterEnd = {}
-	OnCooldownBegin = {}
-	OnCooldownEnd = {}
-	
-	// ResponseRules Query Events
-	OnConcept = {}
+	::VSLib.EasyLogic.Notifications <-
+	{
+		// General events
+		OnAchievementEarned = {}
+		OnAchievementEvent = {}
+		OnAwarded = {}
+		OnInstructorDraw = {}
+		OnInstructorNoDraw = {}
+		OnServerHintCreated = {}
+		OnServerHintStopped = {}
+		OnBulletImpact = {}
+		OnDoorMoving = {}
+		OnDoorClosed = {}
+		OnDoorOpened = {}
+		OnDoorUnlocked = {}
+		OnRescueVehicleIncoming = {}
+		OnRescueVehicleReady = {}
+		OnRescueVehicleLeaving = {}
+		OnGauntletFinaleStart = {}
+		OnFinaleStart = {}
+		OnFinaleRadioStart = {}
+		OnFinaleWin = {}
+		OnEscapeStarted = {}
+		OnPreRadioStart = {}
+		OnGeneratorStart = {}
+		OnBeginSacrificeRun = {}
+		OnCompleteSacrifice = {}
+		OnReloadedScriptedHud = {}
+		OnRoundStartPreEntity = {}
+		OnRoundStart = {}
+		OnRoundBegin = {}
+		OnRoundFreezeEnd = {}
+		OnRoundEnd = {}
+		OnMapEnd = {}
+		OnNavBlocked = {}
+		OnSurvivalAt30Min = {}
+		OnSurvivalStart = {}
+		OnVersusStart = {}
+		OnScavengeStart = {}
+		OnScavengeHalftime = {}
+		OnScavengeOvertime = {}
+		OnScavengeRoundFinished = {}
+		OnScavengeTied = {}
+		OnScavengeMatchFinished = {}
+		OnScavengeGascanDestroyed = {}
+		OnVersusMarkerReached = {}
+		OnVersusMatchFinished = {}
+		OnGhostSpawnTime = {}
+		OnServerCvarChanged = {}
+		OnServerAddBan = {}
+		OnServerRemoveBan = {}
+		OnServerPreShutdown = {}
+		OnServerShutdown = {}
+		OnTriggeredCarAlarm = {}
+		OnPanicEventFinished = {}
+		OnStartScoreAnimation = {}
+		OnHostNameChanged = {}
+		
+		// General player events (both infected and survivors)
+		OnPlayerJoined = {}
+		OnPlayerConnected = {}
+		OnPlayerLeft = {}
+		OnDeath = {}
+		OnInfectedDeath = {}
+		OnZombieDeath = {}
+		OnPlayerKilled = {}
+		OnMeleeKill = {}
+		OnEnterStartArea = {}
+		OnEnterSaferoom = {}
+		OnLeaveSaferoom = {}
+		OnHurt = {}
+		OnHurtConcise = {}
+		OnFallDamage = {}
+		OnPlayerActivate = {}
+		OnSpawn = {}
+		OnPostSpawn = {}
+		OnStartSpawn = {}
+		OnFirstSpawn = {}
+		OnTransitioned = {}
+		OnEntityShoved = {}
+		OnPlayerShoved = {}
+		OnEntityVisible = {}
+		OnWeaponSpawnVisible = {}
+		OnDeadSurvivorVisible = {}
+		OnCheckpointButtonWaiting = {}
+		OnCheckpointButtonUsed = {}
+		OnCheckpointDoorWaiting = {}
+		OnCheckpointDoorWaitingVersus = {}
+		OnHitSafeRoom = {}
+		OnRescueDoorOpened = {}
+		OnFootLockerOpened = {}
+		OnMountedGunUsed = {}
+		OnMountedGunOverheated = {}
+		OnUse = {}
+		OnTeamChanged = {}
+		OnNameChanged = {}
+		OnGrabbedLedge = {}
+		OnReleasedLedge = {}
+		OnPourCompleted = {}
+		OnPourBlocked = {}
+		OnPourInterrupted = {}
+		OnAFK = {}
+		OnPlayerReplacedBot = {}
+		OnBotReplacedPlayer = {}
+		OnSay = {}
+		OnVoteCastYes = {}
+		OnVoteCastNo = {}
+		OnRelocated = {}
+		OnRespawning = {}
+		
+		// General infected events
+		OnAbilityUsed = {}
+		OnAbilityOutOfRange = {}
+		OnPanicEvent = {}
+		OnInfectedHurt = {}
+		OnWitchSpawned = {}
+		OnWitchStartled = {}
+		OnWitchKilled = {}
+		OnZombieIgnited = {}
+		
+		// Survivor events
+		OnDefibBegin = {}
+		OnDefibInterrupted = {}
+		OnDefibSuccess = {}
+		OnDefibFailed = {}
+		OnScriptDefib = {} // Called when a player is revived using Defib().
+		OnAdrenalineUsed = {}
+		OnHealStart = {}
+		OnHealEnd = {}
+		OnHealInterrupted = {}
+		OnHealSuccess = {}
+		OnPillsUsed = {}
+		OnPillsFailed = {}
+		OnIncapacitated = {}
+		OnIncapacitatedStart = {}
+		OnJump = {}
+		OnJumpApex = {}
+		FirstSurvLeftStartArea = {}
+		OnReviveBegin = {}
+		OnReviveEnd = {}
+		OnReviveSuccess = {}
+		OnFriendlyFire = {}
+		OnGascanDropped = {}
+		OnWeaponDropped = {}
+		OnWeaponGiven = {}
+		OnWeaponFire = {}
+		OnWeaponFireAt40 = {}
+		OnWeaponFireEmpty = {}
+		OnWeaponReload = {}
+		OnWeaponZoom = {}
+		OnItemPickup = {} // Called when a player picks up a weapon, ammo, etc (see Notifications::CanPickupObject if you want to block pickups)
+		OnAmmoPickup = {}
+		OnAmmoCantUse = {}
+		OnPipeBombBounced = {}
+		OnPipeBombDetonated = {}
+		OnNonPistolFired = {}
+		OnTotalAmmoBelow40 = {}
+		OnExplosiveBarrelKill = {}
+		OnSpawnerGaveItem = {}
+		OnSurvivorCallForHelp = {}
+		OnSurvivorRescueAbandoned = {}
+		OnSurvivorRescued = {}
+		OnUpgradeDeploying = {}
+		OnUpgradeDeployed = {}
+		OnUpgradeReceived = {}
+		OnUpgradeAlreadyUsed = {}
+		OnUpgradeFailed = {}
+		OnLeaveSafeArea = {}
+		
+		// Charger events
+		OnChargerCharged = {}
+		OnChargerCarryVictim = {}
+		OnChargerCarryVictimEnd = {}
+		OnChargerImpact = {}
+		OnChargerPummelBegin = {}
+		OnChargerPummelEnd = {}
+		
+		// Smoker events
+		OnSmokerChokeBegin = {}
+		OnSmokerChokeEnd = {}
+		OnSmokerChokeStopped = {}
+		OnSmokerPullStopped = {}
+		OnSmokerTongueReleased = {}
+		OnSmokerTongueGrab = {}
+		OnSmokerTongueBent = {}
+		
+		// Spitter events
+		OnSpitLanded = {}
+		OnEnterSpit = {}
+		
+		// Jockey
+		OnJockeyRideStart = {}
+		OnJockeyRideEnd = {}
+		OnJockeyHeadshot = {}
+		OnJockeyPunched = {}
+		
+		// Hunter
+		OnHunterHeadshot = {}
+		OnHunterPounceFailed = {}
+		OnHunterPounceShoved = {}
+		OnHunterPouncedVictim = {}
+		OnHunterPounceStopped = {}
+		OnHunterPunched = {}
+		OnHunterReleasedVictim = {}
+		
+		// Boomer
+		OnPlayerVomited = {}
+		OnPlayerVomitEnd = {}
+		OnFatalVomit = {}
+		OnBoomerExploded = {}
+		OnBoomerNear = {}
+		
+		// Tank
+		OnTankFrustrated = {}
+		OnTankKilled = {}
+		OnTankSpawned = {}
+		OnSpawnedAsTank = {}
+		
+		// Achievements
+		OnPunchedClown = {}
+		OnInfectedDecapitated = {}
+		OnNonMeleeFired = {}
+		OnMolotovThrown = {}
+		OnForcedGasCanDrop = {}
+		OnStrongmanBellKnockedOff = {}
+		OnStashwhackerGameWon = {}
+		OnChargerKilled = {}
+		OnSpitterKilled = {}
+		OnJockeyKilled = {}
+		OnVomitBombTank = {}
+		OnUpgradePackAdded = {}
+		OnChargerChargeEnd = {}
+		OnChairCharged = {}
+		OnM60StreakEnded = {}
+		OnSongPlayed = {}
+		OnChristmasGiftGrab = {}
+		OnGoldenCrowbarPickup = {}
+		OnLeftConcertStage = {}
+		
+		// Misc
+		OnDifficulty = {}
+		OnDifficultyChanged = {}
+		OnSurvivorsDead = {}
+		OnBrokeProp = {}
+		OnBrokeBreakable = {}
+		OnWeaponDroppedToProp = {}
+		OnPickupInvItem = {} // Called when a player tries to pickup an item spawned with Utils.SpawnInventoryItem()
+		CanPickupObject = {} // Called when a player tries to pickup a game-related item (such as some prop or weapon)
+		OnMapFirstStart = {}
+		OnNextMap = {}
+		OnSurvivorsSpawned = {}
+		OnSurvivorsLeftStartArea = {}
+		OnEnterRescueVehicle = {}
+		OnLeaveRescueVehicle = {}
+		
+		// SourceTV events
+		OnSourceTVStatus = {}
+		OnSourceTVRankEntity = {}
+		
+		// Hint events from info_game_event_proxy
+		OnExplainSurvivorGlowsDisabled = {}
+		OnExplainItemGlowsDisabled = {}
+		OnExplainRescueDisabled = {}
+		OnExplainBodyshotsReduced = {}
+		OnExplainWitchInstantKill = {}
+		OnExplainNeedGnomeToContinue = {}
+		OnExplainPills = {}
+		OnExplainWeapons = {}
+		OnExplainPreRadio = {}
+		OnExplainRadio = {}
+		OnExplainGasTruck = {}
+		OnExplainPanicButton = {}
+		OnExplainElevatorButton = {}
+		OnExplainLiftButton = {}
+		OnExplainChurchDoor = {}
+		OnExplainEmergencyDoor = {}
+		OnExplainCrane = {}
+		OnExplainBridge = {}
+		OnExplainGasCanPanic = {}
+		OnExplainVanPanic = {}
+		OnExplainMainstreet = {}
+		OnExplainTrainLever = {}
+		OnExplainDisturbance = {}
+		OnExplainScavengeGoal = {}
+		OnExplainScavengeLeaveArea = {}
+		OnExplainPreDrawbridge = {}
+		OnExplainDrawbridge = {}
+		OnExplainPerimeter = {}
+		OnExplainDeactivateAlarm = {}
+		OnExplainImpoundLot = {}
+		OnExplainDecon = {}
+		OnExplainDeconWait = {}
+		OnExplainMallWindow = {}
+		OnExplainMallAlarm = {}
+		OnExplainCoaster = {}
+		OnExplainCoasterStop = {}
+		OnExplainFloat = {}
+		OnExplainFerryButton = {}
+		OnExplainHatchButton = {}
+		OnExplainShackButton = {}
+		OnExplainVehicleArrival = {}
+		OnExplainBurgerSign = {}
+		OnExplainCarouselButton = {}
+		OnExplainCarouselDestination = {}
+		OnExplainStageLighting = {}
+		OnExplainStageFinaleStart = {}
+		OnExplainStageSurvivalStart = {}
+		OnExplainStagePyrotechnics = {}
+		OnExplainC3M4Radio1 = {}
+		OnExplainC3M4Radio2 = {}
+		OnExplainGatesAreOpen = {}
+		OnExplainC2M4Ticketbooth = {}
+		OnExplainC3M4Rescue = {}
+		OnExplainHotelElevatorDoors = {}
+		OnExplainGunShopTanker = {}
+		OnExplainGunShop = {}
+		OnExplainStoreAlarm = {}
+		OnExplainStoreItem = {}
+		OnExplainStoreItemStop = {}
+		OnExplainSurvivalGeneric = {}
+		OnExplainSurvivalAlarm = {}
+		OnExplainSurvivalRadio = {}
+		OnExplainSurvivalCarousel = {}
+		OnExplainReturnItem = {}
+		OnExplainSaveItems = {}
+		OnExplainC4M1GetGas = {}
+		OnExplainC4M3ReturnToBoat = {}
+		OnExplainC1M4Finale = {}
+		OnExplainC1M4ScavengeInstructions = {}
+		OnExplainSewerGate = {}
+		OnExplainSewerRun = {}
+		OnExplainC6M3Finale = {}
+		OnExplainFinaleBridgeLowering = {}
+		OnExplainTrainBoss = {}
+		OnExplainTrainExit = {}
+		OnExplainFreighter = {}
+		OnExplainHighriseFinale2 = {}
+		OnExplainStartGenerator = {}
+		OnExplainRestartGenerator = {}
+		OnExplainBridgeButton = {}
+		OnExplainDLC3Howitzer = {}
+		OnExplainDLC3GeneratorButton = {}
+		OnExplainDLC3LiftLever = {}
+		OnExplainDLC3Barrels = {}
+		OnExplainDLC3Radio = {}
+		OnExplainDLC3Door = {}
+		OnExplainOnslaught = {}
+		OnExplainLighthouseGate = {}
+		OnExplainLighthouseGenerator = {}
+		OnExplainLighthouseGenButton = {}
+		OnExplainLighthouseFinaleEvent = {}
+		OnExplainLighthouseRestartGen = {}
+		OnExplainLighthouseGas = {}
+		OnExplainLighthouseFinale = {}
+		OnExplainJunkyardFuel = {}
+		OnExplainContainerDrop = {}
+		OnExplainContainerReady = {}
+		
+		// OnScriptEvent_ functions
+		OnHoldoutStart = {}
+		OnResourcesChanged = {}
+		OnHelicopterBegin = {}
+		OnHelicopterEnd = {}
+		OnCooldownBegin = {}
+		OnCooldownEnd = {}
+		
+		// ResponseRules Query Events
+		OnConcept = {}
+	}
 }
 
 /**
@@ -599,18 +616,57 @@ getconsttable()["SCRIPT_SHUTDOWN_TEAM_SWAP"] <- 2;
 getconsttable()["SCRIPT_SHUTDOWN_LEVEL_TRANSITION"] <- 3;
 getconsttable()["SCRIPT_SHUTDOWN_EXIT_GAME"] <- 4;
 
-// Create entity data cache system
-::VSLib.EasyLogic.Cache <- {};
+// Nav Attributes
+getconsttable()["NAV_MESH_INVALID"] <- 0;
+getconsttable()["NAV_MESH_CROUCH"] <- 1;				// must crouch to use this node/area
+getconsttable()["NAV_MESH_JUMP"] <- 2;					// must jump to traverse this area (only used during generation)
+getconsttable()["NAV_MESH_PRECISE"] <- 4;				// do not adjust for obstacles, just move along area
+getconsttable()["NAV_MESH_NO_JUMP"] <- 8;				// inhibit discontinuity jumping
+getconsttable()["NAV_MESH_STOP"] <- 16;					// must stop when entering this area
+getconsttable()["NAV_MESH_RUN"] <- 32;					// must run to traverse this area
+getconsttable()["NAV_MESH_WALK"] <- 64;					// must walk to traverse this area
+getconsttable()["NAV_MESH_AVOID"] <- 128;				// avoid this area unless alternatives are too dangerous
+getconsttable()["NAV_MESH_TRANSIENT"] <- 256;			// area may become blocked, and should be periodically checked
+getconsttable()["NAV_MESH_DONT_HIDE"] <- 512;			// area should not be considered for hiding spot generation
+getconsttable()["NAV_MESH_STAND"] <- 1024;				// bots hiding in this area should stand
+getconsttable()["NAV_MESH_NO_HOSTAGES"] <- 2048;		// hostages shouldn't use this area
+getconsttable()["NAV_MESH_STAIRS"] <- 4096;				// this area represents stairs, do not attempt to climb or jump them - just walk up
+getconsttable()["NAV_MESH_NO_MERGE"] <- 8192;			// don't merge this area with adjacent areas
+getconsttable()["NAV_MESH_OBSTACLE_TOP"] <- 16384;		// this nav area is the climb point on the tip of an obstacle
+getconsttable()["NAV_MESH_CLIFF"] <- 32768;				// this nav area is adjacent to a drop of at least CliffHeight
+getconsttable()["NAV_MESH_TANK_ONLY"] <- 65536;
+getconsttable()["NAV_MESH_MOB_ONLY"] <- 131072;
+getconsttable()["NAV_MESH_PLAYERCLIP"] <- 262144;
+getconsttable()["NAV_MESH_BREAKABLEWALL"] <- 524288;
+getconsttable()["NAV_MESH_MOSTLY_FLAT"] <- 536870912;
+getconsttable()["NAV_MESH_HAS_ELEVATOR"] <- 1073741824;
+getconsttable()["NAV_MESH_NAV_BLOCKER"] <- -2147483648;
 
-// Create user data cache system
-::VSLib.EasyLogic.UserCache <- {};
+// Nav Spawn Attributes
+getconsttable()["TERROR_NAV_EMPTY"] <- 2;
+getconsttable()["TERROR_NAV_STOP_SCAN"] <- 4;
+getconsttable()["TERROR_NAV_BATTLESTATION"] <- 32;
+getconsttable()["TERROR_NAV_FINALE"] <- 64;
+getconsttable()["TERROR_NAV_PLAYER_START"] <- 128;
+getconsttable()["TERROR_NAV_BATTLEFIELD"] <- 256;
+getconsttable()["TERROR_NAV_IGNORE_VISIBILITY"] <- 512;
+getconsttable()["TERROR_NAV_NOT_CLEARABLE"] <- 1024;
+getconsttable()["TERROR_NAV_CHECKPOINT"] <- 2048;
+getconsttable()["TERROR_NAV_OBSCURED"] <- 4096;
+getconsttable()["TERROR_NAV_NO_MOBS"] <- 8192;
+getconsttable()["TERROR_NAV_THREAT"] <- 16384;
+getconsttable()["TERROR_NAV_RESCUE_VEHICLE"] <- 32768;
+getconsttable()["TERROR_NAV_RESCUE_CLOSET"] <- 65536;
+getconsttable()["TERROR_NAV_ESCAPE_ROUTE"] <- 131072;
+getconsttable()["TERROR_NAV_DESTROYED_DOOR"] <- 262144;
+getconsttable()["TERROR_NAV_NOTHREAT"] <- 524288;
+getconsttable()["TERROR_NAV_LYINGDOWN"] <- 1048576;
 
 if ( !("MutationState" in g_ModeScript) )
 {
 	g_ModeScript.MutationState <- {};
 	g_MapScript.MergeSessionStateTables();
-	local mapname = ::VSLib.Utils.StringReplace(Convars.GetStr("host_map"), ".bsp", "");
-	g_ModeScript.MutationState.MapName <- mapname;
+	g_ModeScript.MutationState.MapName <- Director.GetMapName();
 	g_ModeScript.MutationState.ModeName <- Director.GetGameMode();
 }
 
@@ -648,38 +704,6 @@ if ( !("MutationState" in g_ModeScript) )
 	foreach (func in ::VSLib.EasyLogic.OnScriptStart)
 		func();
 }
-
-::VSLib_OnCoop <- function ()
-{
-	::VSLib.EasyLogic.BaseModeName <- "coop";
-}
-
-::VSLib_OnVersus <- function ()
-{
-	::VSLib.EasyLogic.BaseModeName <- "versus";
-}
-
-::VSLib_OnSurvival <- function ()
-{
-	::VSLib.EasyLogic.BaseModeName <- "survival";
-}
-
-::VSLib_OnScavenge <- function ()
-{
-	::VSLib.EasyLogic.BaseModeName <- "scavenge";
-}
-
-::VSLib_SpawnInfoGamemode <- function ()
-{
-	local _vsl_info_gamemode = ::VSLib.Utils.SpawnEntity("info_gamemode", "vslib_gamemode");
-	_vsl_info_gamemode.ConnectOutput( "OnCoopPostIO", VSLib_OnCoop );
-	_vsl_info_gamemode.ConnectOutput( "OnVersusPostIO", VSLib_OnVersus );
-	_vsl_info_gamemode.ConnectOutput( "OnSurvivalPostIO", VSLib_OnSurvival );
-	_vsl_info_gamemode.ConnectOutput( "OnScavengePostIO", VSLib_OnScavenge );
-}
-
-if ( !Entities.FindByName( null, "vslib_gamemode" ) )
-	VSLib_SpawnInfoGamemode();
 
 // Make a call to MapScript and ModeScript, returns whether any calls were made
 // NOTE: sadly only does no-argument calls - which makes this way less useful
@@ -761,6 +785,11 @@ g_MapScript.ScriptMode_OnActivate <- function (modename, mapname)
 //=========================================================
 g_MapScript.ScriptMode_OnShutdown <- function (reason, nextmap)
 {
+	::VSLib.Timers.RemoveTimerByName("VSLib_LeftStartCheck");
+	VSLib_ResetRoundVars();
+	VSLib_ResetCache();
+	VSLib_RemoveDeadTimers();
+	
 	if ( reason > 0 && reason < 4 )
 	{
 		if ( reason == 1 )
@@ -777,7 +806,7 @@ g_MapScript.ScriptMode_OnShutdown <- function (reason, nextmap)
 		}
 		else if ( reason == 3 )
 		{
-			::VSLib.EasyLogic.MiscData.previousmap <- SessionState.MapName;
+			::VSLib.EasyLogic.MiscData.previousmap <- Director.GetMapName();
 			::VSLib.EasyLogic.MiscData.maprestarted <- 0;
 			::VSLib.EasyLogic.MiscData.maprestarts <- 0;
 			if ( ::VSLib.EasyLogic.NextMapContinues )
@@ -799,6 +828,9 @@ g_MapScript.ScriptMode_OnShutdown <- function (reason, nextmap)
 	foreach (func in ::VSLib.EasyLogic.OnShutdown)
 		func(reason, nextmap);
 	g_ModeScript = null;
+	
+	// Delete ::VSLib in order to reset data upon restarts
+	delete ::VSLib;
 }
 
 //=========================================================
@@ -954,41 +986,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(ents.entity, checkpoint, params);
 }
 
-::VSLib_RescueCheck <- function (args)
-{
-	if ( ::VSLib.Utils.GetNumberInSafeSpot() > 0 )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.Entity(args.entity);
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-		foreach( trigger in ::VSLib.EasyLogic.Objects.OfClassname("trigger_multiple") )
-		{
-			if ( trigger.GetEntityHandle() != ::VSLib.EasyLogic.RescueTrigger.GetEntityHandle() )
-				trigger.DisconnectOutput( "OnStartTouch", "VSLib_RescueVehicleCheck" );
-		}
-		
-		local _id = args.player.GetIndex();
-		if ( !( "_inRescue" in ::VSLib.EasyLogic.Cache[_id] ) )
-			::VSLib.EasyLogic.Cache[_id]._inRescue <- false;
-		
-		if ( !::VSLib.EasyLogic.Cache[_id]._inRescue )
-		{
-			::VSLib.EasyLogic.Cache[_id]._inRescue <- true;
-			foreach (func in ::VSLib.EasyLogic.Notifications.OnEnterRescueVehicle)
-				func(args.player);
-		}
-	}
-	else
-	{
-		if ( args.tries >= 10 )
-			return;
-		else
-		{
-			args.tries++;
-			::VSLib.Timers.AddTimer(0.1, false, VSLib_RescueCheck, { player = args.player, entity = args.entity, tries = args.tries });
-		}
-	}
-}
-
 ::VSLib_LeaveRescue <- function ()
 {
 	if ( !::VSLib.Entity(activator).IsSurvivor() )
@@ -1010,35 +1007,24 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::VSLib_EnterRescue <- function ()
 {
-	if ( !::VSLib.Entity(activator).IsSurvivor() )
+	if ( !::VSLib.Entity(activator).IsSurvivor() || !::VSLib.EasyLogic.RescueTrigger )
 		return;
 	
-	if ( !::VSLib.EasyLogic.RescueTrigger )
-		::VSLib.Timers.AddTimer(0.1, false, VSLib_RescueCheck, { player = ::VSLib.Player(activator), entity = ::VSLib.Entity(self), tries = 0 });
-	else
+	local _id = ::VSLib.Player(activator).GetIndex();
+	if ( !( "_inRescue" in ::VSLib.EasyLogic.Cache[_id] ) )
+		::VSLib.EasyLogic.Cache[_id]._inRescue <- false;
+	
+	if ( !::VSLib.EasyLogic.Cache[_id]._inRescue )
 	{
-		local _id = ::VSLib.Player(activator).GetIndex();
-		if ( !( "_inRescue" in ::VSLib.EasyLogic.Cache[_id] ) )
-			::VSLib.EasyLogic.Cache[_id]._inRescue <- false;
-		
-		if ( !::VSLib.EasyLogic.Cache[_id]._inRescue )
-		{
-			::VSLib.EasyLogic.Cache[_id]._inRescue <- true;
-			foreach (func in ::VSLib.EasyLogic.Notifications.OnEnterRescueVehicle)
-				func(::VSLib.Player(activator));
-		}
+		::VSLib.EasyLogic.Cache[_id]._inRescue <- true;
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnEnterRescueVehicle)
+			func(::VSLib.Player(activator));
 	}
 }
 
 ::VSLib_ConnectRescueVehicleOutputs <- function ()
 {
-	if ( SessionState.MapName == "c1m4_atrium" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.EasyLogic.Objects.AnyOfName("trigger_escape");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
-	else if ( SessionState.MapName == "c2m5_concert" )
+	if ( Director.GetMapName() == "c2m5_concert" )
 	{
 		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.EasyLogic.Objects.AnyOfName("stadium_exit_right_escape_trigger");
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
@@ -1047,38 +1033,11 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
 		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
 	}
-	else if ( SessionState.MapName == "c7m3_port" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.EasyLogic.Objects.AnyOfName("bridge_rescue");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
-	else if ( SessionState.MapName == "c10m5_houseboat" )
-	{
-		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.EasyLogic.Objects.AnyOfName("trigger_boat");
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-	}
 	else
 	{
-		local triggers = [];
-		foreach( trigger in ::VSLib.EasyLogic.Objects.OfClassname("trigger_multiple") )
-		{
-			if ( trigger.GetNetPropInt("m_iEntireTeam") == 2 && trigger.GetNetPropInt("m_bAllowIncapTouch") == 0 )
-				triggers.append( trigger );
-		}
-		
-		if ( triggers.len() == 1 )
-		{
-			::VSLib.EasyLogic.RescueTrigger <- triggers[0];
-			::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
-			::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
-		}
-		else
-		{
-			foreach( trigger in ::VSLib.EasyLogic.Objects.OfClassname("trigger_multiple") )
-				trigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue, "VSLib_RescueVehicleCheck" );
-		}
+		::VSLib.EasyLogic.RescueTrigger <- ::VSLib.Entity( FindRescueAreaTrigger() );
+		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnStartTouch", VSLib_EnterRescue );
+		::VSLib.EasyLogic.RescueTrigger.ConnectOutput( "OnEndTouch", VSLib_LeaveRescue );
 	}
 }
 
@@ -1260,106 +1219,27 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func();
 }
 
-::vslib_concept_data <- function (query)
+::VSLib_ConceptData <- function (query)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnConcept)
 		func(query);
-}
-
-::VSLib_ConceptData <- function (queryData)
-{
-	local query = {};
-	foreach( var, val in queryData )
-		query[var.tolower()] <- val;
-	
-	if ( query.concept.find("VSLibQueryData_") != null )
-	{
-		if ( !::VSLib.EasyLogic.CheckedMode && "gamemode" in query )
-		{
-			::VSLib.EasyLogic.CheckedMode <- true;
-			::VSLib.EasyLogic.BaseModeName <- query.gamemode;
-			
-			foreach (func in ::VSLib.EasyLogic.Notifications.OnModeStart)
-				func(query.gamemode);
-		}
-		
-		if ( "numberinsafespot" in query )
-			::VSLib.EasyLogic.QueryContextData.NumberInSafeSpot <- query.numberinsafespot;
-		if ( "numberoutsidesafespot" in query )
-			::VSLib.EasyLogic.QueryContextData.NumberOutsideSafeSpot <- query.numberoutsidesafespot;
-		if ( "timesincegroupincombat" in query )
-			::VSLib.EasyLogic.QueryContextData.TimeSinceGroupInCombat <- query.timesincegroupincombat;
-		if ( "introactor" in query )
-			::VSLib.EasyLogic.QueryContextData.IntroActor <- query.introactor;
-		if ( "campaignrandomnum" in query )
-			::VSLib.EasyLogic.QueryContextData.CampaignRandomNum <- query.campaignrandomnum;
-		if ( "lowviolence" in query )
-			::VSLib.EasyLogic.QueryContextData.LowViolence <- query.lowviolence;
-		
-		local _id = ::VSLib.Utils.StringReplace(query.concept, "VSLibQueryData_", "").tointeger();
-		
-		if ( "incombat" in query )
-			::VSLib.EasyLogic.Cache[_id]._inCombat <- query.incombat;
-		if ( "timesincecombat" in query )
-			::VSLib.EasyLogic.Cache[_id]._timeSinceCombat <- query.timesincecombat;
-		
-		if ( query.team == "Survivor" || query.team == "L4D1_Survivor" )
-		{
-			if ( "instartarea" in query )
-			{
-				if ( !::VSLib.EasyLogic.SurvivorsLeftStart && query.instartarea == 0 && query.team == "Survivor" )
-				{
-					::VSLib.EasyLogic.SurvivorsLeftStart <- true;
-					
-					foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
-						func();
-				}
-				::VSLib.EasyLogic.Cache[_id]._inStartArea <- query.instartarea;
-			}
-			if ( "insafespot" in query )
-				::VSLib.EasyLogic.Cache[_id]._inSafeSpot <- query.insafespot;
-			if ( "incheckpoint" in query )
-				::VSLib.EasyLogic.Cache[_id]._inCheckpoint <- query.incheckpoint;
-			if ( "inbattlefield" in query )
-				::VSLib.EasyLogic.Cache[_id]._inBattlefield <- query.inbattlefield;
-			if ( "incombatmusic" in query )
-				::VSLib.EasyLogic.Cache[_id]._inCombatMusic <- query.incombatmusic;
-			if ( "coughing" in query )
-				::VSLib.EasyLogic.Cache[_id]._coughing <- query.coughing;
-			if ( "sneaking" in query )
-				::VSLib.EasyLogic.Cache[_id]._sneaking <- query.sneaking;
-			if ( "timeaveragedintensity" in query )
-				::VSLib.EasyLogic.Cache[_id]._timeAveragedIntensity <- query.timeaveragedintensity;
-			if ( "botisinnarrowcorridor" in query )
-				::VSLib.EasyLogic.Cache[_id]._botIsInNarrowCorridor <- query.botisinnarrowcorridor;
-			if ( "botisnearcheckpoint" in query )
-				::VSLib.EasyLogic.Cache[_id]._botIsNearCheckpoint <- query.botisnearcheckpoint;
-			if ( "botteamleader" in query )
-				::VSLib.EasyLogic.Cache[_id]._botTeamLeader <- query.botteamleader;
-			if ( "bottimesinceanyfriendvisible" in query )
-				::VSLib.EasyLogic.Cache[_id]._botTimeSinceAnyFriendVisible <- query.bottimesinceanyfriendvisible;
-			if ( "botnearbyvisiblefriendcount" in query )
-				::VSLib.EasyLogic.Cache[_id]._botNearbyVisibleFriendCount <- query.botnearbyvisiblefriendcount;
-			if ( "botclosestvisiblefriend" in query )
-				::VSLib.EasyLogic.Cache[_id]._botClosestVisibleFriend <- query.botclosestvisiblefriend;
-			if ( "botclosestincombatfriend" in query )
-				::VSLib.EasyLogic.Cache[_id]._botClosestInCombatFriend <- query.botclosestincombatfriend;
-			if ( "botisavailable" in query )
-				::VSLib.EasyLogic.Cache[_id]._botIsAvailable <- query.botisavailable;
-		}
-		
-		return false;
-	}
-	
-	vslib_concept_data(query);
 	
 	return false;
 }
 
-::VSLib_QueryCheck <- function (params)
+::VSLib_LeftStartCheck <- function (params)
 {
-	foreach( player in ::VSLib.EasyLogic.Players.All() )
-		player.Input("SpeakResponseConcept", "VSLibQueryData_" + player.GetIndex().tostring());
+	foreach( survivor in ::VSLib.EasyLogic.Players.Survivors() )
+	{
+		if ( !survivor.IsInStartArea() )
+		{
+			foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
+				func();
+			
+			::VSLib.Timers.RemoveTimerByName("VSLib_LeftStartCheck");
+			break;
+		}
+	}
 }
 
 ::vslib_map_first_start <- function ()
@@ -1379,17 +1259,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		VSLibScriptStart();
 	
 	::VSLib.EasyLogic.RoundStartPostNavFired <- true;
-	
-	if ( Entities.FindByName( null, "vslib_gamemode" ) )
-	{
-		foreach( vslib_gamemode in ::VSLib.EasyLogic.Objects.OfName("vslib_gamemode") )
-			vslib_gamemode.Kill();
-		
-		if ( ::VSLib.EasyLogic.BaseModeName == "" )
-			::VSLib.EasyLogic.BaseModeName <- SessionState.ModeName;
-	}
-	
-	::VSLib.Timers.AddTimerByName("VSLib_QueryCheck", 0.1, true, VSLib_QueryCheck);
 	
 	local diff = ::VSLib.Utils.GetDifficulty();
 	local olddiff = diff;
@@ -1555,10 +1424,6 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::VSLib.EasyLogic.Events.OnGameEvent_round_end <- function (params)
 {
-	VSLib_ResetRoundVars();
-	VSLib_ResetCache();
-	VSLib_RemoveDeadTimers();
-	
 	::VSLib.EasyLogic.NextMapContinues <- true;
 	
 	local winner = ::VSLib.EasyLogic.GetEventInt(params, "winner"); // team or player
@@ -1864,11 +1729,28 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::_L4D1SurvivorTeamSwitch <- function (player)
 {
-	if ( ::VSLib.EasyLogic.SpawnL4D1Bot )
-		player.SetNetProp("m_survivorCharacter", ::VSLib.EasyLogic.SpawnL4D1Bot);
+	if ( ::VSLib.EasyLogic.SpawnL4D1BotBill && player.GetSurvivorCharacter() == 4 )
+	{
+		player.SetNetProp("m_survivorCharacter", ::VSLib.EasyLogic.SpawnL4D1BotBill);
+		::VSLib.EasyLogic.SpawnL4D1BotBill = null;
+	}
+	else if ( ::VSLib.EasyLogic.SpawnL4D1BotZoey && player.GetSurvivorCharacter() == 5 )
+	{
+		player.SetNetProp("m_survivorCharacter", ::VSLib.EasyLogic.SpawnL4D1BotZoey);
+		::VSLib.EasyLogic.SpawnL4D1BotZoey = null;
+	}
+	else if ( ::VSLib.EasyLogic.SpawnL4D1BotFrancis && player.GetSurvivorCharacter() == 6 )
+	{
+		player.SetNetProp("m_survivorCharacter", ::VSLib.EasyLogic.SpawnL4D1BotFrancis);
+		::VSLib.EasyLogic.SpawnL4D1BotFrancis = null;
+	}
+	else if ( ::VSLib.EasyLogic.SpawnL4D1BotLouis && player.GetSurvivorCharacter() == 7 )
+	{
+		player.SetNetProp("m_survivorCharacter", ::VSLib.EasyLogic.SpawnL4D1BotLouis);
+		::VSLib.EasyLogic.SpawnL4D1BotLouis = null;
+	}
 	player.SetNetProp("m_iTeamNum", 2);
 	Convars.SetValue("sb_l4d1_survivor_behavior", ::VSLib.EasyLogic.L4D1Behavior);
-	::VSLib.EasyLogic.SpawnL4D1Bot = null;
 }
 
 ::_ResetExtraBills <- function (params)
@@ -2471,6 +2353,16 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(ents.entity, item, params);
 }
 
+::VSLib.EasyLogic.Events.OnGameEvent_weapon_drop_to_prop <- function (params)
+{
+	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
+	local weapon = ::VSLib.EasyLogic.GetEventString(params, "item");
+	local item = ::VSLib.EasyLogic.GetEventEntity(params, "propid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnWeaponDroppedToProp)
+		func(ents.entity, item, "weapon_" + weapon, params);
+}
+
 ::VSLib.EasyLogic.Events.OnGameEvent_weapon_fire <- function (params)
 {
 	local ents = ::VSLib.EasyLogic.GetPlayersFromEvent(params);
@@ -2732,6 +2624,26 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHunterPouncedVictim)
 		func(ents.entity, victim, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_jockey_punched <- function (params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local jockey = ::VSLib.EasyLogic.GetEventPlayer(params, "jockeyuserid");
+	local islunging = ::VSLib.EasyLogic.GetEventInt(params, "islunging");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnJockeyPunched)
+		func(player, jockey, (islunging > 0) ? true : false, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_jockey_headshot <- function (params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	local jockey = ::VSLib.EasyLogic.GetEventPlayer(params, "jockeyuserid");
+	local islunging = ::VSLib.EasyLogic.GetEventInt(params, "islunging");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnJockeyHeadshot)
+		func(player, jockey, (islunging > 0) ? true : false, params);
 }
 
 ::VSLib.EasyLogic.Events.OnGameEvent_pounce_stopped <- function (params)
@@ -3092,8 +3004,10 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 
 ::VSLib.EasyLogic.Events.OnGameEvent_triggered_car_alarm <- function (params)
 {
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnTriggeredCarAlarm)
-		func();
+		func(player, params);
 }
 
 ::VSLib.EasyLogic.Events.OnGameEvent_panic_event_finished <- function (params)
@@ -3390,6 +3304,38 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
 	
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnChristmasGiftGrab)
+		func(player, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_golden_crowbar_pickup <- function (params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnGoldenCrowbarPickup)
+		func(player, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_player_left_concert_stage <- function (params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnLeftConcertStage)
+		func(player, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_player_left_safe_area <- function (params)
+{
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	if ( !player.IsInStartArea() )
+	{
+		foreach (func in ::VSLib.EasyLogic.Notifications.OnSurvivorsLeftStartArea)
+			func();
+	}
+	else
+		::VSLib.Timers.AddTimerByName("VSLib_LeftStartCheck", 0.1, true, VSLib_LeftStartCheck);
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnLeaveSafeArea)
 		func(player, params);
 }
 
@@ -4195,6 +4141,96 @@ g_MapScript.ScriptMode_AddCriteria <- function ( )
 		func(player, subject, params);
 }
 
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_gate <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseGate)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_generator <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseGenerator)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_gen_button <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseGenButton)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_finale_event <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseFinaleEvent)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_restart_gen <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseRestartGen)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_gas <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseGas)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_lighthouse_finale <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainLighthouseFinale)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_junkyard_fuel <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainJunkyardFuel)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_container_drop <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainContainerDrop)
+		func(player, subject, params);
+}
+
+::VSLib.EasyLogic.Events.OnGameEvent_explain_container_ready <- function (params)
+{
+	local subject = ::VSLib.EasyLogic.GetEventEntity(params, "subject");
+	local player = ::VSLib.EasyLogic.GetEventPlayer(params, "userid");
+	
+	foreach (func in ::VSLib.EasyLogic.Notifications.OnExplainContainerReady)
+		func(player, subject, params);
+}
+
 ::VSLib.EasyLogic.Events.OnScriptEvent_start_holdout <- function (params)
 {
 	foreach (func in ::VSLib.EasyLogic.Notifications.OnHoldoutStart)
@@ -4391,7 +4427,7 @@ function VSLib::EasyLogic::GetPlayersFromEvent(params)
  */
 function VSLib::EasyLogic::AddChatTrigger(trigger_text, func)
 {
-	local trigger = _triggerStart + trigger_text;
+	local trigger = ::VSLib.EasyLogic._triggerStart + trigger_text;
 	
 	// do not double up on triggers
 	foreach (idx, v in _itChatTextIndex)
@@ -4411,7 +4447,7 @@ function VSLib::EasyLogic::AddChatTrigger(trigger_text, func)
  */
 function VSLib::EasyLogic::RemoveChatTrigger(trigger_text)
 {
-	local trigger = _triggerStart + trigger_text;
+	local trigger = ::VSLib.EasyLogic._triggerStart + trigger_text;
 	
 	foreach (i, v in _itChatTextIndex)
 	{
@@ -4432,7 +4468,15 @@ function VSLib::EasyLogic::RemoveChatTrigger(trigger_text)
  */
 function VSLib::EasyLogic::ChangeChatTriggerStartText(start_text)
 {
-	_triggerStart = start_text;
+	::VSLib.EasyLogic._triggerStart = start_text;
+}
+
+/**
+ * Changes the chat trigger hiding text (e.g. the forward slash).
+ */
+function VSLib::EasyLogic::ChangeChatTriggerStartText(hide_text)
+{
+	::VSLib.EasyLogic._triggerHide = hide_text;
 }
 
 /**
@@ -4468,97 +4512,130 @@ function VSLib::EasyLogic::RemoveInterceptChat(func)
 /**
  * Valve forward: Used by EasyLogic to implement chat triggers
  */
-::InterceptChat <- function (str, srcEnt)
+if (!("InterceptChat" in getroottable()))
 {
-	if (srcEnt != null)
+	::InterceptChat <- function (str, srcEnt)
 	{
-		// Strip the name from the chat text
-		local name = srcEnt.GetPlayerName() + ": ";
-		local text = strip(str.slice(str.find(name) + name.len()));
-
-		if (text.find(::VSLib.EasyLogic._triggerStart) == 0)
+		local hideText = false;
+		
+		if (srcEnt != null)
 		{
-			// Separate the commands and arguments
-			local arr = split(text, " ");
-			
-			// Identify the command
-			local cmd = arr[0];
-			
-			// Build an argument array
-			local args = {};
-			local idx = 0;
-			foreach (k, v in arr)
+			// Strip the name from the chat text
+			local name = srcEnt.GetPlayerName() + ": ";
+			local text = strip(str.slice(str.find(name) + name.len()));
+
+			local startTrigger = ( text.find(::VSLib.EasyLogic._triggerStart) == 0 );
+			local hideTrigger = ( text.find(::VSLib.EasyLogic._triggerHide) == 0 );
+			if (startTrigger || hideTrigger)
 			{
-				if (k != 0 && v != null && v != "")
+				// Separate the commands and arguments
+				local arr = split(text, " ");
+				
+				// Identify the command
+				local cmd = arr[0];
+				
+				// Build an argument array
+				local args = {};
+				local idx = 0;
+				foreach (k, v in arr)
 				{
-					args[idx] <- v;
-					idx++;
+					if (k != 0 && v != null && v != "")
+					{
+						args[idx] <- v;
+						idx++;
+					}
 				}
-			}
-			
-			// Store it.
-			::VSLib.EasyLogic.LastArgs <- args;
-			
-			local player = ::VSLib.Player(srcEnt);
-			
-			// Execute the permanent triggers
-			local baseCmd = split(cmd, ::VSLib.EasyLogic._triggerStart);
-			if (0 in baseCmd)
-			{
-				if (baseCmd[0] in ::VSLib.EasyLogic.Triggers)
-					::VSLib.EasyLogic.Triggers[baseCmd[0]](player, args, text);
-				else if (baseCmd[0].tolower() in ::VSLib.EasyLogic.Triggers)
-					::VSLib.EasyLogic.Triggers[baseCmd[0].tolower()](player, args, text);
-			}
-			
-			// Execute the removable trigger (if it is a trigger).
-			foreach (i, trigger in ::VSLib.EasyLogic._itChatTextIndex)
-			{
-				if (trigger == cmd || trigger.tolower() == cmd.tolower())
+				
+				// Store it.
+				::VSLib.EasyLogic.LastArgs <- args;
+				
+				local player = ::VSLib.Player(srcEnt);
+				
+				// Execute the permanent triggers
+				local baseCmd = "";
+				if (startTrigger)
+					baseCmd = split(cmd, ::VSLib.EasyLogic._triggerStart);
+				else if (hideTrigger)
+					baseCmd = split(cmd, ::VSLib.EasyLogic._triggerHide);
+				if (0 in baseCmd)
 				{
-					::VSLib.EasyLogic._itChatFunction[i](player, args, text);
-					break;
+					if (baseCmd[0] in ::VSLib.EasyLogic.Triggers)
+					{
+						::VSLib.EasyLogic.Triggers[baseCmd[0]](player, args, text);
+						if (hideTrigger)
+							hideText = true;
+					}
+					else if (baseCmd[0].tolower() in ::VSLib.EasyLogic.Triggers)
+					{
+						::VSLib.EasyLogic.Triggers[baseCmd[0].tolower()](player, args, text);
+						if (hideTrigger)
+							hideText = true;
+					}
+				}
+				
+				// Execute the removable trigger (if it is a trigger).
+				foreach (i, trigger in ::VSLib.EasyLogic._itChatTextIndex)
+				{
+					if (trigger == cmd || trigger.tolower() == cmd.tolower())
+					{
+						::VSLib.EasyLogic._itChatFunction[i](player, args, text);
+						if (hideTrigger)
+							hideText = true;
+						break;
+					}
 				}
 			}
 		}
-	}
-	
-	local player = null;
-	local text = "";
-	
-	if (srcEnt != null)
-	{
-		local name = srcEnt.GetPlayerName() + ": ";
-		text = strip(str.slice(str.find(name) + name.len()));
-		player = ::VSLib.Player(srcEnt);
-	}
-	else
-	{
-		if ( str.find("Console:") != null )
+		
+		local player = null;
+		local text = "";
+		
+		if (srcEnt != null)
 		{
-			local name = "Console: ";
+			local name = srcEnt.GetPlayerName() + ": ";
 			text = strip(str.slice(str.find(name) + name.len()));
+			player = ::VSLib.Player(srcEnt);
 		}
 		else
-			text = str;
+		{
+			if ( str.find("Console:") != null )
+			{
+				local name = "Console: ";
+				text = strip(str.slice(str.find(name) + name.len()));
+			}
+			else
+				text = str;
+		}
+		
+		// Fire any intercept hooks
+		foreach(v in ::VSLib.EasyLogic._interceptList)
+		{
+			if (v != null)
+				v(str, srcEnt);
+		}
+		foreach(v in ::VSLib.EasyLogic.OnInterceptChat)
+		{
+			if (v != null)
+			{
+				if (v(text, player) == false)
+					return false;
+			}
+		}
+		
+		if ( "ModeInterceptChat" in g_ModeScript )
+		{
+			if ( g_ModeScript.ModeInterceptChat(str, srcEnt) == false )
+				return false;
+		}
+		if ( "MapInterceptChat" in g_ModeScript )
+		{
+			if ( g_ModeScript.MapInterceptChat(str, srcEnt) == false )
+				return false;
+		}
+		
+		if ( hideText )
+			return false;
 	}
-	
-	// Fire any intercept hooks
-	foreach(v in ::VSLib.EasyLogic._interceptList)
-	{
-		if (v != null)
-			v(str, srcEnt);
-	}
-	foreach(v in ::VSLib.EasyLogic.OnInterceptChat)
-	{
-		if (v != null)
-			v(text, player);
-	}
-	
-	if ( "ModeInterceptChat" in g_ModeScript )
-		ModeInterceptChat(str, srcEnt);
-	if ( "MapInterceptChat" in g_ModeScript )
-		MapInterceptChat(str, srcEnt);
 }
 
 if ( ("InterceptChat" in g_ModeScript) && (g_ModeScript.InterceptChat != getroottable().InterceptChat) )
@@ -4599,41 +4676,44 @@ function VSLib::EasyLogic::GetArgument(idx)
 /**
  * Lets you send commands by using scripted_user_func in console
  */
-::UserConsoleCommand <- function (playerScript, arg)
+if (!("UserConsoleCommand" in getroottable()))
 {
-	// Separate the commands and arguments
-	local arr = split(arg, ",");
-	
-	// Build an argument array
-	local args = {};
-	local idx = -1;
-	foreach (k, v in arr)
+	::UserConsoleCommand <- function (playerScript, arg)
 	{
-		if (k != -1 && v != null && v != "")
+		// Separate the commands and arguments
+		local arr = split(arg, ",");
+		
+		// Build an argument array
+		local args = {};
+		local idx = -1;
+		foreach (k, v in arr)
 		{
-			args[idx] <- v;
-			idx++;
+			if (k != -1 && v != null && v != "")
+			{
+				args[idx] <- v;
+				idx++;
+			}
 		}
+		
+		// Store it.
+		::VSLib.EasyLogic.LastArgs <- args;
+		
+		local argArray = clone args;
+		argArray.rawdelete(-1);
+		
+		local player = ::VSLib.Player(playerScript);
+		
+		foreach(v in ::VSLib.EasyLogic.OnUserCommand)
+		{
+			if (v != null)
+				v(player, argArray, arg);
+		}
+		
+		if ( "ModeUserConsoleCommand" in g_ModeScript )
+			g_ModeScript.ModeUserConsoleCommand(playerScript, arg);
+		if ( "MapUserConsoleCommand" in g_ModeScript )
+			g_ModeScript.MapUserConsoleCommand(playerScript, arg);
 	}
-	
-	// Store it.
-	::VSLib.EasyLogic.LastArgs <- args;
-	
-	local argArray = clone args;
-	argArray.rawdelete(-1);
-	
-	local player = ::VSLib.Player(playerScript);
-	
-	foreach(v in ::VSLib.EasyLogic.OnUserCommand)
-	{
-		if (v != null)
-			v(player, argArray, arg);
-	}
-	
-	if ( "ModeUserConsoleCommand" in g_ModeScript )
-		ModeUserConsoleCommand(playerScript, arg);
-	if ( "MapUserConsoleCommand" in g_ModeScript )
-		MapUserConsoleCommand(playerScript, arg);
 }
 
 if ( ("UserConsoleCommand" in g_ModeScript) && (g_ModeScript.UserConsoleCommand != getroottable().UserConsoleCommand) )
@@ -5594,13 +5674,16 @@ function VSLib::EasyLogic::Objects::All()
 // Update Hooks
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-::Update <- function ()
+if (!("Update" in getroottable()))
 {
-	foreach (update in ::VSLib.EasyLogic.Update)
-		update();
-	
-	if ( "ModeUpdate" in g_ModeScript )
-		ModeUpdate();
+	::Update <- function ()
+	{
+		foreach (update in ::VSLib.EasyLogic.Update)
+			update();
+		
+		if ( "ModeUpdate" in g_ModeScript )
+			g_ModeScript.ModeUpdate();
+	}
 }
 
 if ( ("Update" in g_ModeScript) && (g_ModeScript.Update != getroottable().Update) )

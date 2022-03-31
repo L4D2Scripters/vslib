@@ -24,12 +24,15 @@
  *
  *  The Timer table allows the developer to easily add synchronized callbacks.
  */
-::VSLib.Timers <-
+if (!("Timers" in ::VSLib))
 {
-	TimersList = {}
-	TimersID = {}
-	ClockList = {}
-	count = 0
+	::VSLib.Timers <-
+	{
+		TimersList = {}
+		TimersID = {}
+		ClockList = {}
+		count = 0
+	}
 }
 
 /*
@@ -197,6 +200,9 @@ function VSLib::Timers::DisplayTime(idx)
  */
 ::VSLib.Timers._thinkFunc <- function()
 {
+	if (!("VSLib" in getroottable()))
+		return;
+	
 	local TIMER_FLAG_COUNTDOWN = (1 << 2);
 	local TIMER_FLAG_DURATION_VARIANT = (1 << 4);
 	

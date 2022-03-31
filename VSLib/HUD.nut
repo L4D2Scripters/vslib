@@ -22,9 +22,12 @@
 /**
  * Wraps Valve's HUD system.
  */
-::VSLib.HUD <-
+if (!("HUD" in ::VSLib))
 {
-	_hud = { Fields = {} }
+	::VSLib.HUD <-
+	{
+		_hud = { Fields = {} }
+	}
 }
 
 /**

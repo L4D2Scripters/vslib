@@ -114,30 +114,33 @@ class ::VSLib.Entity
  *
  * \todo @TODO Perhaps move all of these into two distinct tables with KVs instead of leaving the KVs out in the EntData table
  */
-::VSLib.EntData <-
+if (!("EntData" in ::VSLib))
 {
-	// single point_hurt data
-	_lastHurt = -1
-	_hurtIntent = -1
-	_hurtDmg = 0
-	_hurtIgnore = []
-	
-	_objPickupTimer = {}
-	_objBtnPickup = {}
-	_objBtnThrow = {}
-	_objOldBtnMask = {}
-	_objHolding = {}
-	
-	_objValveTimer = {}
-	_objValveHolding = {}
-	_objValveThrowPower = {}
-	_objValvePickupRange = {}
-	_objValveThrowDmg = {}
-	_objValveHoldDmg = {}
-	_objEnableDmg = {}
-	
-	_inv = {}
-	_invItems = {}
+	::VSLib.EntData <-
+	{
+		// single point_hurt data
+		_lastHurt = -1
+		_hurtIntent = -1
+		_hurtDmg = 0
+		_hurtIgnore = []
+		
+		_objPickupTimer = {}
+		_objBtnPickup = {}
+		_objBtnThrow = {}
+		_objOldBtnMask = {}
+		_objHolding = {}
+		
+		_objValveTimer = {}
+		_objValveHolding = {}
+		_objValveThrowPower = {}
+		_objValvePickupRange = {}
+		_objValveThrowDmg = {}
+		_objValveHoldDmg = {}
+		_objEnableDmg = {}
+		
+		_inv = {}
+		_invItems = {}
+	}
 }
 
 
@@ -241,6 +244,17 @@ getconsttable()["BUTTON_GRENADE1"] <- 8388608; // grenade 1
 getconsttable()["BUTTON_GRENADE2"] <- 16777216; // grenade 2
 getconsttable()["BUTTON_LOOKSPIN"] <- 0x2000000; // lookspin if bound #shotgunefx
 
+// Hitgroups to be used with m_LastHitGroup
+getconsttable()["HITGROUP_GENERIC"] <- 0;
+getconsttable()["HITGROUP_HEAD"] <- 1;
+getconsttable()["HITGROUP_CHEST"] <- 2;
+getconsttable()["HITGROUP_STOMACH"] <- 3;
+getconsttable()["HITGROUP_LEFTARM"] <- 4;
+getconsttable()["HITGROUP_RIGHTARM"] <- 5;
+getconsttable()["HITGROUP_LEFTLEG"] <- 6;
+getconsttable()["HITGROUP_RIGHTLEG"] <- 7;
+getconsttable()["HITGROUP_GEAR"] <- 10; // alerts NPC, but doesn't do damage or bleed (1/100th damage)
+
 // Damage types that can be used with Hurt(), etc
 getconsttable()["DMG_GENERIC"] <- 0;
 getconsttable()["DMG_CRUSH"] <- (1 << 0);
@@ -333,6 +347,40 @@ getconsttable()["FL_TRANSRAGDOLL"] <- (1 << 29);		/**< In the process of turning
 getconsttable()["FL_UNBLOCKABLE_BY_PLAYER"] <- (1 << 30);		/**< pusher that can't be blocked by the player */
 getconsttable()["FL_FREEZING"] <- (1 << 31);		/**< We're becoming frozen! */
 getconsttable()["FL_EP2V_UNKNOWN1"] <- (1 << 31);		/**< Unknown */
+
+// Entity Flags to be used with the m_iEFlags network property values
+getconsttable()["EFL_KILLME"] <- (1<<0);		/**< This entity is marked for death -- This allows the game to actually delete ents at a safe time */
+getconsttable()["EFL_DORMANT"] <- (1<<1);		/**< Entity is dormant, no updates to client */
+getconsttable()["EFL_NOCLIP_ACTIVE"] <- (1<<2);		/**< Lets us know when the noclip command is active. */
+getconsttable()["EFL_SETTING_UP_BONES"] <- (1<<3);		/**< Set while a model is setting up its bones. */
+getconsttable()["EFL_KEEP_ON_RECREATE_ENTITIES"] <- (1<<4);		/**< This is a special entity that should not be deleted when we restart entities only */
+getconsttable()["EFL_DIRTY_SHADOWUPDATE"] <- (1<<5);		/**< Client only- need shadow manager to update the shadow... */
+getconsttable()["EFL_NOTIFY"] <- (1<<6);		/**< Another entity is watching events on this entity (used by teleport) */
+getconsttable()["EFL_FORCE_CHECK_TRANSMIT"] <- (1<<7);
+getconsttable()["EFL_BOT_FROZEN"] <- (1<<8);		/**< This is set on bots that are frozen. */
+getconsttable()["EFL_SERVER_ONLY"] <- (1<<9);		/**< Non-networked entity. */
+getconsttable()["EFL_NO_AUTO_EDICT_ATTACH"] <- (1<<10);		/**< Don't attach the edict; we're doing it explicitly */
+getconsttable()["EFL_DIRTY_ABSTRANSFORM"] <- (1<<11);
+getconsttable()["EFL_DIRTY_ABSVELOCITY"] <- (1<<12);
+getconsttable()["EFL_DIRTY_ABSANGVELOCITY"] <- (1<<13);
+getconsttable()["EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS"] <- (1<<14);
+getconsttable()["EFL_DIRTY_SPATIAL_PARTITION"] <- (1<<15);
+getconsttable()["EFL_HAS_PLAYER_CHILD"] <- (1<<16);		/**< One of the child entities is a player. */
+getconsttable()["EFL_IN_SKYBOX"] <- (1<<17);		/**< This is set if the entity detects that it's in the skybox. This forces it to pass the "in PVS" for transmission. */
+getconsttable()["EFL_USE_PARTITION_WHEN_NOT_SOLID"] <- (1<<18);		/**< Entities with this flag set show up in the partition even when not solid */
+getconsttable()["EFL_TOUCHING_FLUID"] <- (1<<19);		/**< Used to determine if an entity is floating */
+getconsttable()["EFL_IS_BEING_LIFTED_BY_BARNACLE"] <- (1<<20);
+getconsttable()["EFL_NO_ROTORWASH_PUSH"] <- (1<<21);		/**< I shouldn't be pushed by the rotorwash */
+getconsttable()["EFL_NO_THINK_FUNCTION"] <- (1<<22);
+getconsttable()["EFL_NO_GAME_PHYSICS_SIMULATION"] <- (1<<23);
+getconsttable()["EFL_CHECK_UNTOUCH"] <- (1<<24);
+getconsttable()["EFL_DONTBLOCKLOS"] <- (1<<25);		/**< I shouldn't block NPC line-of-sight */
+getconsttable()["EFL_DONTWALKON"] <- (1<<26);		/**< NPC;s should not walk on this entity */
+getconsttable()["EFL_NO_DISSOLVE"] <- (1<<27);		/**< These guys shouldn't dissolve */
+getconsttable()["EFL_NO_MEGAPHYSCANNON_RAGDOLL"] <- (1<<28);		/**< Mega physcannon can't ragdoll these guys. */
+getconsttable()["EFL_NO_WATER_VELOCITY_CHANGE"] <- (1<<29);		/**< Don't adjust this entity's velocity when transitioning into water */
+getconsttable()["EFL_NO_PHYSCANNON_INTERACTION"] <- (1<<30);		/**< Physcannon can't pick these up or punt them */
+getconsttable()["EFL_NO_DAMAGE_FORCES"] <- (1<<31);		/**< Doesn't accept forces from physics damage */
 
 // RenderModes
 getconsttable()["RENDER_NORMAL"] <- 0;		/**< src */
@@ -737,6 +785,151 @@ function VSLib::Entity::GetNetPropType( prop )
 }
 
 /**
+ * Gets the value of the entity's response criterion as a string.
+ */
+function VSLib::Entity::GetResponseCriterion( criterion )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return ResponseCriteria.GetValue( _ent, criterion.tostring() );
+}
+
+/**
+ * Gets a table containing all of the entity's response criteria.
+ */
+function VSLib::Entity::GatherResponseCriteria()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local table = {};
+	ResponseCriteria.GetTable( _ent, table );
+	
+	return table;
+}
+
+/**
+ * Returns true if the response criterion exists.
+ */
+function VSLib::Entity::HasResponseCriterion( criterion )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return ResponseCriteria.HasCriterion( _ent, criterion.tostring() );
+}
+
+/**
+ * Gets the value of the entity's response criterion as a string.
+ */
+function VSLib::Entity::GetResponseCriteriaValue( criterion )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return ResponseCriteria.GetValue( _ent, criterion.tostring() );
+}
+
+/**
+ * Returns true if the output exists.
+ */
+function VSLib::Entity::HasOutput( output )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return EntityOutputs.HasOutput( _ent, output.tostring() );
+}
+
+/**
+ * Returns true if an action exists for the output.
+ */
+function VSLib::Entity::HasOutputAction( output )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return EntityOutputs.HasAction( _ent, output.tostring() );
+}
+
+/**
+ * Returns the number of connections for the output.
+ */
+function VSLib::Entity::GetNumOutputElements( output )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return EntityOutputs.GetNumElements( _ent, output.tostring() );
+}
+
+/**
+ * Returns a table of output information.
+ */
+function VSLib::Entity::GetOutputTable( output, element = 0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	local table = {};
+	EntityOutputs.GetOutputTable( _ent, output.tostring(), table, element );
+	return table;
+}
+
+/**
+ * Add a new output to the entity.
+ */
+function VSLib::Entity::AddOutput( output, target, input, parameter = "", delay = 0, timesToFire = -1 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	EntityOutputs.AddOutput( _ent, output.tostring(), target.tostring(), input.tostring(), parameter.tostring(), delay,tofloat(), timesToFire.tointeger() );
+}
+
+/**
+ * Remove an output from the entity.
+ */
+function VSLib::Entity::RemoveOutput( output, target = "", input = "", parameter = "" )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	EntityOutputs.RemoveOutput( _ent, output.tostring(), target.tostring(), input.tostring(), parameter.tostring() );
+}
+
+/**
  * Gets a table of the entity's glow color.
  */
 function VSLib::Entity::GetGlowColor()
@@ -811,7 +1004,7 @@ function VSLib::Entity::GetMaxHealth()
 		return;
 	}
 	
-	return GetNetPropInt( "m_iMaxHealth" );
+	return _ent.GetMaxHealth();
 }
 
 /**
@@ -1014,17 +1207,17 @@ function VSLib::Entity::SetKeyValue(key, value)
 	if (!IsEntityValid())
 	{
 		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
+		return false;
 	}
 	
 	if (typeof value == "string")
-		_ent.__KeyValueFromString(key.tostring(), value.tostring());
+		return _ent.__KeyValueFromString(key.tostring(), value.tostring());
 	else if (typeof value == "integer" || typeof value == "float")
-		_ent.__KeyValueFromInt(key.tostring(), value);
+		return _ent.__KeyValueFromInt(key.tostring(), value);
 	else if (typeof value == "bool")
-		_ent.__KeyValueFromInt(key.tostring(), value.tointeger());
+		return _ent.__KeyValueFromInt(key.tostring(), value.tointeger());
 	else
-		_ent.__KeyValueFromVector(key.tostring(), value);
+		return _ent.__KeyValueFromVector(key.tostring(), value);
 }
 
 /**
@@ -1128,7 +1321,7 @@ function VSLib::Entity::SetMaxHealth(value)
 		return;
 	}
 	
-	_ent.__KeyValueFromInt("max_health", value.tointeger());
+	_ent.SetMaxHealth(value.tointeger());
 }
 
 /**
@@ -1442,22 +1635,8 @@ function VSLib::Entity::SetModel(mdl)
 		return;
 	}
 	
-	local index = -1;
-	::VSLib.Utils.PrecacheModel( mdl );
-	if ( mdl in ::VSLib.EasyLogic.SetModelIndexes )
-		index = ::VSLib.EasyLogic.SetModelIndexes[mdl];
-	else
-	{
-		local dummyEnt = ::VSLib.Utils.CreateEntity("prop_dynamic_override", Vector(0, 0, 0), QAngle(0, 0, 0), { model = mdl, renderfx = 15, solid = 1 });
-		index = dummyEnt.GetNetPropInt("m_nModelIndex");
-		::VSLib.EasyLogic.SetModelIndexes[mdl] <- index;
-		dummyEnt.Kill();
-	}
-	
-	if ( _ent.GetClassname().find("weapon_") != null )
-		SetNetProp("m_iWorldModelIndex", index);
-	SetNetProp("m_nModelIndex", index);
-	SetNetProp("m_ModelName", mdl);
+	::VSLib.Utils.PrecacheModel(mdl);
+	_ent.SetModel(mdl);
 }
 
 /**
@@ -1892,7 +2071,7 @@ function VSLib::Entity::AddSpawnFlags( flag )
 	
 	local flags = GetNetPropInt( "m_spawnflags" );
 	
-	if ( HasFlag(flag) )
+	if ( HasSpawnFlags(flag) )
 		return;
 	
 	SetNetProp( "m_spawnflags", ( flags | flag ) );
@@ -1911,7 +2090,7 @@ function VSLib::Entity::RemoveSpawnFlags( flag )
 	
 	local flags = GetNetPropInt( "m_spawnflags" );
 	
-	if ( !HasFlag(flag) )
+	if ( !HasSpawnFlags(flag) )
 		return;
 	
 	SetNetProp( "m_spawnflags", ( flags & ~flag ) );
@@ -1943,34 +2122,6 @@ function VSLib::Entity::SetMoveType( moveType )
 	}
 	
 	return SetNetProp( "movetype", moveType.tointeger() );
-}
-
-/**
- * Gets the entity's model scale.
- */
-function VSLib::Entity::GetModelScale()
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	return GetNetPropFloat( "m_flModelScale" );
-}
-
-/**
- * Sets the entity's model scale.
- */
-function VSLib::Entity::SetModelScale( scale )
-{
-	if (!IsEntityValid())
-	{
-		printl("VSLib Warning: Entity " + _idx + " is invalid.");
-		return;
-	}
-	
-	return SetNetProp( "m_flModelScale", scale.tofloat() );
 }
 
 /**
@@ -2020,7 +2171,7 @@ function VSLib::Entity::GetModel()
 		return;
 	}
 	
-	return GetNetPropString( "m_ModelName" );
+	return _ent.GetModelName();
 }
 
 /**
@@ -2392,10 +2543,10 @@ function VSLib::Entity::GetClip()
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") == null )
+	if ( !("Clip1" in _ent) )
 		return;
 	
-	return GetNetPropInt( "m_iClip1" );
+	return _ent.Clip1();
 }
 
 /**
@@ -2409,10 +2560,44 @@ function VSLib::Entity::SetClip( amount )
 		return;
 	}
 	
-	if ( _ent.GetClassname().find("weapon_") == null )
+	if ( !("SetClip1" in _ent) )
 		return;
 	
-	SetNetProp( "m_iClip1", amount.tointeger() );
+	_ent.SetClip1( amount.tointeger() );
+}
+
+/**
+ * Gets the max ammo allowed in the clip for the weapon.
+ */
+function VSLib::Entity::GetMaxClip()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetMaxClip1" in _ent) )
+		return;
+	
+	return _ent.GetMaxClip1();
+}
+
+/**
+ * Gets the default clip for the weapon.
+ */
+function VSLib::Entity::GetDefaultClip()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetDefaultClip1" in _ent) )
+		return;
+	
+	return _ent.GetDefaultClip1();
 }
 
 /**
@@ -2520,6 +2705,34 @@ function VSLib::Entity::RemoveUpgrade( upgrade )
 		SetNetProp( "m_nUpgradedPrimaryAmmoLoaded", 0 );
 	
 	SetNetProp( "m_upgradeBitVec", ( flags & ~upgrade ) );
+}
+
+/**
+ * Gets the entity's last body region that took damage.
+ */
+function VSLib::Entity::GetLastHitGroup()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return GetNetPropInt( "m_LastHitGroup" );
+}
+
+/**
+ * Sets the entity's last body region that took damage.
+ */
+function VSLib::Entity::SetLastHitGroup( nHitGroup )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	return SetNetPropInt( "m_LastHitGroup", nHitGroup );
 }
 
 /**
@@ -2698,6 +2911,50 @@ function VSLib::Entity::GetGender()
 	}
 	
 	return GetNetPropInt( "m_Gender" );
+}
+
+/**
+ * Returns true if the gender is a male.
+ */
+function VSLib::Entity::IsMale()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( GetGender() == 1 || GetGender() == 3 || GetGender() == 5 || GetGender() == 6 || GetGender() == 7 || GetGender() == 9 || GetGender() == 10 || IsUncommonInfected() )
+		return true;
+	else if ( GetGender() == 18 )
+	{
+		if ( GetModel().find("_male") != null )
+			return true;
+	}
+	
+	return false;
+}
+
+/**
+ * Returns true if the gender is a female.
+ */
+function VSLib::Entity::IsFemale()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( GetGender() == 2 || GetGender() == 4 || GetGender() == 8 || GetGender() == 19 )
+		return true;
+	else if ( GetGender() == 18 )
+	{
+		if ( GetModel().find("_female") != null )
+			return true;
+	}
+	
+	return false;
 }
 
 /**
@@ -3100,8 +3357,6 @@ function VSLib::Entity::GetLookingEntity(mask = 33579137)
 
 /**
  * Returns the numerical index of the entity.
- * Because Valve didn't provide a function to convert a base entity back to an index,
- * we go the long way around by using an entity loop.
  */
 function VSLib::Entity::GetBaseIndex()
 {
@@ -4082,6 +4337,79 @@ function VSLib::Entity::StopSound( file )
 }
 
 /**
+ * Plays an ambient sound file on an entity
+ */
+function VSLib::Entity::EmitAmbientSound( file, volume = 1.0, soundlevel = 350, pitch = 100 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (file == "" || !file)
+		return;
+	
+	if ( file.find(".wav") == null && file.find(".mp3") == null )
+	{
+		if ( !(file in ::EasyLogic.PrecachedSounds) )
+		{
+			printf("VSLib: Precaching named sound: %s", file);
+			_ent.PrecacheScriptSound(file);
+			::EasyLogic.PrecachedSounds[file] <- 1;
+		}
+	}
+	
+	EmitAmbientSoundOn(file, volume, soundlevel, pitch, _ent);
+}
+
+/**
+ * Stops an ambient sound on an entity
+ */
+function VSLib::Entity::StopAmbientSound( file )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	StopAmbientSoundOn( file, _ent );
+}
+
+/**
+ * Plays a sound file on an entity from an ambient_generic
+ */
+function VSLib::Entity::PlaySoundFile( file, volume = 10, pitch = 100, radius = 500, keyvalues = {} )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if (file == "" || !file || GetTargetname() == "")
+		return;
+	
+	if ( file.find(".wav") == null && file.find(".mp3") == null )
+	{
+		if ( !(file in ::EasyLogic.PrecachedSounds) )
+		{
+			printf("VSLib: Precaching named sound: %s", file);
+			_ent.PrecacheScriptSound(file);
+			::EasyLogic.PrecachedSounds[file] <- 1;
+		}
+	}
+	
+	local t = { health = volume, message = file, SourceEntityName = GetTargetname(), pitch = pitch, pitchstart = pitch, radius = radius, spawnflags = "32", };
+	foreach (idx, val in t)
+		keyvalues[idx] <- val;
+	local ent = ::VSLib.Utils.CreateEntity("ambient_generic", Vector(0,0,0), QAngle(0,0,0), keyvalues);
+	ent.Input("PlaySound");
+	ent.Kill();
+}
+
+/**
  * Returns true if the entity is a bot.
  */
 function VSLib::Entity::IsBot()
@@ -4742,67 +5070,785 @@ function VSLib::Entity::CanTraceToOtherEntity(otherEntity, height = 5)
 }
 
 
+//
+//  CBaseAnimating class functions
+//
 
+
+/**
+ * Get the named attachement id.
+ */
+function VSLib::Entity::LookupAttachment( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("LookupAttachment" in _ent) )
+		return;
+	
+	return _ent.LookupAttachment( name );
+}
+
+/**
+ * Get the attachement id's origin vector.
+ */
+function VSLib::Entity::GetAttachmentOrigin( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetAttachmentOrigin" in _ent) )
+		return;
+	
+	return _ent.GetAttachmentOrigin( id );
+}
+
+/**
+ * Get the attachement id's angles.
+ */
+function VSLib::Entity::GetAttachmentAngles( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetAttachmentAngles" in _ent) )
+		return;
+	
+	return _ent.GetAttachmentAngles( id );
+}
+
+/**
+ * Ask whether the main sequence is done playing.
+ */
+function VSLib::Entity::IsSequenceFinished()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("IsSequenceFinished" in _ent) )
+		return;
+	
+	return _ent.IsSequenceFinished();
+}
+
+/**
+ * Sets a bodygroup.
+ */
+function VSLib::Entity::SetBodygroup( group, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetBodygroup" in _ent) )
+		return;
+	
+	_ent.SetBodygroup( group, value );
+}
+
+/**
+ * Get the named attachment's parent bone index.
+ */
+function VSLib::Entity::GetAttachmentBone( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetAttachmentBone" in _ent) )
+		return;
+	
+	return _ent.GetAttachmentBone( id );
+}
+
+/**
+ * Get the bone id's origin vector.
+ */
+function VSLib::Entity::GetBoneOrigin( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetBoneOrigin" in _ent) )
+		return;
+	
+	return _ent.GetBoneOrigin( id );
+}
+
+/**
+ * Get the bone id's angles as a p,y,r vector.
+ */
+function VSLib::Entity::GetBoneAngles( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetBoneAngles" in _ent) )
+		return;
+	
+	return _ent.GetBoneAngles( id );
+}
+
+/**
+ * Get the named activity index.
+ */
+function VSLib::Entity::LookupActivity( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("LookupActivity" in _ent) )
+		return;
+	
+	return _ent.LookupActivity( name );
+}
+
+/**
+ * Get the named bone index.
+ */
+function VSLib::Entity::LookupBone( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("LookupBone" in _ent) )
+		return;
+	
+	return _ent.LookupBone( name );
+}
+
+/**
+ * Looks up a sequence by sequence name or activity name.
+ */
+function VSLib::Entity::LookupSequence( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("LookupSequence" in _ent) )
+		return;
+	
+	return _ent.LookupSequence( name );
+}
+
+/**
+ * Set a sequence by id.
+ */
+function VSLib::Entity::SetSequence( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetSequence" in _ent) )
+		return;
+	
+	_ent.SetSequence( id );
+}
+
+/**
+ * Reset a sequence by id. If the id is different than the current sequence, switch to the new sequence.
+ */
+function VSLib::Entity::ResetSequence( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("ResetSequence" in _ent) )
+		return;
+	
+	_ent.ResetSequence( id );
+}
+
+/**
+ * Get the current sequence id.
+ */
+function VSLib::Entity::GetSequence()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetSequence" in _ent) )
+		return;
+	
+	return _ent.GetSequence();
+}
+
+/**
+ * Get the activity name for a sequence by id.
+ */
+function VSLib::Entity::GetSequenceActivityName( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetSequenceActivityName" in _ent) )
+		return;
+	
+	return _ent.GetSequenceActivityName( id );
+}
+
+/**
+ * Get a sequence name by id.
+ */
+function VSLib::Entity::GetSequenceName( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetSequenceName" in _ent) )
+		return;
+	
+	return _ent.GetSequenceName( id );
+}
+
+/**
+ * Get a sequence duration by id.
+ */
+function VSLib::Entity::GetSequenceDuration( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetSequenceDuration" in _ent) )
+		return;
+	
+	return _ent.GetSequenceDuration( id );
+}
+
+/**
+ * Get a bodygroup by id.
+ */
+function VSLib::Entity::GetBodygroup( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetBodygroup" in _ent) )
+		return;
+	
+	return _ent.GetBodygroup( id );
+}
+
+/**
+ * Get the bodygroup id's name.
+ */
+function VSLib::Entity::GetBodygroupName( id )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetBodygroupName" in _ent) )
+		return;
+	
+	return _ent.GetBodygroupName( id );
+}
+
+/**
+ * Find a bodygroup id by name.
+ */
+function VSLib::Entity::FindBodygroupByName( name )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("FindBodygroupByName" in _ent) )
+		return;
+	
+	return _ent.FindBodygroupByName( name );
+}
+
+/**
+ * Get name by group and part.
+ */
+function VSLib::Entity::GetBodygroupPartName( group, part )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetBodygroupPartName" in _ent) )
+		return;
+	
+	return _ent.GetBodygroupPartName( group, part );
+}
+
+/**
+ * Gets the entity's model scale.
+ */
+function VSLib::Entity::GetModelScale()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetModelScale" in _ent) )
+		return GetNetPropFloat( "m_flModelScale" );
+	
+	return _ent.GetModelScale();
+}
+
+/**
+ * Changes a model's scale over time.
+ */
+function VSLib::Entity::SetModelScale( scale, changeDuration = 0.0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetModelScale" in _ent) )
+	{
+		SetNetProp( "m_flModelScale", scale.tofloat() );
+		return;
+	}
+	
+	_ent.SetModelScale( id, changeDuration );
+}
+
+/**
+ * Sets a pose parameter value.
+ */
+function VSLib::Entity::SetPoseParameter( id, value )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetPoseParameter" in _ent) )
+		return;
+	
+	return _ent.SetPoseParameter( id, value );
+}
+
+
+//
+//  CBaseFlex class functions
+//
+
+
+/**
+ * Returns the instance of the oldest active scene entity (if any).
+ */
+function VSLib::Entity::GetCurrentScene()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return null;
+	}
+	
+	if ( !("GetCurrentScene" in _ent) )
+		return null;
+	
+	local instancedScene = _ent.GetCurrentScene();
+	if (!instancedScene)
+		return null;
+	
+	return ::VSLib.Entity(instancedScene);
+}
+
+/**
+ * Returns the instance of the scene entity at the specified index.
+ */
+function VSLib::Entity::GetSceneByIndex( index )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return null;
+	}
+	
+	if ( !("GetSceneByIndex" in _ent) )
+		return null;
+	
+	local instancedScene = _ent.GetSceneByIndex( index );
+	if (!instancedScene)
+		return null;
+	
+	return ::VSLib.Entity(instancedScene);
+}
+
+/**
+ * Force the entity to play the specified .vcd file.
+ */
+function VSLib::Entity::PlayScene( sceneName, postDelay = 0.0 )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("PlayScene" in _ent) )
+		return;
+	
+	return _ent.PlayScene( sceneName, postDelay );
+}
+
+
+//
+//  CTerrorWeapon class functions
+//
+
+
+/**
+ * Gets the weapon's ammo in clip1.
+ */
+function VSLib::Entity::Clip1()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("Clip1" in _ent) )
+		return;
+	
+	return _ent.Clip1();
+}
+
+/**
+ * Gets the weapon's ammo in clip2.
+ */
+function VSLib::Entity::Clip2()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("Clip2" in _ent) )
+		return;
+	
+	return _ent.Clip2();
+}
+
+/**
+ * Gets the weapon's default ammo for clip1.
+ */
+function VSLib::Entity::GetDefaultClip1()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetDefaultClip1" in _ent) )
+		return;
+	
+	return _ent.GetDefaultClip1();
+}
+
+/**
+ * Gets the weapon's default ammo for clip2.
+ */
+function VSLib::Entity::GetDefaultClip2()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetDefaultClip2" in _ent) )
+		return;
+	
+	return _ent.GetDefaultClip2();
+}
+
+/**
+ * Gets the weapon's maximum ammo for clip1.
+ */
+function VSLib::Entity::GetMaxClip1()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetMaxClip1" in _ent) )
+		return;
+	
+	return _ent.GetMaxClip1();
+}
+
+/**
+ * Gets the weapon's maximum ammo for clip2.
+ */
+function VSLib::Entity::GetMaxClip2()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GetMaxClip2" in _ent) )
+		return;
+	
+	return _ent.GetMaxClip2();
+}
+
+/**
+ * Sets the weapon's ammo for clip1.
+ */
+function VSLib::Entity::SetClip1( amount )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetClip1" in _ent) )
+		return;
+	
+	_ent.SetClip1( amount );
+}
+
+/**
+ * Sets the weapon's ammo for clip2.
+ */
+function VSLib::Entity::SetClip2( amount )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("SetClip2" in _ent) )
+		return;
+	
+	_ent.SetClip2( amount );
+}
+
+/**
+ * Gives the weapon default ammo.
+ */
+function VSLib::Entity::GiveDefaultAmmo()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("GiveDefaultAmmo" in _ent) )
+		return;
+	
+	_ent.GiveDefaultAmmo();
+}
+
+/**
+ * Force the weapon to reload.
+ */
+function VSLib::Entity::Reload()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("Reload" in _ent) )
+		return;
+	
+	_ent.Reload();
+}
+
+
+//
+//  CBaseTrigger class functions
+//
+
+
+/**
+ * Disable the trigger.
+ */
+function VSLib::Entity::Disable()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("Disable" in _ent) )
+		return;
+	
+	_ent.Disable();
+}
+
+/**
+ * Enable the trigger.
+ */
+function VSLib::Entity::Enable()
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return;
+	}
+	
+	if ( !("Enable" in _ent) )
+		return;
+	
+	_ent.Enable();
+}
+
+/**
+ * Checks whether the passed entity is touching the trigger.
+ */
+function VSLib::Entity::IsTouching( entity )
+{
+	if (!IsEntityValid())
+	{
+		printl("VSLib Warning: Entity " + _idx + " is invalid.");
+		return false;
+	}
+	
+	if ( !("IsTouching" in _ent) )
+		return false;
+	
+	if ( typeof entity == "VSLIB_ENTITY" || typeof entity == "VSLIB_PLAYER" )
+		entity = entity.GetBaseEntity();
+	
+	return _ent.IsTouching( entity );
+}
 
 
 
 /**
  * Processes damage data associated with ::VSLib.
  */
-::AllowTakeDamage <- function (damageTable)
+if (!("AllowTakeDamage" in getroottable()))
 {
-	// Process triggered hurts
-	if (damageTable.Attacker == ::VSLib.EntData._lastHurt)
+	::AllowTakeDamage <- function (damageTable)
 	{
-		foreach (hEnt in ::VSLib.EntData._hurtIgnore)
-			if (hEnt.GetIndex() == damageTable.Victim.GetEntityIndex())
-				return false;
-		
-		if (!::VSLib.EntData._hurtIntent || damageTable.Victim == ::VSLib.EntData._hurtIntent)
+		// Process triggered hurts
+		if (damageTable.Attacker == ::VSLib.EntData._lastHurt)
 		{
-			damageTable.DamageDone = ::VSLib.EntData._hurtDmg;
-			return true;
+			foreach (hEnt in ::VSLib.EntData._hurtIgnore)
+				if (hEnt.GetIndex() == damageTable.Victim.GetEntityIndex())
+					return false;
+			
+			if (!::VSLib.EntData._hurtIntent || damageTable.Victim == ::VSLib.EntData._hurtIntent)
+			{
+				damageTable.DamageDone = ::VSLib.EntData._hurtDmg;
+				return true;
+			}
+			
+			return false;
 		}
 		
-		return false;
-	}
-	
-	// Process hooks
-	if ("EasyLogic" in ::VSLib)
-	{
-		if (damageTable.Victim != null)
+		// Process hooks
+		if ("EasyLogic" in ::VSLib)
 		{
-			local name = damageTable.Victim.GetClassname();
-			if (name in ::VSLib.EasyLogic.OnDamage)
+			if (damageTable.Victim != null)
 			{
-				local victim = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Victim);
-				local attacker = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Attacker);
-				
-				local damagesave = damageTable.DamageDone;
-				damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
-				
-				if (damageTable.DamageDone == null)
-					damageTable.DamageDone = damagesave;
-				else if (damageTable.DamageDone <= 0)
+				local name = damageTable.Victim.GetClassname();
+				if (name in ::VSLib.EasyLogic.OnDamage)
+				{
+					local victim = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Victim);
+					local attacker = ::VSLib.Utils.GetEntityOrPlayer(damageTable.Attacker);
+					
+					local damagesave = damageTable.DamageDone;
+					damageTable.DamageDone = ::VSLib.EasyLogic.OnDamage[name](victim, attacker, damageTable.DamageDone, damageTable);
+					
+					if (damageTable.DamageDone == null)
+						damageTable.DamageDone = damagesave;
+					else if (damageTable.DamageDone <= 0)
+						return false;
+					
+					return true;
+				}
+			}
+			
+			foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
+			{
+				if (func(damageTable) == false)
 					return false;
-				
-				return true;
 			}
 		}
 		
-		foreach (func in ::VSLib.EasyLogic.OnTakeDamage)
-		{
-			if (func(damageTable) == false)
-				return false;
-		}
+		if ( "ModeAllowTakeDamage" in g_ModeScript )
+			return g_ModeScript.ModeAllowTakeDamage(damageTable);
+		if ( "MapAllowTakeDamage" in g_ModeScript )
+			return g_ModeScript.MapAllowTakeDamage(damageTable);
+		
+		return true;
 	}
-	
-	if ( "ModeAllowTakeDamage" in g_ModeScript )
-		return ModeAllowTakeDamage(damageTable);
-	if ( "MapAllowTakeDamage" in g_ModeScript )
-		return MapAllowTakeDamage(damageTable);
-	
-	return true;
 }
 
 if ( ("AllowTakeDamage" in g_ModeScript) && (g_ModeScript.AllowTakeDamage != getroottable().AllowTakeDamage) )
@@ -4825,34 +5871,37 @@ else
 /**
  * Associates the AllowBash() function with ::VSLib.
  */
-::AllowBash <- function (basher, bashee)
+if (!("AllowBash" in getroottable()))
 {
-	local attacker = ::VSLib.Utils.GetEntityOrPlayer(basher);
-	local victim = ::VSLib.Utils.GetEntityOrPlayer(bashee);
-	
-	foreach(func in ::VSLib.EasyLogic.OnBash)
+	::AllowBash <- function (basher, bashee)
 	{
-		if (func != null)
+		local attacker = ::VSLib.Utils.GetEntityOrPlayer(basher);
+		local victim = ::VSLib.Utils.GetEntityOrPlayer(bashee);
+		
+		foreach(func in ::VSLib.EasyLogic.OnBash)
 		{
-			local res = func(attacker, victim);
-			
-			if (res != null)
-			switch ( res )
+			if (func != null)
 			{
-				case ALLOW_BASH_NONE:
-					return ALLOW_BASH_NONE;
-				case ALLOW_BASH_PUSHONLY:
-					return ALLOW_BASH_PUSHONLY;
+				local res = func(attacker, victim);
+				
+				if (res != null)
+				switch ( res )
+				{
+					case ALLOW_BASH_NONE:
+						return ALLOW_BASH_NONE;
+					case ALLOW_BASH_PUSHONLY:
+						return ALLOW_BASH_PUSHONLY;
+				}
 			}
 		}
+		
+		if ( "ModeAllowBash" in g_ModeScript )
+			return g_ModeScript.ModeAllowBash(basher, bashee);
+		if ( "MapAllowBash" in g_ModeScript )
+			return g_ModeScript.MapAllowBash(basher, bashee);
+		
+		return ALLOW_BASH_ALL;
 	}
-	
-	if ( "ModeAllowBash" in g_ModeScript )
-		return ModeAllowBash(damageTable);
-	if ( "MapAllowBash" in g_ModeScript )
-		return MapAllowBash(damageTable);
-	
-	return ALLOW_BASH_ALL;
 }
 
 if ( ("AllowBash" in g_ModeScript) && (g_ModeScript.AllowBash != getroottable().AllowBash) )
@@ -4875,17 +5924,20 @@ else
 /**
  * Processes BotQuery() with ::VSLib.
  */
-::BotQuery <- function (queryflag, entity, defaultvalue)
+if (!("BotQuery" in getroottable()))
 {
-	foreach (func in ::VSLib.EasyLogic.OnBotQuery)
-		func(queryflag, entity, defaultvalue);
-	
-	if ( "ModeBotQuery" in g_ModeScript )
-		return ModeBotQuery(queryflag, entity, defaultvalue);
-	if ( "MapBotQuery" in g_ModeScript )
-		return MapBotQuery(queryflag, entity, defaultvalue);
-	
-	return defaultvalue;
+	::BotQuery <- function (queryflag, entity, defaultvalue)
+	{
+		foreach (func in ::VSLib.EasyLogic.OnBotQuery)
+			func(queryflag, entity, defaultvalue);
+		
+		if ( "ModeBotQuery" in g_ModeScript )
+			return g_ModeScript.ModeBotQuery(queryflag, entity, defaultvalue);
+		if ( "MapBotQuery" in g_ModeScript )
+			return g_ModeScript.MapBotQuery(queryflag, entity, defaultvalue);
+		
+		return defaultvalue;
+	}
 }
 
 if ( ("BotQuery" in g_ModeScript) && (g_ModeScript.BotQuery != getroottable().BotQuery) )
