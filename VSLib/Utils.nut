@@ -1803,7 +1803,7 @@ function VSLib::Utils::SpawnInventoryItem( itemName, mdl, pos )
 function VSLib::Utils::ShowHintSurvivors( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
 	foreach( survivor in ::VSLib.EasyLogic.Players.Survivors() )
-		survivor.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
+		survivor.ShowHint( text, duration, icon, binding, color, pulsating, alphapulse, shaking );
 }
 
 /**
@@ -1812,7 +1812,7 @@ function VSLib::Utils::ShowHintSurvivors( text, duration = 5, icon = "icon_tip",
 function VSLib::Utils::ShowHintInfected( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
 	foreach( infected in ::VSLib.EasyLogic.Players.Infected() )
-		infected.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
+		infected.ShowHint( text, duration, icon, binding, color, pulsating, alphapulse, shaking );
 }
 
 /**
@@ -1821,7 +1821,7 @@ function VSLib::Utils::ShowHintInfected( text, duration = 5, icon = "icon_tip", 
 function VSLib::Utils::ShowHintAll( text, duration = 5, icon = "icon_tip", binding = "", color = "255 255 255", pulsating = 0, alphapulse = 0, shaking = 0 )
 {
 	foreach( player in ::VSLib.EasyLogic.Players.All() )
-		player.ShowHint( text, duration, icon, color, binding, pulsating, alphapulse, shaking );
+		player.ShowHint( text, duration, icon, binding, color, pulsating, alphapulse, shaking );
 }
 
 /**
